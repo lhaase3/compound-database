@@ -1,0 +1,267 @@
+,PEO#,compound,,Lambda Max (DCM/AcCN),Lambda Max (neat film),phase map,"r33 (neat, assuming ne=1.7, no=1.5)",CAMB3LYP SVPD CHCl3 (Cosmo),,B3LYP SVPD CHCl3,,,DSC melt (total),,,,location,,,,
+,,,MW,,,,,dipole (D),beta ,dipole,beta,beta/MW,J/g,kJ/mol,Refractive index (ne/no),Notes,lab?,first PEO#,registered PEO#,Lab book #,Max loading (%)
+,rm734,,423,,,I -187.9 - N - 132.7 - NF; Cr - 139.8 - N  ,,12.9,5.50E+03,,,1.30E+01,83.5,35.3205,,,yes,#0001,#0017,,
+,LCM04,,387.45,,,Cr - 93 - N - >200; 93 - N - 45 - FN?,,11.3,6.50E+03,,,1.68E+01,53.35353535,20.67182727,,might be two biphenyls,yes,#0002,#0018,,
+,DR1-OMe,,328,,,I - 80 - Cr,,14.1,3.70E+04,,,1.13E+02,92.85714286,30.45714286,,,yes,#0003,#0003,,15
+,peo326,,,,,Cr - ~150C (MP vey broad 20C); I - Cr - ~100C,,13.8,4.20E+04,,,#DIV/0!,,#DIV/0!,,,yes,#0004,#0004,,
+,PEO519,,,,,I - 207 - FN - RT,,,,,,#DIV/0!,,#DIV/0!,,,yes,#0005,#0005,,
+,PEO503,,,,,Cr - 132 - I; I - 106.3 - N - 105.1 - NF - 86.8 - Cr,,,,,,#DIV/0!,97.10144928,#DIV/0!,,,yes,#0006,#0019,,
+,PEO105,,406,,,Cr - 105-115  - I; I - 87 - Cr,,14.2,4.00E+04,,,9.85E+01,93.52941176,37.97294118,,two melting peaks with some crystallation between them makes enthalpy calc too high,yes,#0007,#0007,,15
+,peo390,,320.39,,,Cr - 103 - I; I - RT (slow crystallization),,12.8,3.75E+04,,,1.17E+02,79.7029703,25.53603465,,,yes,#0008,#0008,,10
+,PEO691,,,,,Cr - 230 - decomp,,10,3.30E+04,,,#DIV/0!,,#DIV/0!,,,yes,#0009,#0009,,
+,PEO317,,509.5,,,Cr - 124 - I; I - 42 - FN - glassy at RT,,,,,,0,92.92929293,47.34747475,,,yes,#0010,#0010,,
+,PEO422,,687,,,I - 116 - FN,,,,,,0,82.4,56.6088,,,yes,#0011,#0011,,
+,peo359,,,,,Cr - 225 - SmA - decomp,,,,,,#DIV/0!,,#DIV/0!,,,yes,#0012,#0012,,
+,PEO318,,,,,"I - 116.5 - Cr.  Does supercool into a N (I think) ~110C, though it was reported as FN",,,,,,#DIV/0!,,#DIV/0!,,,,,,,
+,PEO562,,486,447,,Cr - 171 - I (Decomp>220); I - 155 - Cr,,16.6,6.60E+04,,,1.36E+02,65.3,31.7358,,,yes,#0013,#0013,,27
+,LCM10,,,,,Cr- 122.4 - N - 226 - I ; N - 110.5 - Cr,,8.3,9.10E+03,,,#DIV/0!,,#DIV/0!,,,,,,,
+,LCM01,,,,,I - N - 153 - SmA -  61 - Cr,,9.8,4.50E+03,,,#DIV/0!,46.7611336,#DIV/0!,,,,,,,
+,LCM02,,,,,Cr - 90 - SmA - ~170 - N,,,,,,#DIV/0!,38.40304183,#DIV/0!,,,,,,,
+,LCM03,,,,,Cr - 135 - N; ,,,,,,#DIV/0!,67.03910615,#DIV/0!,,pavel's synthesis produced material with a melting point of 142,,,,,
+,LCM05,,,,,Cr - 143 - N; N - 123 - Cr,,,,,,#DIV/0!,49.74358974,#DIV/0!,,,,,,,
+,LCM06,,,,,Cr - 130 - N; N - 111 - Cr,,,,,,#DIV/0!,,#DIV/0!,,,,,,,
+,LCM07,,,,,Cr - 185 - N; N - 170 - Cr ,,,,,,#DIV/0!,59.90990991,#DIV/0!,,,,,,,
+,LCM08,,,,,Cr- 95.5 - N - 322 - I; N - ~50 - Cr,,,,,,#DIV/0!,,#DIV/0!,,,,,,,
+,LCM09,,527.59,,,Cr - 121.2 - N - 300 - I; N - 96 - Cr,,11.3,1.70E+04,,,3.22E+01,54.56038647,28.7855143,,,,,,,
+,LCM11,,,,,Cr - 122.1 - N - 210.4 - I; N - 120 - SmA - 62 - SmX,,,,,,#DIV/0!,,#DIV/0!,,,,,,,
+,LCM14,,,,,Cr - 48.1 - SmA - 112.5 - N - 193 - I ,,,,,,#DIV/0!,,#DIV/0!,,,,,,,
+,LCM15,,421.39,,,Cr 109.6 N 230.6 Iso,,,,,,0,63.95939086,26.95184772,,,,,,,
+,LCM16,,449.45,,,Cr 90.2 N 198.5 Iso,,,,,,0,60.54421769,27.21159864,,,,,,,
+,LCM17,,403.4,,,Cr 96.2 N 214.2 Iso,,,,,,0,,0,,,,,,,
+,LCM18,,431,,,Cr 99.3 N 213.1 Iso,,,,,,0,61.36363636,26.44772727,,,,,,,
+,PEO01,,,,,Cr - 45 - I ,,,,,,#DIV/0!,97.04433498,#DIV/0!,,,yes,14,14,,
+,w1038,,,,,Cr - 132 - I,,,,,,#DIV/0!,,#DIV/0!,,Poor solubility in FN hosts,yes,16,16,,
+,PEO-0015,,404.4,528,,Cr - 213 - I; no decomp up to 250 on DSC,,16.2,60000,,,148.3679525,79,31.9476,,,yes,15,15,,10
+,PEO-0020,,535.44,,, Cr - 90 - FN; I - 235 - N - 182 - NF - 96 - SmA (believed) - 57 - Cr,,14.4,2.30E+03,,,4.30E+00,48,25.70112,,,,,,,
+,PEO-0021,,470.63,689,,Cr - 192 - I,,23,1.20E+05,,,2.55E+02,48,22.59024,,,,,,,15
+,PEO-0022,,339.24,,,Cr - 100 - I; I - 90 - Cr,,,,,,0,73.2,24.832368,,,,,,,
+,PEO-0023,,550.48,,,Cr - 78 - N; I - 119 - N - 59 - SmA,,,,,,0,60,33.0288,,,,,,,
+,PEO-0024,,428.34,,,Cr - 48 - I; no N phase observed on cooling ,,,,,,0,61,26.12874,,,,,,,
+,PEO-0025,,441.57,,,,,20.2,7.10E+04,,,1.61E+02,,0,,,,,,,10
+,PEO-0026,,715.45,,,Cr - 128 - FN; I - 180 - N - 152 - FN - RT,,,,,,0,61.4,43.92863,,,,,,,
+,PEO-0027,,552.75,,,Cr - 225 - I ,,21.4,2.00E+05,,,3.62E+02,,0,,,,,,,10
+,PEO-0028,,539.11,,,Cr - 240 - I ,,,,,,0,,0,,,,,,sp108,
+,PEO-0029,,565.15,,,Cr - 240 - Decomp,,,,,,0,,0,,,,,,,
+,PEO-0030,,632.9,,,glass - 70 - I; decomp > 250C,,,,,,0,,0,,,,,,sp137,5
+,PEO-0031,,744.8,820,,melt 170C,,30.5,1.94E+05,,,2.60E+02,,0,,,,,,,5
+,PEO-0032,,576.79,,,"with a sample of large crystals, melt by DSC starts around 110C - 140C.  Tg ~ 70C   ",,29.3,1.78E+05,,,3.09E+02,40,23.0716,,,,,,,10
+,PEO-0033,,604.85,,,melt 180C; Tg ~60C,,29.3,1.78E+05,,,2.94E+02,49.8,30.12153,,,,,,sp150,5
+,PEO-0034,,548.74,,,"melt 240C, decomp ~260",,29.3,1.78E+05,,,3.24E+02,60,32.9244,,,,,,sp172,5
+,PEO-0035,,562.77,,,melt 230C,,29.8,1.39E+05,,,2.47E+02,46,25.88742,,46-70 J/g.  Melting point difficult to get peak area because of two peaks,,,,,5
+,PEO-0036,,669.92,,,,,,,,,0.00E+00,,0,,only 1mg made,,,,,
+,PEO-0037,,468.59,621,,melt 195C; decomp > 220C,,26.7,3.70E+04,,,7.90E+01,69.91,32.7591269,,,,,,sp214,
+,PEO-0038,,495.01,826,,melt>240C,,,,,,0,,0,,"insoluble, even at <5%",,,,,
+,PEO-0039,,548,,,melt = ~225C,,,,,,0,,0,,,,,,,12
+,PEO-0040,,598,816,,,,31.3,,,,0,,0,,,,,,,
+,PEO-0041,,492.52,,,"I - 82 - FN; Decomp ~230C, basline started creeping up around 200C ",,16.7,8.60E+03,,,1.75E+01,69.3,34.131636,,,,,,,
+,PEO-0042,,774,1015,,,,,,,,,,0,,DSC shows amorphous with decomp around 190C ,,,,,1
+,PEO-0043,,658.27,761,,,,,,,,,,0,,,,,,,1
+,PEO-0044,,712,739,,,,,,,,,,0,,,,,,,1
+,PEO-0045,,688,745,,Cr - 190 - I,,,,,,,,0,,,,,,sp257,
+,PEO-0046,,577,814,,Cr - >230C ,,,,,,,,0,,,,,,,1
+,PEO-0047,,644.79,820,,Cr - 230C - I; fast recrystallization ,,32.8,,,,,,0,,,,,,sp279,1
+,PEO-0048,,485.64,650,,Cr - 205 - Decomp,,,,,,,,0,,,,,,,15
+,PEO-0049,,515.45,,,I - N - 202 - SmZA - 185 - FN - 120 - Nx,,,,,,,40,20.618,,,,,,,
+,PEO-0050,,441.95,700,,melt around 230C--> decomp,,,,,,,,0,,,,,,,
+,PEO-0051,,509.7,698,,melt 176C,,10,7.90E+04,,,1.55E+02,83,42.3051,,,,,,,15
+,PEO-0052,,885.86,,,N - 237 - FN - 54 - glass; melt ~85C,,,,,,0,,0,,,,,,,
+,PEO-0053,,,,,,,,,,,#DIV/0!,,#DIV/0!,,,,,,,0
+,PEO-0054,,414.32,,,Cr - 73 - I; I - RT,,,,,,0,,0,,,,,,,
+,PEO-0055,,522.43,,,Cr - 87 - N; I - 131 - N - 57 - Cr,,,,,,0,,0,,,,,,,
+,PEO-0056,,494.49,,,Cr -112 - I; I - RT; Decomp 217C,,11.3,,,,0,,0,,,,,,,
+,PEO-0057,,522.56,662,,Cr - 180 - I; ,,27.1,3.40E+04,,,6.51E+01,,0,,,,,,,1
+,PEO-0058,,550.74,752,,Cr - 240 - I (decomp),,20.3,2.00E+05,,,3.63E+02,,0,,,,,,,5
+,PEO-0059,,959.9,,,Cr - 174 - FN - 250 - N,,,,,,0,61,58.5539,,,,,,,
+,PEO-0060,,494.63,706,,Cr - 215 - I (decomp),,29.6,9.90E+04,,,2.00E+02,,0,,,,,,,5
+,PEO-0061,,660.8,780,,Cr - 150 - I; decomp starts around 180C,,29.5,2.41E+05,,,3.65E+02,51.8,34.22944,,,,,,,1
+,PEO-0062,,439.51,567,,Cr - 180 - I; Decomp,,16.2,3.60E+04,,,8.19E+01,,0,,,,,,,19
+,PEO-0063,,369.47,656,,,,16.4,3.00E+04,,,8.12E+01,,0,,Believed low purity,,,,,
+,PEO-0064,,467.6,604,,Cr - 163 - I; Decomp>220C,,16.6,3.90E+04,,,8.34E+01,56,26.1856,,,,,,,10
+,PEO-0065,,417.5,582,,amorphous - 35 - melt; decomp starts around 160C ,,16.8,4.30E+04,,,1.03E+02,,0,,,,,,,10
+,PEO-0066,,502,560,,no melt observed up to 260C.  By DSC appears to just start sublime or decomp at ~170C ,,,,,,0,,0,,unsure about structure since spencer couldn't get a mass and lambda max is lower than expected.,,,,,<<12% (poor dissolution)
+,PEO-0067,,493,566,,,,15.2,6.60E+04,,,1.34E+02,,0,,,,,,cp039,16
+,PEO-0068,,312,455,,"Cr - 90 - I ; I - 76 - N; Decomp = 180 starts a bit, accellerates at 200C",,13.6,3.00E+04,,,9.62E+01,72,22.464,,,,,,,55
+,PEO-0069,,555,853,,Cr - 230 - I (believed decomp),,32.9,,,,0,,0,,,,,,,1
+,PEO-0070,,416.48,485,,Cr - 170 - SmA - >250C; SmA - 170 - SmX,,,,,,0,,0,,,,,,,
+,PEO-0071,,490.64,805,,Cr - >260 ,,32.9,,,,0,,0,,,,,,,1
+,PEO-0072,,,635,,glass - <80C (missed transition); decomp ~160C,,23.3,1.20E+05,,,#DIV/0!,,#DIV/0!,,,,,,,1
+,PEO-0073,,426,605,,Cr - 200 - I (Decomp),,24.4,,,,0,,0,,,,,,,1
+,PEO-0074,,618.87,,,glass - 115 - I ,,,,,,0,,0,,,,,,,10
+,PEO-0075,,477.6,674,,glass (believed) - 120 - I ,,28.2,4.30E+04,,,9.00E+01,,0,,,,,,,<<8.5
+,PEO-0076,,578.77,,,Cr - 240 - I; crystallized immediately on cooling,,,,,,0,,0,,,,,,,10
+,PEO-0077,,445.56,584,,oil at RT ,,16.8,4.30E+04,,,9.65E+01,,0,,,,,,,10
+,PEO-0078,,640.88,,,Cr - >250C ,,,,,,0,,0,,very difficult to dissolve in LC hosts.  Not sure I actually got 10% in,,,,,10
+,PEO-0079,,682.96,826,,glass - 72C - I ,,27.5,1.83E+05,,,2.68E+02,,0,,,,,,,<6.5
+,PEO-0080,,546.69,669,,Cr - 250 - believed decomp,,26.7,1.70E+05,,,3.11E+02,,0,,probably <5% loading,,,,,<10
+,PEO-0081,,584.77,811,,doesn't melt uniformly.  Appears to be a mixture of amorphous and crystalline with xstals melting > 230C ,,,,,,0,,0,,,,,,,7
+,PEO-0082,,575.58,620,,Cr - 170 - I; decomp on melt,,,,,,0,,0,,purity doesn't look good by DSC,,,,,18
+,PEO-0083,,626.85,,,,,,,,,0,,0,,,,,,,
+,PEO-0084,,512.6,563,,Cr - 165 - melt 1 - 192 - melt 2; decomp ~ 200C ,,15.7,7.40E+04,,,1.44E+02,27.7,14.19902,,"enthalpy calculated for first peak, which was followed by an exotherm (crystal II?) ",,,,,15
+,PEO-0085,,451.52,564,,Cr - 230 - decomp; decomp may have started ~180,,,,,,0,,0,,,,,,,8
+,PEO-0086,,633.12,724,,Cr - 265 - decomp,,,,,,0,,0,,,,,,,5
+,PEO-0087,,576.79,,,Cr - 231 - I; decomp > 260C,,,,,,0,56,32.30024,,,,,,,10
+,PEO-0088,,699,722,,Cr - 215 - I; crystallized slowly on cooling.  Looks like slow decomposition on melting,,,,,,0,,0,,,,,,,<7.5%
+,PEO-0089,,603,723,,melting point >260,,,,,,0,,0,,,,,,,
+,PEO-0090,,520,764,,melting point >260,,,,,,0,,0,,"only a few mgs.  mass was not confirmed; uncertain structure.  poor solubity in DCM, acetone, and toluene.",,,,,
+,PEO-0091,,476.52,,,Cr - 160 - I; I - 120 - N - ~80 Cr; decomp onset around 225C ,,14,2.60E+04,,,5.46E+01,76.8,36.596736,,,,,,,
+,PEO0-0092,,492.52,,,Cr - 175 - I; I - 160 - Cr; decomp onset ~230C ,,,,,,,75,36.939,,,,,,,
+,PEO-0093,,494.51,,,Cr - 165 - I; I - 126 - Cr,,,,,,,78,38.57178,,,,,,,
+,peo-0094,,621.17,,,Cr - 230 - decomp (bubbles),,,,,,,,0,,,,,,,
+,PEO-0095,,688.92,,,amorphous? - ~220 slow decomp,,,,,,,,0,,"Only 3 mg made, which was committed to the DSC.  may have been amorphous in the DSC pan.  ",,,,,
+,PEO-0096,,731.25,919,,Cr - 222 - Decomp (bubbles),,,,,,,,0,,,,,,,
+,PEO-0097,,493.53,421,,Cr - 136 - I; I - 99 - N - 78 - Cr; decomp starts around 230?,,,,,,,80,39.4824,,,,,,,
+,PEO-0098,,,812 (br),,Cr - 236 - I; I - 180 - Cr? (low enthalpy broad transition),,,,,,,,#DIV/0!,,,,,,,
+,peo-0099,,763.76,,,,,,,,,,,0,,,,,,,
+,PEO-0100,,654.72,,,Cr - 158 - I; I - 131 - N - 122 - FN - 37 - glass (DSC).  ,40,,33000,,,,60.9,39.872448,,,,,,,
+,PEO-0101,,670.72,,,Cr - 163; I - 130 - N - 124 - FN; crystallized very quickly on cooling  (~155C); Decomp > 200 (flat up until then and didn't check higher T) ,,,,,,,57,38.23104,,,,,,,
+,PEO-0102,,626.67,474,,Cr - 165 - N; I - 183 - N - 148 - NF - 48 glass (DSC) slowly crystallized on cooling ,44,,,,,,,0,,,,,,,
+,PEO-0103,,528.6,,,Cr - 170 - I; I - glass,,,,,,,,0,,,,,,,
+,PEO-0104,,678.73,,,Cr - 163 - I; I - 103 - N - glass,,,,,,,54.8,37.194404,,,,,,,
+,PEO-0105,,828.86,,,Cr - 183 - N; N ~130 - FN? - glass,,,,,,,,0,,only 2 mgs and sample did not look pure.  ,,,,,
+,PEO-0106,,644.65,,,Cr - 148 - FN - 170 - N - 182 - I; doesn't crystallize on cooling.,,,,21,3.30E+04,,,0,,Transitition temps appear to increase as the sample spends time >170C.  O/n at 150C results in a mixture of isotropic and crystals.,,,,,
+,PEO-0107,,643.66,,,Cr - 148 - N; I - 170 - N - 141 - FN - 107 - Cr,,,,,,,,0,,,,,,,
+,PEO-0108,,661.65,,,Cr - 131 - FN; I - 143 - FN - 117 - Cr,,,,,,,,0,,,,,,,
+,PEO-0109,,597.64,,,Cr - 177 - N; N - ~70C - Cr.  ,,,,,,,65,38.8466,,,,,,,
+,PEO-0110,,627.64,488,,"Cr - 157 - N; N - 153 - FN - RT (forms a glass by 50C).  Above 150C, I started to see gas formation/decomp.  Decarboxylation of free acid?  Exotherm also observed on DSC after melt","tried to fill a 15um cell immediately above melting pt., but lots of gas generated in cell.  found a small measureable area and measured 41 pm/V (index =1.7)",,,,,,68,42.67952,,,,,,,
+,PEO-0111,,598.62,,,"Cr - 176 - N; N ~ 130 Cr.  If the slide is removed from the hot stage, and placed under a static gun, what appears to be a FN phase can be briefly observed before crystallization.  ",,,,,7.10E+04,,,0,,,,,,,
+,PEO-0112,,574.6,,,"Cr - ~130C - FN - 198 - N; melting is not uniform, sample purity suspect.  ",,,,20.1,5.80E+04,,,0,,,,,,,
+,PEO-0113,,634.61,,,Cr - 182 - N; N - 163 - FN - ~142C - Cr.  ,crystallized too fast in cells for an r33 measurement ,21.5,36000,22.4,7.20E+04,,49,31.09589,,lots of solid shit in this material.  Pavel mentioned serious solubility problems,,,,,
+,PEO-0114,,668.69,,,Cr - 158 - N - 177 - I; I - 177 - N - ~100 - Cr.  Decomp likely above 160-180C.  Slowly crystallizes on cooling.  Tg = 42.5C (DSC); possible that there was some decomposition during the initial melt since the second melt was at 138C.  ,,17.3,41000,,,,46,30.75974,,,,,,,
+,PEO-0115,,622.58,,,"Cr - 171 - FN - 187 - I; I - 187 - FN - 130 - Cr.  Apparent gas formation on DSC at 213C, but no exotherm.  ",,22.1,28500,22.2,3.20E+04,,59,36.73222,,,,,,,
+,PEO-0116,,552.54,437,,Cr - 185 - FN - 217 - I; I - 217 - FN - 90 - Cr ;Tg = 46 (DSC);  Td >250 by DSC,51,20.1,36000,22.7,5.20E+04,,63.7,35.196798,,photostability under benchtop conditions in dilution soln very poor: completely decomposed after sitting in acetophenone over the weekend.  ,,,,,
+,PEO-0117,,636.57,,,Cr - 226 - I; I - 210 - N - immediately crystallized,,,,,,,,0,,,,,,,
+,PEO-0118,,582.55,,,Cr - 222 - FN; FN - 190 - Cr ,,,,,1.85E+05,,,0,,,,,,,
+,PEO-0119,,570.61,,,Cr - 172 - N; N - 135 - Cr ,,,,,,,,0,,,,,,,
+,PEO-0120,,652,,,Cr - 199 - N; N - 180 - Cr,,,,,,,,0,,,,,,,
+,PEO-0121,,626.67,,,Cr - 203 - N; N - 149 - FN - 120 - Cr; Tg=49C (DSC),,21.1,43000,,,,80.6,50.509602,,,,,,,
+,PEO-0122,,556.63,,,Cr - 212 - N; N - 182 - FN - 62 - glass (DSC) (very slow crystallization starts around 140C); Td >250C,49,19.3,54000,,,,74,41.19062,,,,,,,
+,PEO-0123,,610.6,,,Cr - 225 - I; I - 190 - Cr,,,,,,,,0,,,,,,,
+,PEO-0124,,694.67,,,Cr - 170 - I; I - 155 - N - 114 - FN - 46 glass (DSC); no exotherm on DSC up to 250C ,,,,,,,52.6,36.539642,,,,,,,
+,PEO-0125,,638.75,,,Cr - 233 - N; N - 165 - FN - 164 - Cr.  Tg = 67C (quenched DSC),,20,56000,,,,,0,,,,,,,
+,PEO-0126,,554.63,,,"Cr - 192 - N; N - 163 - FN - 58C (DSC) glass.  on second cooling, one crystal started growing around 130C very slowly",,,,,,,62,34.38706,,,,,,,
+,PEO-0127,,594.6,,,Cr - 178 - N; N - 120 - FN - 54 - glass (DSC); Crystals start forming around 140C ,33.5,18.7,43000,,,,63,37.4598,,,,,,,
+,PEO-0128,,608.63,,,Cr - >260C (never melted),,,,,,,,0,,,,,,,
+,PEO-0129,,569.58,,,Cr - 265 - decomp,,,,,,,,0,,,,,,,
+,PEO-0130,,554.66,,,Cr - 235 - N; N - RT (cools into a glass with no sign of a FN phase),,,,,,,,0,,,,,,,
+,PEO-0131,,584.68,,,"Cr - 194 - I; I - 190 - N - 57.5 - glass (DSC).  May have been a FN transition at around 80C on DSC, and that is consistent with 50% mixtures.  Nothing visible in cells, however.",20,,,,,,72,42.09696,,,,,,,
+,PEO-0132,,690.8,416,,Cr - 160 -  FN; N - 165 - FN - 62 - glass (DSC); slow crystallization when heated back up ~120C,41.5,21.1,56000,,,,57,39.3756,,,,,,,
+,PEO-0133,,760.85,458/468,,Cr - 183 - N - 223 - I;  N - 135 - FN - 56 - glass (DSC); Thermally stable >250C,48,,,,,,56,42.6076,,,,,,,
+,PEO-0134,,678.77,425,,Cr - 181 - N; N - 154 - FN - 58 - glass (DSC),42.5,19.3,52000,,,,44.5,30.205265,,,,,,,
+,PEO-0135,,460.53,,,Cr - 182 - I; I - 172 - Cr; small amount of decomp (melting pt reduction) after 250C excursion but very little exotherm,,16.2,60000,,,,79,36.38187,,,,,,,
+,PEO-0136,,688.73,,,Cr - 225 - N; N - 205 - FN - 81 - glass; decomp>250C.  Crystals from cyclopentanone melt at 242C.  There appears to be two crystalline forms.  Does not crystallize in 15um cells after repeated thermal cycles.  ,49,23.2,44000,,,,76,52.34348,,,,,,,
+,PEO-0137,,652.69,,,Cr - 275 - decomp (brief N phase),,22.7,44000,,,,,0,,decided not to isolate the remainder of the material.  Not 100% certain the dimethylamino is not ortho to the azo,,,,,
+,PEO-0138,,677.77,,,Cr - 186 - decomp (brief N phase).  ,,18.8,58000,,,,,0,,"tried casting an amorphous film from DCM, and no sign of a FN phase was observed when pulsing with a static gun while heating up to the decomp temp ",,,,,
+,PEO-0139,,434.45,,,Cr - 252 - decomp,,18,66000,,,,,0,,,,,,,
+,PEO-0140,,716.78,421,,Cr - 214- N; N - 151 - FN - 71- glass (dsc).  Crystallized on heating and those crystals melt at 179C.  ,40,23.2,44000,,,,88,63.07664,,,,,,,
+,PEO-0141,,738.83,,,glassy nematic - 150C - I; decomp starts around 150C.  Tg unclear,,21.7,51000,,,,,0,,,,,,,
+,PEO-0142,,742.82,492,,glassy FN - 78 - FN - 108 - N - Cr - 188 - I; I - 162 - N - 108 - FN ,0,24,49000,,,,,0,,,,,,,
+,PEO-0143,,692.78,519,,Cr - 237 - N; N - ~150 - NF -  76 - glass;  Exotherm observed starting ~220C.,not able to fill cell without some decomp,,,,,,,0,,,,,,,
+,PEO-0144,,664.73,425,,"Cr - 202 - FN; N - 207 - FN - 74 - glass (dsc).  Exotherm starts at ~210C, ~10% decomposition after excursion to 255C by LCMS.",45,21.7,49000,,,,13.1,8.707963,,,,,,,
+,peo-0145,,714.76,492,,"Cr - 218 - N; N - 179 - FN  - 88 - glass; some decomp that starts around 220C by DSC, and after heating to 250C FN transition reduced by 40C; LCMS indicates small amt of phenol present after excursion",46,24,49000,,,,79,56.46604,,,,,,,
+,peo-0146,,759.8,489,506,Cr - 175 - FN - 180 - N; FN - 66 -  glass; exotherm on DSC starts around 210-220C  ,49,,,,,,57,43.3086,,,,,,,
+,PEO-0147,,738.69,554,564,Cr - 219 - I ( some decomp into oligomers with the phenol subs C-F on the terminal ring likely); I - ~212 - FN - 108 - glass,60,26,64000,,,,67,49.49223,,,,,,,
+,PEO-0148,,611.61,546,,Cr - 240 - I; I - 220 - Cr.  I wasn't able to observe any LC phase before crystallization.  Also there were bubbles forming once the crystals melted indicating some kind of decomp,,,,,,,,0,,,,,,,
+,PEO-0149,,749.87,,,Cr - 220 - N - 222 - I; I - 222 - N - glass,,,,,,,,0,,even 50/50 mixtures with PEO-0134 did not show any FN phase,,,,,
+,PEO-0150,,780.77,,,Cr - 207 - I; I - ~140 - FN - 79 - glass.  Significant decomp after heating to 220C,,,,,,,,0,,,,,,,
+,PEO-0151,,758.82,,,"Cr - 190 - I; I - 136 - N  - 115 - FN - 77 - glass; decomp starts around 160 by DSC, but looked clean on LCMS when a sample was heated to 220C.  DSC sample that was heated to 250C showed complete decomposition into phenol and single azo products.  ",79,,,,,,,0,,,,,,,
+,PEO-0152,,764.77,,,amorphous - ~120 - Cr - 215 - I; I - 175 - N - 150 - FN,,,,,,,,0,,,,,,,
+,PEO-0153,,715.71,554,,Cr - 234 - decomp; no LC phase seen on cooling,,24.9,67000,,,,,0,,,,,,,
+,PEO-0154,,736.72,,,"Cr - 192.5 - N; N - 173 - FN - 108 - glass (Tg measurement was quite different on second scan, closer to 88C)",79,,,,,,37,27.25864,,,,,,,
+,PEO-0155,,706.81,,,Cr - 200 - I - Cr - 210 - I; I - 150 - N - RT,,,,,,,,0,,"May be other isomer, with ortho-dimethylamino",,,,,
+,PEO-0156,,708.67,557,,Cr - 238 - N; N - 210 - FN (may have been higher but was decomposing on melt),,,,,,,,0,,,,,,,
+,PEO-0157,,728.79,550,,"Cr - 205 - N - 235 - I; N - 77 - glass (likely has a latent NF phase around 100-110C based on binary mixures, but nothing is visible on DSC or microscope)",,,,,,,,0,,,,,,,
+,PEO-0158,,734.75,,,"Cr - 203 - N, but new crystals immediately form that don't melt until 218C; N - ~150 - FN",,,,,,,,0,,,,,,,
+,PEO-0159,,730.77,548,,"glass - 85 - FN - 137 - N - 196 - I; No crystallization observed even after 1h at 150C, though FN phase transition dropped by 10C.  Melting pt of crystals from AcCN 164C; exotherm on DSC starts around 190C and is maximum at 229C ",78,,64000,,,,,0,,,,,,,
+,PEO-0160,,748.76,547,,glass - 77 -  FN - 160 - N - 200 - I; exotherm in DSC starts around 195; I was able to observe some crystals on the initial melt by depressing on the glass slides at 170C.  These melted at 194C,,,65000,,,,,0,,,,,,,
+,PEO-0161,,718.73,,,Cr - 200 - N; N - 148 - FN - 80 - glass; Exotherm on DSC starts around 150-160.  ,,,,,,,,0,,,,,,,
+,PEO-0162,,722.7,524,,Cr - 206 - N; N - 196 - FN - 69 - glass; exotherm on DSC starts ~230C,73,24.2,57500,,,,,0,,,,,,,
+,PEO-0163,,704.73,,,Cr - 217 - N; N - 173 - FN - 73 glass.  Exothem on DSC starts ~210C,,,,,,,,0,,,,,,,
+,PEO-0164,,750.75,558,,"Cr - 215 - I; I - 190 - N - 140 - FN - 140 - Cr; after the second heating cycle, N phase was depressed by 20C and FN phase was not observed.  In addition some visible gas generation at 215C.  DSC exotherm starts <200C and is maximum at 222C.  ",,,,,,,,0,,,,,,,
+,PEO-0165,,742.7,520,,Cr - 189 - FN - 200 - N - 60 - glass ;  recrystallized at 125C;  15 min at 195C I don't see any change in the FN transition.  Exotherm starts around 200C ,,,,,,,,0,,,,,,,
+,PEO-0166,,736.74,525,,Cr - 173 - N; N - 159 - FN - 66 - glass,,,,,,,,0,,,,,,,
+,PEO-0167,,722.69,,,Cr - 220 - FN - 85 - glass;  decomposing into furan even at 200C.  Transition temperatures quickly reduce ,,,,,,,,0,,,,,,,
+,PEO-0168,,1463.5,,,Cr - 158 - Cr - 240 - I; I - ~210 - N - 115 - glass,,,,,,,,0,,,,,,,
+,PEO-0169,,724.71,,,Cr1 - 190 - Cr2 - 208 - N; N - 177 - FN - 155 - Cr,,,,,,,,0,,,,,,,
+,PEO-0170,,770.75,,,Cr - 183 - N; N - 178 - FN - 56 - glass (no crystallization observed once melted); exotherm starts around 220C,70,,,,,,,0,,,,,,,
+,PEO-0171,,730.77,,,"Cr1 - 196 - Cr2 - 215 - N;  N - 161 - FN - 89 - glass; decomp >200C according to DSC.  2 min 240C only shows some demethylated product.  250C DSC sample shows complete decomposition, with products including mass of 729",,,,,,,,0,,,,,,,
+,PEO-0172,,745.73,554,,"Cr - 217 - NF - decomp;  If quenched upon melting, crystals form that melt at 235;  Tg = 88C by quenching DSC sample ",,,,,,,,0,,,,,,,
+,PEO-0173,,754.74,,,"Cr - 187 - NF - 192 - N - 220 - I; NF - 71 - glass; 1hr 150C no crystallization, 2h 120C no crystallization; crystallization observed after 60h at 115C.   Likely crystallized after 24h, but I forgot to make an observation at earlier time point.  ",66,,,,,,,0,,,,,,,
+,PEO-0174,,756.73,,,Cr - 204 - Cr2 - 211 - N; N - 167 - FN - 150 - Cr; Tg=61,,,,,,,,0,,,,,,,
+,PEO-0175,,728.65,504,,Cr - 207 - FN - >240 - N; Tg = 71C; crystals slowly grow on cooling,71,,,,,,,0,,,,,,,
+,PEO-0176,,732.64,,,Cr - 230 - FN - 240 - N (decomp).  Significant demethylation observed at 240C,,,,,,,,0,,,,,,,
+,PEO-0177,,660.67,541,,Cr - 210 - I; I - 203 - N - 140 - Cr; virtual FN transion in 50/50 mixture of 81C ,,,,,,,,0,,,,,,,
+,PEO-0178,,744.74,554,,Cr - 235 - N; N - 130 - FN; Tg = 78C (had to quench DSC sample-- may have been some decomp at the melt),,,,,,,,0,,,,,,,
+,PEO-0179,,646.62,535,,Cr - 250 - decomp; tried to cool as quickly as possible and did observe an N phase at 230C but quickly crystallized before any other phase could be observed.  ,,,,,,,,0,,,,,,,
+,PEO-0180,,744.69,532,,Cr - 230 - N; N - ~175 - FN (transition temps could be higher since only 0.5mg total product was isolated),,,,,,,,0,,,,,,,
+,PEO-0181,,738.74,531,,Cr - 206 - N; N - 155 - FN - glass; glass - 115 - Cr,,,,,,,,0,,,,,,,
+,PEO-0182,,752.74,527,,Cr - 238 - N - decomp; N - 176 - FN - 75 - glass; glass - 112 - Cr ,,,,,,,,0,,,,,,,
+,PEO-0183,,766.79,,,Cr - 199 - N; N - 125 - FN - 62 - glass,65,,,,,,,0,,,,,,,
+,PEO-0184,,786.75,,,"Cr - 245 - I (some fragmentation azo between B-C rings, but no dealkylated products; ",,,,,,,,0,,,,,,,
+,PEO-0185,,781.76,,,Cr - 243 - I (decomp),,,,,,,,0,,,,,,,
+,PEO-0186,,796.79,,,Cr - 222 - N - 128*(virtual) FN - 72 - glass; slow crystallization on cooling and no sign of a FN phase ,,,,,,,,0,,,,,,,
+,PEO-0187,,743.77,583,,Cr - 225 - Cr2 - 250 decomp; Crystals from EtOAc just melt at 225C with no higher melting crystals observed.  No FN phase was observed on cooling of which melted at 225C.  ,,,,,,,,0,,confirmed with NMR that we had the undesired orientation of the triazole,,,,,
+,PEO-0188,,784.78,,,Cr - 202 - Cr - 210 - N; N - 158 - FN - Cr (crystals start quickly growing around 170C),,,,,,,,0,,,,,,,
+,PEO-0189,,753.71,540,,Cr - 227 - (decomp) - N - 79 - glass; No sign of FN on cooling.  Virtual FN transition in mixtures of ~140C,,,,,,,,0,,,,,,,
+,PEO-0190,,759.76,,,Cr - 245 - I (some decomp); no LC phase observed on cooling,,,,,,,,0,,impure material,,,,,
+,PEO-0191,,756.74,,571,Cr - 150-160 - Cr2 - 225 - N; N - 175 - FN - 90* - glass. *Tg estimated from binary mixture;   FN phase only observed from films ,,,,,,,,0,,,,,,,
+,PEO-0192,,789.79,,,"Cr - 240 - I (some decomp); I - 230 - N - 93 - glass.  Binary mixture exp showed a FN phase ~140C.  Viscosity at that temperature of neat material appears very high, so it is possible that is why I'm not observing it.",,,,,,,,0,,,,,,,
+,PEO-0193,,731.73,,,Cr - >280C (never melted),,,,,,,,0,,,,,,,
+,PEO-0194,,764.8,,,Cr - 165 - N; N - 133 - FN,,,,,,,,0,,,,,,,
+,PEO-0195,,914.93,,,Cr - 203 - NF - 210 - N;,,,,,,,,0,,,,,,,
+,PEO-0196,,820.86,,,Cr - 201 - I; I - 180 - N - 122 - FN - 70 - FNG; Cr1 - 165 - Cr2 - 185 - Cr3 - 201 - I,,,,,,,,0,,,,,,,
+,PEO-0197,,992.92,519,,Cr - 246 - N; N - 225 - FN - 95 - FNG,,,,,,,,0,,,,,,,
+,PEO-0198,,970.99,521,,Cr - 178 - FN; N - 206 - FN - 77 - FNG; crystals from cyclopentanone melt at 196C ,58,,,,,,,0,1.95,,,,,,
+,PEO-0199,,924.95,,,Cr - 222 - N; N - 220 - FN - 89 - FNG,,,,,,,,0,,,,,,,
+,PEO-0200,,936.94,551,,Cr - 235 - I - decomp; NF - 213 - N - 225 - I,,,,,,,,0,,,,,,,
+,PEO-0201,,942.94,,,Cr - 195 - FN - 86.5 - FNG; a few crystals growing after 3h at 125C.  Those melt at 185C.   ,,,,,,,,0,,,,,,,
+,PEO-0202,,1093.07,,,Cr - 195 - FN - 87 - FNG ; crystals are observed on cooling ,,,,,,,,0,,,,,,,
+,PEO-0203,,1077.1,,,Cr - 199 - FN > 250C; FN - 84 - FNG.  No crystals after 68h 100C ,55,,,,,,,0,,,,,,,
+,PEO-0204,,942.94,,,Cr - 169 - FN (brd); FN - 84.5 - FNG,,,,,,,,0,,,,,,,
+,PEO-0205,,792.81,,,Cr - 240 - N; N -220 - Cr ,,,,,,,,0,,,,,,,
+,PEO-0206,,970.97,,,Cr - 160 - Cr2 - 185 - FN - 85 - FNG; No crystals after 100C 16h,51,,,,,,,0,1.91/1.50,,,,,,
+,PEO-0207,,983,524,,"Cr - 150 - FN - 194 - N; NF - 83 - FNG; no crystals after 24h at 120C, and no change in transition temp",,,,,,,21.6,21.2328,,,,,,,
+,PEO-0208,,954.95,524,,Cr - 160 - Cr2 - 176 - FN - 215 - N; FN - 90 - FNG ; some crystals after 5 days at 100C--> melt at ~180,,,,,,,,0,,,,,,,
+,PEO-0209,,942.91,523,,Cr - 171 - Cr2 - 214 - FN; FN - 91.5 - FNG; no crystals after sitting over the weekend at 100C,,,,,,,,0,,,,,,,
+,PEO-0210,,963,,,Cr - 245 - N; N - 230 - Cr.  FNG - 107 - FN,,,,,,,,0,,,,,,,
+,PEO-0211,,967,512,,Cr - 206 - Cr2 - 244 - N; N - 185 - FN - 96 - FNG,,,,,,,,0,,,,,,,
+,PEO-0212,,1069.12,,,Cr - 251 - N; N - 205 - FN - 108 - FNG,,,,,,,,0,,,,,,,
+,PEO-0213,,974.98,,,Cr - 252 - N; N - 240 - Cr; quenching DSC sample after melt: FN - 101 - FNG but LCMS shows significant decomp,,,,,,,,0,,,,,,,
+,PEO-0214,,974.98,,,Cr - 265 - N (decomp); FNG - 97 - FN - 210 - N ,,,,,,,,0,,,,,,,
+,PEO-0215,,1133.15,519,,Cr - 225 - N - Cr - 248 - N; N - 206 - FN - 96 - FNG,,,,,,,,0,,,,,,,
+,PEO-0216,,982.98,537,,Cr - 157 - FN - Cr - 202 - FN - 210 - I; FNG - 95 - FN,,,,,,,,0,,,,,,,
+,PEO-0217,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,PEO-0218,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,PEO-0219,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,PEO-0220,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,PEO-0221,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,PEO-0222,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,PEO-0223,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
+,,,,,,,,,,,,,,#DIV/0!,,,,,,,
