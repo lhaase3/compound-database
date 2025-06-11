@@ -17,6 +17,45 @@ cred = credentials.Certificate("firebase-key.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
+def extract_transitions_with_temps(phase_map_str: str):
+    if not isinstance(phase_map_str, str):
+        return []
+
+    transitions = []
+    segments = phase_map_str.split(";")
+
+    valid_phases = {
+        "CR", "N", "I", "FN", "NF", "SMA", "SMX", "FNG", "NX", "GLASS", "DECOMP", "SMZA"
+    }
+
+    for segment in segments:
+        parts = re.split(r'\s*-\s*', segment.strip())
+        parsed = []
+
+        for part in parts:
+            clean = part.strip().upper().rstrip("?")
+            if clean in valid_phases:
+                parsed.append(("phase", clean))
+            elif re.match(r"[~>]?[-+]?[0-9]+(?:\.[0-9]+)?", clean):
+                temp_match = re.search(r"[-+]?[0-9]+(?:\.[0-9]+)?", clean)
+                if temp_match:
+                    parsed.append(("temp", temp_match.group()))
+
+        i = 0
+        while i + 2 < len(parsed):
+            if parsed[i][0] == "phase" and parsed[i+1][0] == "temp" and parsed[i+2][0] == "phase":
+                phase1 = parsed[i][1]
+                temp = parsed[i+1][1]
+                phase2 = parsed[i+2][1]
+                if phase1 != phase2:
+                    transitions.append(f"{phase1} - {phase2} @ {temp}")
+                i += 2
+            else:
+                i += 1
+
+    return transitions
+
+
 @app.route('/compounds')
 def get_compounds():
     compounds_ref = db.collection('compounds')
@@ -59,14 +98,21 @@ def search_substructure():
 def add_compound():
     print("🧪 Received method:", request.method)
     if request.method == "OPTIONS":
-        return '', 200  # Preflight success response
+        return '', 200
 
     data = request.get_json()
     if "id" not in data:
         return jsonify({"error": "Compound must have an 'id' field"}), 400
 
+    phase_map_str = data.get("phase map", "")
+    transitions = extract_transitions_with_temps(phase_map_str)
+
+    data["parsed_phase_transitions"] = transitions  # 💡 Add parsed transitions to the record
+
     db.collection("compounds").document(data["id"]).set(data, merge=True)
+
     return jsonify({"success": True}), 200
+
 
 @app.route("/update-compound", methods=["POST"])
 def update_compound():

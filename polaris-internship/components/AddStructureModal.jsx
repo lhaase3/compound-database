@@ -7,6 +7,7 @@ export default function AddStructureModal({ onClose, onSubmit }) {
   const [formData, setFormData] = useState({});
 
   const fields = [
+    "smiles",
     "id",
     "MW",
     "Lambda Max (DCM/Ac CN)",
@@ -78,8 +79,10 @@ export default function AddStructureModal({ onClose, onSubmit }) {
   };
 
   const handleSave = async () => {
-    const smiles = window.jsmeAppletInstance?.smiles?.() || "";
-    const data = { ...formData, smiles };
+    const drawnSMILES = window.jsmeAppletInstance?.smiles?.() || "";
+    const smiles = formData.smiles?.trim() || drawnSMILES;
+
+    const data = { ...formData, smiles };  // overwrite only if needed
 
     try {
       const res = await fetch("http://localhost:5000/add-compound", {
@@ -104,6 +107,7 @@ export default function AddStructureModal({ onClose, onSubmit }) {
   };
 
 
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center"
@@ -118,7 +122,10 @@ export default function AddStructureModal({ onClose, onSubmit }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           {fields.map((field) => (
             <div key={field} className="flex flex-col">
-              <label className="text-sm text-gray-600 font-semibold">{field}</label>
+              <label className="text-sm text-gray-600 font-semibold">
+                {field === "smiles" ? "Draw structure or enter SMILES manually" : field}
+              </label>
+
               <input
                 type="text"
                 name={field}

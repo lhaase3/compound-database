@@ -14,7 +14,6 @@ export default function JsmeEditor() {
         options: 'oldlook,star',
       });
 
-      // Give it a moment to initialize before setting callback
       setTimeout(() => {
         jsmeApplet.setCallBack('AfterStructureModified', () => {
           const s = jsmeApplet.smiles();

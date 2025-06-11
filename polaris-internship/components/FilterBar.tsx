@@ -44,18 +44,6 @@ export default function FilterBar({ onFilterResults, resetSignal }: FilterBarPro
       onFilterResults([]);
     }
   };
-
-  // return (
-  //   <div className="mb-4 w-full max-w-xl">
-  //     <input
-  //       type="text"
-  //       value={inputValue}
-  //       onChange={handleInputChange}
-  //       className="w-full p-2 border border-gray-300 rounded-md"
-  //       placeholder="Search SMILES or name..."
-  //     />
-  //   </div>
-  // );
 }
 
 
