@@ -19,14 +19,7 @@ type AttachmentData = {
 };
 
 type CompoundWithAttachments = Compound & {
-  attachments: {
-    uv_vis: AttachmentData;
-    dsc: AttachmentData;
-    lcms: AttachmentData;
-    thermal_stability: AttachmentData;
-    pda_detector_spectrum: AttachmentData;
-    [key: string]: AttachmentData;
-  };
+  attachments: { [key: string]: AttachmentData };
 };
 
 export default function CompoundModal({
@@ -66,21 +59,38 @@ export default function CompoundModal({
     },
   }));
 
+  // Track user-added custom fields
+
   const [lotsForCompound, setLotsForCompound] = useState<string[]>([]);
   const [showLotDropdown, setShowLotDropdown] = useState(false);
-  const [selectedAttachment, setSelectedAttachment] = useState<"uv_vis" | "dsc" | "lcms" | "thermal_stability" | "pda_detector_spectrum" | null>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<
+    "uv_vis" | "dsc" | "lcms" | "thermal_stability" | "pda_detector_spectrum" | string | null
+  >(null);
   const isLotVersion = source === "lot" && compound.original_id;
   const [showCreateLotModal, setShowCreateLotModal] = useState(false);
+  const [showAddTextField, setShowAddTextField] = useState(false);
+  const [newTextFieldName, setNewTextFieldName] = useState("");
+  const [newTextFieldValue, setNewTextFieldValue] = useState("");
 
+  // List of unwanted fields to exclude from custom display
+  const unwanted = [
+    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions"
+  ];
 
+  // Your defined fields (always shown, in order)
   const fields = [
-    "id", "MW", "Lambda Max (DCM/Ac CN)", "Lambda Max (neat film)",
-    "phase map", "r33", "CAMB3LYP SVPD CHCl3 (Cosmo)",
-    "B3LYP SVPD CHCl3 dipole", "B3LYP SVPD CHCl3 beta", "beta/MW",
+    "id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
+    "phase map", "r33", "dipole CAMB3LYP SVPD CHCl3 (Cosmo)",
+    "beta/MW", "beta CAMB3LYP SVPD CHCl3 (Cosmo)",
     "J/g DSC melt (total)", "kJ/mol DSC melt (total)",
     "Refractive index (ne/no)", "Notes", "lab?", "first PEO#",
     "registered PEO#", "Lab book #", "Max loading (%)", "smiles"
   ];
+
+  // Find custom fields (not in fields, not unwanted)
+  // const customKeys = Object.keys(compound || {}).filter(
+  //   (k) => !fields.includes(k) && !unwanted.includes(k)
+  // );
 
   useEffect(() => {
     if (compound?.id) {
@@ -116,22 +126,50 @@ export default function CompoundModal({
     }
   };
 
+  // Normalize all attachments, including custom fields, and always include built-in keys
   useEffect(() => {
-    const normalizedAttachments = {
-      uv_vis: compound.attachments?.["uv-vis_spectrum"] || compound.attachments?.uv_vis || { note: "", imageUrl: "" },
-      dsc: compound.attachments?.dsc || { note: "", imageUrl: "" },
-      lcms: compound.attachments?.lcms || { note: "", imageUrl: "" },
-      thermal_stability: compound.attachments?.thermal_stability || { note: "", imageUrl: "" },
-      pda_detector_spectrum: compound.attachments?.pda_detector_spectrum || { note: "", imageUrl: ""}
-    };
-
+    const builtIn = [
+      "uv_vis",
+      "dsc",
+      "lcms",
+      "thermal_stability",
+      "pda_detector_spectrum",
+    ];
+    const allKeys = compound.attachments ? Array.from(new Set([...Object.keys(compound.attachments), ...builtIn])) : builtIn;
+    const normalizedAttachments: { [key: string]: AttachmentData } = {};
+    allKeys.forEach((key) => {
+      const att = compound.attachments?.[key] || { note: "", imageUrl: "" };
+      normalizedAttachments[key] = {
+        note: att.note || "",
+        imageUrl: att.imageUrl || "",
+      };
+    });
     setEditedCompound((prev) => ({
       ...compound,
-      attachments: normalizedAttachments
-    }));
+      attachments: normalizedAttachments,
+    } as CompoundWithAttachments));
   }, [compound]);
 
 
+  // Helper: get all attachment keys (built-in + custom)
+  const getAllAttachmentKeys = () => Object.keys(editedCompound.attachments || {});
+
+  // Add Attachment Field
+  const handleAddAttachmentField = () => {
+    const name = prompt("Enter a name for the new attachment field:");
+    if (
+      name &&
+      !Object.keys(editedCompound.attachments || {}).includes(name)
+    ) {
+      setEditedCompound((prev) => ({
+        ...prev,
+        attachments: {
+          ...prev.attachments,
+          [name]: { note: "", imageUrl: "" },
+        },
+      }));
+    }
+  };
 
   return (
     <div
@@ -286,34 +324,133 @@ export default function CompoundModal({
                 />
               ) : (
                 <span className={compound[field] ? "text-black" : "text-gray-400"}>
-                  {compound[field] ?? "N/A"}
+                  {compound[field] ? compound[field] : "N/A"}
                 </span>
               )}
             </div>
           ))}
+
+          {/* Show any custom fields */}
+          {/* {Object.keys(editedCompound)
+            .filter((key) => !fields.includes(key) && key !== "attachments")
+            .map((key) => (
+              <div key={key} className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-600">{key}</span>
+                {editMode ? (
+                  <input
+                    className="border rounded px-2 py-1 text-sm"
+                    value={editedCompound[key] ?? ""}
+                    onChange={(e) => handleChange(key, e.target.value)}
+                  />
+                ) : (
+                  <span className={compound[key] ? "text-black" : "text-gray-400"}>
+                    {compound[key] ? compound[key] : "N/A"}
+                  </span>
+                )}
+              </div>
+            ))} */}
+            {Object.keys(editedCompound)
+  .filter((key) => !fields.includes(key) && !unwanted.includes(key))
+  .map((key) => (
+    <div key={key} className="flex flex-col">
+      <span className="text-sm font-semibold text-gray-600">{key}</span>
+      {editMode ? (
+        <input
+          className="border rounded px-2 py-1 text-sm"
+          value={editedCompound[key] ?? ""}
+          onChange={(e) => handleChange(key, e.target.value)}
+        />
+      ) : (
+        <span className={compound[key] ? "text-black" : "text-gray-400"}>
+          {compound[key] ? compound[key] : "N/A"}
+        </span>
+      )}
+    </div>
+))}
+
         </div>
 
+
         {/* Attachments Section */}
-        <div className="mt-6 flex gap-4 justify-center">
-          {["UV-vis spectrum", "DSC", "LCMs", "Thermal Stability"].map((type) => (
+        <div className="mt-6 flex gap-4 flex-wrap justify-center">
+          {getAllAttachmentKeys().map((key) => (
             <button
-              key={type}
-              className="text-blue-600 underline hover:text-blue-800"
-              onClick={() =>
-                setSelectedAttachment(type.toLowerCase().replace(/\s+/g, "_") as "uv_vis" | "dsc" | "lcms" | "thermal_stability" | "pda_detector_spectrum")
-              }
+              key={key}
+              className="text-blue-600 underline hover:text-blue-800 mb-1"
+              onClick={() => setSelectedAttachment(key)}
             >
-              {type}
+              {key.replace(/_/g, " ")}
             </button>
           ))}
         </div>
 
+        {/* Add Field Buttons */}
+        <div className="mt-8 flex gap-4 justify-center">
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer"
+            onClick={handleAddAttachmentField}
+          >
+            Add Attachment Field
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer"
+            onClick={() => setShowAddTextField(true)}
+          >
+            Add Text Field
+          </button>
+        </div>
+
+        {showAddTextField && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddTextField(false)}>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">Add Text Field</h2>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                placeholder="Field name"
+                value={newTextFieldName}
+                onChange={e => setNewTextFieldName(e.target.value)}
+              />
+              <textarea
+                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                placeholder="Field value"
+                value={newTextFieldValue}
+                onChange={e => setNewTextFieldValue(e.target.value)}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                  onClick={() => setShowAddTextField(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  onClick={async () => {
+                    if (!newTextFieldName.trim()) return;
+                    const updatedCompound = {
+                      ...editedCompound,
+                      [newTextFieldName]: newTextFieldValue,
+                    };
+                    setEditedCompound(updatedCompound);
+                    setShowAddTextField(false);
+                    setNewTextFieldName("");
+                    setNewTextFieldValue("");
+                    await onUpdate(updatedCompound);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {selectedAttachment && (
           <AttachmentModal
             attachmentKey={selectedAttachment}
             data={editedCompound.attachments?.[selectedAttachment] || undefined}
             onClose={() => setSelectedAttachment(null)}
-            onSave={(note, fileUrl) => {
+            onSave={async (note, fileUrl) => {
               const updatedCompound = {
                 ...editedCompound,
                 attachments: {
@@ -322,7 +459,8 @@ export default function CompoundModal({
                 },
               };
               setEditedCompound(updatedCompound);
-              onUpdate(updatedCompound); // persists to Firestore
+              // Immediately persist the attachment update to Firestore
+              await onUpdate(updatedCompound);
             }}
           />
         )}
@@ -342,3 +480,4 @@ export default function CompoundModal({
     </div>
   );
 }
+

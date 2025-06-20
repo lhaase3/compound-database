@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import CompoundModal from "./CompoundModal";
 
 
 export default function FormulationList() {
@@ -15,9 +16,7 @@ export default function FormulationList() {
 
   return (
     <div className="p-6 text-black">
-
       <h1 className="text-3xl font-bold mb-4">Formulations</h1>
-
       {!selectedFormulation ? (
         <ul className="space-y-2">
           {formulations.map((form) => (
@@ -61,13 +60,15 @@ export default function FormulationList() {
 
 
           <h3 className="font-semibold mt-4">Components:</h3>
-          <ul className="mb-4 list-disc pl-5">
-            {selectedFormulation.components.map((comp: any, idx: number) => (
-              <li key={idx}>
-                {comp.compoundId} ({comp.lotId || "original"}) – {comp.molPercent}% → {comp.mass} g
-              </li>
-            ))}
-          </ul>
+            <ul className="mb-4 list-disc pl-5">
+              {selectedFormulation.components.map((comp: any, idx: number) => (
+                <li key={idx}>
+                  {comp.compoundId} ({comp.lotId || "original"}) – {comp.molPercent}% → {comp.mass} g
+                </li>
+              ))}
+            </ul>
+
+
 
           <div className="mb-2">
             <strong>Total Moles:</strong> {selectedFormulation.totalMoles}
@@ -90,4 +91,5 @@ export default function FormulationList() {
       )}
     </div>
   );
+  
 }

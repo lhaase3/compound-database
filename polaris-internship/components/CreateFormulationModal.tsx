@@ -149,9 +149,10 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
               >
                 <option value="">(Original)</option>
                 {(lots[comp.compoundId.toLowerCase()] || []).map((lot) => (
-                  <option key={lot} value={lot}>{lot}</option>
+                  <option key={lot} value={lot}>{lot}</option>  // ✅ key added
                 ))}
               </select>
+
               <input
                 type="number"
                 min={0}

@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 
 type Props = {
-  attachmentKey: "uv_vis" | "dsc" | "lcms" | "thermal_stability" | "pda_detector_spectrum";
+  attachmentKey: string;
   data?: { note: string; imageUrl: string };
   onClose: () => void;
   onSave: (note: string, fileUrl: string) => void;
 };
 
 export default function AttachmentModal({ attachmentKey, data, onClose, onSave }: Props) {
+  console.log("AttachmentModal opened for:", attachmentKey, data); // Debug log
   const [note, setNote] = useState(data?.note || "");
   const [imageUrl, setImageUrl] = useState(data?.imageUrl || "");
   const [file, setFile] = useState<File | null>(null);
