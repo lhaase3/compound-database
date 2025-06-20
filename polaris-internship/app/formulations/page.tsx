@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import CompoundModal from "@/components/CompoundModal";
 
@@ -14,7 +14,8 @@ export default function FormulationList() {
   const [compoundSource, setCompoundSource] = useState<"main" | "lot">("main");
   const [compoundLotId, setCompoundLotId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-
+  const [showStickyLogo, setShowStickyLogo] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
 
 
 
@@ -25,12 +26,52 @@ export default function FormulationList() {
       .catch((err) => console.error("Failed to fetch formulations", err));
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!heroRef.current) return;
+      const heroBottom = heroRef.current.getBoundingClientRect().bottom;
+      setShowStickyLogo(heroBottom <= 0);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Fast scroll-to-top function
+  const fastScrollToTop = () => {
+    const c = document.documentElement.scrollTop || document.body.scrollTop;
+    if (c > 0) {
+      window.scrollBy(0, -Math.max(120, Math.floor(c / 4)));
+      setTimeout(fastScrollToTop, 4);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#002C36] flex flex-col items-center p-0">
+      {/* Sticky Logo Taskbar */}
+      <div
+        className={`fixed top-0 left-0 w-full z-50 flex justify-start pointer-events-none transition-opacity duration-300 ${
+          showStickyLogo ? "opacity-100" : "opacity-0"
+        }`}
+        style={{ height: "64px" }}
+        aria-hidden={!showStickyLogo}
+      >
+        <button
+          onClick={fastScrollToTop}
+          className="pointer-events-auto bg-[#002C36]/80 rounded-full shadow-lg p-2 ml-8"
+          style={{ marginTop: "8px" }}
+          aria-label="Back to top"
+        >
+          <img
+            src="/polaris-logo-only.png"
+            alt="Polaris Electro-Optics Logo"
+            className="w-16 h-21 drop-shadow-lg"
+          />
+        </button>
+      </div>
       {/* Hero Section */}
-      <div className="w-full bg-gradient-to-r from-[#00343F] to-[#002C36] py-12 mb-10 shadow flex flex-col items-center relative overflow-hidden">
+      <div ref={heroRef} className="w-full bg-gradient-to-r from-[#00343F] to-[#002C36] py-12 mb-10 shadow flex flex-col items-center relative overflow-hidden">
         {/* Logo in top-left corner */}
-        <img src="/polaris-logo-only.png" alt="Polaris Electro-Optics Logo" className="w-20 h-25 absolute top-6 left-8 z-20 drop-shadow-lg" />
+        <img src="/polaris-logo-only.png" alt="Polaris Electro-Optics Logo" className={`w-16 h-21 absolute top-6 left-8 z-20 drop-shadow-lg transition-opacity duration-300 ${showStickyLogo ? "opacity-0" : "opacity-100"}`} />
         <div className="absolute inset-0 opacity-30 pointer-events-none select-none" style={{background: 'url(/circuit-bg.svg) center/cover no-repeat'}} />
         <h1 className="text-5xl font-extrabold mb-3 text-[#00E6D2] tracking-tight drop-shadow uppercase z-10">Formulations</h1>
         <p className="text-xl text-white mb-6 max-w-2xl text-center z-10 font-semibold">Polaris Electro-Optics</p>

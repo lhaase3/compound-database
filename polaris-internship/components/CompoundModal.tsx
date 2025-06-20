@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Compound } from "@/types/compound";
 import AttachmentModal from "./AttachmentModal";
 import CreateLotModal from "./CreateLotModal";
@@ -71,6 +71,8 @@ export default function CompoundModal({
   const [showAddTextField, setShowAddTextField] = useState(false);
   const [newTextFieldName, setNewTextFieldName] = useState("");
   const [newTextFieldValue, setNewTextFieldValue] = useState("");
+  const [showFullStructureModal, setShowFullStructureModal] = useState(false);
+
 
   // List of unwanted fields to exclude from custom display
   const unwanted = [
@@ -81,16 +83,12 @@ export default function CompoundModal({
   const fields = [
     "id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
     "phase map", "r33", "dipole CAMB3LYP SVPD CHCl3 (Cosmo)",
-    "beta/MW", "beta CAMB3LYP SVPD CHCl3 (Cosmo)",
-    "J/g DSC melt (total)", "kJ/mol DSC melt (total)",
+    "beta CAMB3LYP SVPD CHCl3 (Cosmo)","dipole B3LYP SVPD CHCl3",
+    "beta B3LYP SVPD CHCl3","beta/MW",
+    "J/g DSC melt (total)", "kJ/mol DSC melt (total)", 
     "Refractive index (ne/no)", "Notes", "lab?", "first PEO#",
     "registered PEO#", "Lab book #", "Max loading (%)", "smiles"
   ];
-
-  // Find custom fields (not in fields, not unwanted)
-  // const customKeys = Object.keys(compound || {}).filter(
-  //   (k) => !fields.includes(k) && !unwanted.includes(k)
-  // );
 
   useEffect(() => {
     if (compound?.id) {
@@ -169,6 +167,56 @@ export default function CompoundModal({
         },
       }));
     }
+  };
+
+  const FullStructurePreview = ({ smiles }: { smiles: string }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!window.RDKit || !smiles) return;
+
+      let mol;
+      try {
+        mol = window.RDKit.get_mol(smiles);
+      } catch (err) {
+        console.error("Invalid SMILES for full preview:", err);
+        return;
+      }
+
+      if (!mol) return;
+
+      const svg = mol.get_svg();
+
+      if (containerRef.current) {
+        containerRef.current.innerHTML = svg;
+        containerRef.current.style.transform = "scale(2.2)";  // 👈 Increase scale for size
+        containerRef.current.style.transformOrigin = "top center";
+        containerRef.current.style.width = "fit-content";
+        containerRef.current.style.margin = "0 auto";
+      }
+
+      mol.delete();
+    }, [smiles]);
+
+    const handleClickOutside = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (
+      containerRef.current &&
+      !containerRef.current.contains(e.target as Node)
+    ) {
+      onClose();
+    }
+  };
+
+    return (
+      <div
+        className="flex justify-center items-start overflow-auto"
+        ref={containerRef}
+        style={{
+          width: "100%",
+          height: "600px",  // 👈 Make vertical space taller to accommodate larger rendering
+        }}
+      />
+    );
   };
 
   return (
@@ -329,48 +377,25 @@ export default function CompoundModal({
               )}
             </div>
           ))}
-
-          {/* Show any custom fields */}
-          {/* {Object.keys(editedCompound)
-            .filter((key) => !fields.includes(key) && key !== "attachments")
-            .map((key) => (
-              <div key={key} className="flex flex-col">
-                <span className="text-sm font-semibold text-gray-600">{key}</span>
-                {editMode ? (
-                  <input
-                    className="border rounded px-2 py-1 text-sm"
-                    value={editedCompound[key] ?? ""}
-                    onChange={(e) => handleChange(key, e.target.value)}
-                  />
-                ) : (
-                  <span className={compound[key] ? "text-black" : "text-gray-400"}>
-                    {compound[key] ? compound[key] : "N/A"}
-                  </span>
-                )}
-              </div>
-            ))} */}
             {Object.keys(editedCompound)
-  .filter((key) => !fields.includes(key) && !unwanted.includes(key))
-  .map((key) => (
-    <div key={key} className="flex flex-col">
-      <span className="text-sm font-semibold text-gray-600">{key}</span>
-      {editMode ? (
-        <input
-          className="border rounded px-2 py-1 text-sm"
-          value={editedCompound[key] ?? ""}
-          onChange={(e) => handleChange(key, e.target.value)}
-        />
-      ) : (
-        <span className={compound[key] ? "text-black" : "text-gray-400"}>
-          {compound[key] ? compound[key] : "N/A"}
-        </span>
-      )}
-    </div>
-))}
-
+              .filter((key) => !fields.includes(key) && !unwanted.includes(key))
+              .map((key) => (
+                <div key={key} className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-600">{key}</span>
+                  {editMode ? (
+                    <input
+                      className="border rounded px-2 py-1 text-sm"
+                      value={editedCompound[key] ?? ""}
+                      onChange={(e) => handleChange(key, e.target.value)}
+                    />
+                  ) : (
+                    <span className={compound[key] ? "text-black" : "text-gray-400"}>
+                      {compound[key] ? compound[key] : "N/A"}
+                    </span>
+                  )}
+                </div>
+            ))}
         </div>
-
-
         {/* Attachments Section */}
         <div className="mt-6 flex gap-4 flex-wrap justify-center">
           {getAllAttachmentKeys().map((key) => (
@@ -383,6 +408,50 @@ export default function CompoundModal({
             </button>
           ))}
         </div>
+
+        <div className="mt-6 text-center">
+          <div
+            className="bg-white p-2 rounded-lg border shadow hover:shadow-md transition-all cursor-pointer"
+            style={{
+              width: 180,
+              height: 140,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              margin: "0 auto",
+            }}
+            onClick={() => setShowFullStructureModal(true)}
+          >
+            {typeof window !== "undefined" && window.RDKit ? (() => {
+              try {
+                const mol = window.RDKit.get_mol(compound.smiles || "");
+                return mol ? (
+                <div
+                  dangerouslySetInnerHTML={{ __html: mol.get_svg() }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                    transform: "scale(0.6)",
+                    transformOrigin: "center",
+                  }}
+                />
+                ) : (
+                  <span className="text-sm text-gray-500">Invalid SMILES</span>
+                );
+              } catch {
+                return <span className="text-sm text-gray-500">Invalid SMILES</span>;
+              }
+            })() : (
+              <span className="text-sm text-gray-500">Loading...</span>
+            )}
+          </div>
+        </div>
+
+
+
 
         {/* Add Field Buttons */}
         <div className="mt-8 flex gap-4 justify-center">
@@ -475,6 +544,20 @@ export default function CompoundModal({
               setLotsForCompound(updatedLots);
             }}
           />
+        )}
+        {showFullStructureModal && (
+          <div className="fixed inset-0 bg-opacity-80 z-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded shadow-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+              <h2 className="text-lg font-bold mb-2">Full Structure</h2>
+              <FullStructurePreview smiles={compound.smiles} />
+              <button
+                onClick={() => setShowFullStructureModal(false)}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
