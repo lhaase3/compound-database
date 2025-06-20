@@ -6,3 +6,7 @@ backend/Miniconda3-latest-Linux-x86_64.sh
 
 firebase-key.json
 /backend/firebase-key.json
+
+# Ignore SSH key files
+keyFile
+keyFile.pub
