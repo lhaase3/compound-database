@@ -131,7 +131,7 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
         </div>
         
         {selectedComponents.map((comp, idx) => (
-          <div key={idx} className="mb-4 border p-3 rounded">
+          <div key={comp.compoundId + '-' + comp.lotId + '-' + idx} className="mb-4 border p-3 rounded">
             <div className="flex gap-4 mb-2 text-black">
               <select
                 className="border px-2 py-1"

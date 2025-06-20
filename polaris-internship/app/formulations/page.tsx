@@ -26,23 +26,36 @@ export default function FormulationList() {
   }, []);
 
   return (
-    <div className="p-6 bg-white min-h-screen text-black">
-    <Link href="/">
-        <button className="mb-4 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-black rounded">
-            ⬅ Back to Home
-        </button>
-    </Link>
-      <h1 className="text-3xl font-bold mb-4">Formulations</h1>
-      <div className="mb-4 w-full max-w-md">
+    <div className="min-h-screen bg-[#002C36] flex flex-col items-center p-0">
+      {/* Hero Section */}
+      <div className="w-full bg-gradient-to-r from-[#00343F] to-[#002C36] py-12 mb-10 shadow flex flex-col items-center relative overflow-hidden">
+        {/* Logo in top-left corner */}
+        <img src="/polaris-logo-only.png" alt="Polaris Electro-Optics Logo" className="w-20 h-25 absolute top-6 left-8 z-20 drop-shadow-lg" />
+        <div className="absolute inset-0 opacity-30 pointer-events-none select-none" style={{background: 'url(/circuit-bg.svg) center/cover no-repeat'}} />
+        <h1 className="text-5xl font-extrabold mb-3 text-[#00E6D2] tracking-tight drop-shadow uppercase z-10">Formulations</h1>
+        <p className="text-xl text-white mb-6 max-w-2xl text-center z-10 font-semibold">Polaris Electro-Optics</p>
+        <div className="mb-2 z-10">
+          <Link href="/">
+            <button className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-6 py-2 rounded-lg shadow font-bold text-lg uppercase tracking-wide flex items-center gap-2 transition-all">
+              <span role="img" aria-label="home">🏠</span> Back to Home
+            </button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-8 w-full max-w-md">
         <input
           type="text"
           placeholder="🔍 Search by compound ID (e.g. PEO-0100)"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full border border-gray-300 px-3 py-2 rounded text-black"
+          className="w-full border border-[#00E6D2] bg-[#00343F] px-3 py-2 rounded text-[#00E6D2] focus:outline-none focus:ring-2 focus:ring-[#00E6D2] placeholder-[#00E6D2]/60"
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      {/* Formulations Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl px-4">
         {formulations
           .filter((form) =>
             searchTerm.trim() === "" ||
@@ -53,12 +66,12 @@ export default function FormulationList() {
           .map((form) => (
             <div
               key={form.id}
-              className="bg-white border border-gray-300 rounded-lg p-4 shadow hover:shadow-md cursor-pointer"
+              className="bg-[#e6f9f7] border border-[#00E6D2] rounded-2xl p-6 shadow-lg hover:shadow-2xl cursor-pointer transition-all text-[#002C36]"
               onClick={() => setSelectedFormulation(form)}
             >
-              <h2 className="text-xl font-semibold mb-2">{form.name || "Unnamed Formulation"}</h2>
-              <p className="text-sm text-gray-800 mb-1">Components:</p>
-              <ul className="list-disc pl-5 text-sm text-gray-700">
+              <h2 className="text-2xl font-bold mb-2 uppercase tracking-wide text-[#00E6D2]">{form.name || "Unnamed Formulation"}</h2>
+              <p className="text-sm mb-1 font-semibold">Components:</p>
+              <ul className="list-disc pl-5 text-sm">
                 {form.components?.map((comp: any, idx: number) => (
                   <li key={idx}>{comp.compoundId} ({comp.molPercent}%)</li>
                 )) || <li>No components</li>}

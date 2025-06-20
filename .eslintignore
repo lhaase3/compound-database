@@ -1,0 +1,9 @@
+# Ignore build artifacts and 3rd party files
+node_modules/
+.next/
+public/
+polaris-internship/public/
+polaris-internship/.next/
+polaris-internship/**/*.cache.js
+polaris-internship/utils/firebase.js
+**/*.cache.js
