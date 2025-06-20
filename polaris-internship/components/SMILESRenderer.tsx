@@ -43,8 +43,11 @@ export default function SMILESRenderer({ smiles }: Props) {
       const img = new Image();
 
       img.onload = () => {
-        const canvas = canvasRef.current!;
-        const ctx = canvas.getContext("2d")!;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
         canvas.width = img.width * 2; // scale up
         canvas.height = img.height * 2;
         ctx.scale(2, 2); // double the drawing size
