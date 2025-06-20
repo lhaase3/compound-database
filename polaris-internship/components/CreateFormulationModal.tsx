@@ -147,9 +147,9 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
                 value={comp.lotId}
                 onChange={(e) => updateComponent(idx, "lotId", e.target.value)}
               >
-                <option value="">(Original)</option>
-                {(lots[comp.compoundId.toLowerCase()] || []).map((lot) => (
-                  <option key={lot} value={lot}>{lot}</option>  // ✅ key added
+                <option key="original" value="">(Original)</option>
+                {(lots[comp.compoundId.toLowerCase()] || []).map((lot, lotIdx) => (
+                  <option key={lot + '-' + lotIdx} value={lot}>{lot}</option>
                 ))}
               </select>
 
