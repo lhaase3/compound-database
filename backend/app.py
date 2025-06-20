@@ -122,17 +122,34 @@ def add_compound():
         return '', 200
 
     data = request.get_json()
+
+    # 🚫 Prevent saving lot-based compounds directly
+    if "original_id" in data:
+        return jsonify({"error": "Cannot add a compound that originates from a lot."}), 400
+
     if "id" not in data:
         return jsonify({"error": "Compound must have an 'id' field"}), 400
 
     phase_map_str = data.get("phase map", "")
     transitions = extract_transitions_with_temps(phase_map_str)
 
-    data["parsed_phase_transitions"] = transitions  # 💡 Add parsed transitions to the record
+    data["parsed_phase_transitions"] = transitions
+
+    # db.collection("compounds").document(data["id"]).set(data, merge=True)
+    fields = [
+        "smiles", "id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
+        "phase map", "r33", "dipole CAMB3LYP SVPD CHCl3 (Cosmo)", "beta CAMB3LYP SVPD CHCl3 (Cosmo)", 
+        "B3LYP SVPD CHCl3 dipole",
+        "B3LYP SVPD CHCl3 beta", "beta/MW", "J/g DSC melt (total)",
+        "kJ/mol DSC melt (total)", "Refractive index (ne/no)", "Notes", "lab?",
+        "first PEO#", "registered PEO#", "Lab book #", "Max loading (%)"
+    ]
 
     db.collection("compounds").document(data["id"]).set(data, merge=True)
 
+
     return jsonify({"success": True}), 200
+
 
 
 @app.route("/update-compound", methods=["POST"])
@@ -438,6 +455,47 @@ def update_formulation(formulation_id):
         return jsonify({"error": str(e)}), 500
 
 
+
+@app.route("/rename-camb3lyp-field", methods=["POST"])
+def rename_camb3lyp_field():
+    compounds_ref = db.collection("compounds")
+    compounds = compounds_ref.stream()
+
+    old_field = "CAMB3LYP SVPD CHCl3 (Cosmo)"
+    new_field = f"dipole {old_field}"
+
+    count = 0
+    for doc in compounds:
+        data = doc.to_dict()
+        if old_field in data:
+            value = data[old_field]
+            doc.reference.update({
+                new_field: value,
+                old_field: firestore.DELETE_FIELD
+            })
+            count += 1
+
+    return {"status": "done", "updated_count": count}
+
+@app.route("/cleanup-trash-fields", methods=["POST"])
+def cleanup_trash_fields():
+    known_trash_fields = {
+        "Unnamed: 18", "Unnamed: 19", "Unnamed: 20",
+        "Unnamed: 21", "Unnamed: 22", "Unnamed: 23",
+    }
+
+    compounds_ref = db.collection("compounds")
+    docs = compounds_ref.stream()
+
+    for doc in docs:
+        doc_data = doc.to_dict()
+        compound_id = doc.id
+        cleaned_data = {k: v for k, v in doc_data.items() if k not in known_trash_fields}
+
+        # Overwrite the document with cleaned data
+        db.collection("compounds").document(compound_id).set(cleaned_data)
+
+    return jsonify({"success": True, "message": "Trash fields removed from all compounds"}), 200
 
 
 

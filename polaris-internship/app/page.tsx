@@ -331,13 +331,21 @@ export default function Home() {
       )}
 
        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10 mx-auto max-w-screen-xl px-6">
-          {filteredCompounds.map((compound) => (
+          {/* {filteredCompounds.map((compound) => (
             <CompoundCard
               key={compound.id}
               compound={compound}
               onMoreInfo={setSelectedCompound}
             />
+          ))} */}
+          {filteredCompounds.map((compound, index) => (
+              <CompoundCard
+                key={compound.id || `compound-${index}`}  // fallback ensures uniqueness
+                compound={compound}
+                onMoreInfo={setSelectedCompound}
+              />
           ))}
+
 
       </div>
 
@@ -389,14 +397,22 @@ export default function Home() {
                 ),
               });
 
-              const updated = await fetch(
-                selectedSource === "lot" && currentLotId
-                  ? `http://localhost:5000/lot/${currentLotId}`
-                  : "http://localhost:5000/compounds"
-              ).then((res) => res.json());
-
-              setCompounds(updated);
-              setSelectedCompound(updatedCompound);
+              // Refetch the updated compound from backend
+              let freshCompound: Compound;
+              if (selectedSource === "lot" && currentLotId) {
+                // For lot compounds, fetch the lot and find the updated compound
+                const lotCompounds = await fetch(`http://localhost:5000/lot/${currentLotId}`).then(res => res.json());
+                freshCompound = lotCompounds.find((c: Compound) => c.id === updatedCompound.id) || updatedCompound;
+                setCompounds(lotCompounds);
+                console.log("[DEBUG] Fetched lot compound after update:", freshCompound);
+              } else {
+                // For main compounds, fetch the updated compound and the full list
+                freshCompound = await fetch(`http://localhost:5000/compounds/${updatedCompound.id}`).then(res => res.json());
+                const updatedList = await fetch("http://localhost:5000/compounds").then(res => res.json());
+                setCompounds(updatedList);
+                console.log("[DEBUG] Fetched main compound after update:", freshCompound);
+              }
+              setSelectedCompound(freshCompound);
             } catch (err) {
               console.error("Failed to update compound:", err);
             }

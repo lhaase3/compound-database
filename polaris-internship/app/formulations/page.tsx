@@ -2,12 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import CompoundModal from "@/components/CompoundModal";
+
 
 export default function FormulationList() {
   const [formulations, setFormulations] = useState<any[]>([]);
   const [selectedFormulation, setSelectedFormulation] = useState<any | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({ name: "", phaseMap: "", notes: "" });
+  const [selectedCompound, setSelectedCompound] = useState<any | null>(null);
+  const [compoundSource, setCompoundSource] = useState<"main" | "lot">("main");
+  const [compoundLotId, setCompoundLotId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
 
 
 
@@ -26,22 +33,37 @@ export default function FormulationList() {
         </button>
     </Link>
       <h1 className="text-3xl font-bold mb-4">Formulations</h1>
-
+      <div className="mb-4 w-full max-w-md">
+        <input
+          type="text"
+          placeholder="🔍 Search by compound ID (e.g. PEO-0100)"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full border border-gray-300 px-3 py-2 rounded text-black"
+        />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {formulations.map((form) => (
-          <div
-            key={form.id}
-            className="bg-white border border-gray-300 rounded-lg p-4 shadow hover:shadow-md cursor-pointer"
-            onClick={() => setSelectedFormulation(form)}
-          >
-            <h2 className="text-xl font-semibold mb-2">{form.name || "Unnamed Formulation"}</h2>
-            <p className="text-sm text-gray-800 mb-1">Components:</p>
-            <ul className="list-disc pl-5 text-sm text-gray-700">
-              {form.components?.map((comp: any, idx: number) => (
-                <li key={idx}>{comp.compoundId} ({comp.molPercent}%)</li>
-              )) || <li>No components</li>}
-            </ul>
-          </div>
+        {formulations
+          .filter((form) =>
+            searchTerm.trim() === "" ||
+            form.components?.some((comp: any) =>
+              comp.compoundId?.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+          )
+          .map((form) => (
+            <div
+              key={form.id}
+              className="bg-white border border-gray-300 rounded-lg p-4 shadow hover:shadow-md cursor-pointer"
+              onClick={() => setSelectedFormulation(form)}
+            >
+              <h2 className="text-xl font-semibold mb-2">{form.name || "Unnamed Formulation"}</h2>
+              <p className="text-sm text-gray-800 mb-1">Components:</p>
+              <ul className="list-disc pl-5 text-sm text-gray-700">
+                {form.components?.map((comp: any, idx: number) => (
+                  <li key={idx}>{comp.compoundId} ({comp.molPercent}%)</li>
+                )) || <li>No components</li>}
+              </ul>
+            </div>
         ))}
       </div>
 
@@ -118,10 +140,47 @@ export default function FormulationList() {
               <ul className="list-disc pl-5">
                 {selectedFormulation.components?.map((comp: any, idx: number) => (
                   <li key={idx}>
-                    {comp.compoundId} ({comp.lotId || "original"}) – {comp.molPercent}% → {comp.mass} g
+                    <button
+                      className="text-blue-600 underline hover:text-blue-800"
+                      onClick={async () => {
+                        try {
+                          const endpoint = comp.lotId
+                            ? `http://localhost:5000/lot/${comp.lotId}`
+                            : `http://localhost:5000/compounds/${comp.compoundId}`;
+
+                          const res = await fetch(endpoint);
+                          const data = await res.json();
+                          let compound;
+
+                          if (comp.lotId) {
+                            // Assume each lot only contains one compound (or just grab the matching one)
+                            compound = data.find((c: any) =>
+                              c.id === comp.compoundId || c.name?.includes(comp.compoundId)
+                            ) || data[0]; // fallback to first in lot
+                          } else {
+                            compound = data;
+                          }
+
+                          if (!compound) {
+                            alert("Compound not found.");
+                            return;
+                          }
+
+
+                          setSelectedCompound(compound);
+                          setCompoundSource(comp.lotId ? "lot" : "main");
+                          setCompoundLotId(comp.lotId || null);
+                        } catch (err) {
+                          console.error("Error loading compound:", err);
+                        }
+                      }}
+                    >
+                      {comp.compoundId} ({comp.lotId || "original"}) – {comp.molPercent}% → {comp.mass} g
+                    </button>
                   </li>
                 )) || <li>No components</li>}
               </ul>
+
             </div>
 
             <div className="mb-4">
@@ -226,6 +285,43 @@ export default function FormulationList() {
             </div>
         </div>
         )}
+        {selectedCompound && (
+          <CompoundModal
+            compound={selectedCompound}
+            onClose={() => setSelectedCompound(null)}
+            onDelete={async (id: string) => {
+              await fetch(`http://localhost:5000/delete-compound/${id}`, { method: "DELETE" });
+              setSelectedCompound(null);
+            }}
+            onUpdate={async (updatedCompound) => {
+              const endpoint =
+                compoundSource === "lot"
+                  ? "http://localhost:5000/update-lot-compound"
+                  : "http://localhost:5000/update-compound";
+
+              const payload =
+                compoundSource === "lot"
+                  ? { ...updatedCompound, lotId: compoundLotId }
+                  : updatedCompound;
+
+              await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+
+              setSelectedCompound(updatedCompound);
+            }}
+            source={compoundSource}
+            lotId={compoundLotId}
+            onUpdateCompoundFromLot={(compound, lotId) => {
+              setSelectedCompound(compound);
+              setCompoundSource(lotId ? "lot" : "main");
+              setCompoundLotId(lotId);
+            }}
+          />
+        )}
+
     </div>
   );
 }
