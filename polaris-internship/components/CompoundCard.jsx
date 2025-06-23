@@ -24,7 +24,19 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
         {isStarred ? '★' : '☆'}
       </button>
       <div className="w-full flex justify-center">
-        <SMILESRenderer smiles={compound.smiles || ""} />
+        {compound.imageUrl && typeof compound.imageUrl === 'string' && compound.imageUrl.trim() !== '' ? (
+          <div className="flex items-center justify-center w-[320px] h-[190px] bg-white rounded" style={{ borderRadius: "0.75rem" }}>
+            <img
+              src={compound.imageUrl}
+              alt={compound.name || compound.id}
+              className="w-full h-full object-contain"
+              style={{ display: "block", margin: "auto" }}
+              onError={e => { e.currentTarget.style.display = 'none'; }}
+            />
+          </div>
+        ) : (
+          <SMILESRenderer smiles={compound.smiles || ""} />
+        )}
       </div>
       <div className="text-center">
         <h2 className="text-lg font-bold" style={{ color: accentColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>

@@ -400,7 +400,7 @@ export default function Home() {
         >
           <span role="img" aria-label="reset">🔄</span> Reset Filter
         </button>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <input
             type="checkbox"
             id="show-starred"
@@ -411,7 +411,7 @@ export default function Home() {
           <label htmlFor="show-starred" className="text-sm text-[#00E6D2] font-bold">
             Show Only Starred
           </label>
-        </div>
+        </div> */}
       </div>
 
       {/* Section Divider */}
@@ -530,7 +530,19 @@ export default function Home() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newCompound),
               });
-              const updated = await fetch("http://localhost:5000/compounds").then((res) => res.json());
+              // Wait for backend to finish generating the imageUrl
+              await new Promise(res => setTimeout(res, 1500));
+              let updated = await fetch("http://localhost:5000/compounds").then((res) => res.json());
+              // If imageUrl is still missing, poll a few more times
+              let tries = 0;
+              while (
+                tries < 4 &&
+                updated.some(c => c.id === newCompound.id && (!c.imageUrl || c.imageUrl === ""))
+              ) {
+                await new Promise(res => setTimeout(res, 1000));
+                updated = await fetch("http://localhost:5000/compounds").then((res) => res.json());
+                tries++;
+              }
               setCompounds(updated);
             } catch (err) {
               console.error("Failed to add compound:", err);

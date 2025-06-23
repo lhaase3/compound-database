@@ -76,7 +76,7 @@ export default function CompoundModal({
 
   // List of unwanted fields to exclude from custom display
   const unwanted = [
-    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions"
+    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl"
   ];
 
   // Your defined fields (always shown, in order)
@@ -170,11 +170,21 @@ export default function CompoundModal({
   };
 
   const FullStructurePreview = ({ smiles }: { smiles: string }) => {
+    if (compound.imageUrl && typeof compound.imageUrl === 'string' && compound.imageUrl.trim() !== '') {
+      return (
+        <div className="flex justify-center items-center w-full h-[600px]">
+          <img
+            src={compound.imageUrl}
+            alt={compound.name || compound.id}
+            style={{ maxWidth: "100%", maxHeight: 560, objectFit: "contain" }}
+            onError={e => { e.currentTarget.style.display = 'none'; }}
+          />
+        </div>
+      );
+    }
     const containerRef = useRef<HTMLDivElement>(null);
-
     useEffect(() => {
       if (!window.RDKit || !smiles) return;
-
       let mol;
       try {
         mol = window.RDKit.get_mol(smiles);
@@ -182,38 +192,31 @@ export default function CompoundModal({
         console.error("Invalid SMILES for full preview:", err);
         return;
       }
-
       if (!mol) return;
-
-      const svg = mol.get_svg();
-
+      // Render a large, high-res SVG and scale it up visually
+      const svg = mol.get_svg_with_highlight({}, {}, 2000, 1200);
       if (containerRef.current) {
         containerRef.current.innerHTML = svg;
-        containerRef.current.style.transform = "scale(2.2)";  // 👈 Increase scale for size
-        containerRef.current.style.transformOrigin = "top center";
-        containerRef.current.style.width = "fit-content";
-        containerRef.current.style.margin = "0 auto";
+        containerRef.current.style.width = "1000px";
+        containerRef.current.style.height = "600px";
+        containerRef.current.style.display = "flex";
+        containerRef.current.style.justifyContent = "center";
+        containerRef.current.style.alignItems = "center";
+        const svgElem = containerRef.current.querySelector('svg');
+        if (svgElem) {
+          svgElem.setAttribute('width', '1000px');
+          svgElem.setAttribute('height', '600px');
+        }
       }
-
       mol.delete();
     }, [smiles]);
-
-    const handleClickOutside = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (
-      containerRef.current &&
-      !containerRef.current.contains(e.target as Node)
-    ) {
-      onClose();
-    }
-  };
-
     return (
       <div
-        className="flex justify-center items-start overflow-auto"
+        className="flex justify-center items-center overflow-auto"
         ref={containerRef}
         style={{
           width: "100%",
-          height: "600px",  // 👈 Make vertical space taller to accommodate larger rendering
+          height: "600px",
         }}
       />
     );
@@ -423,29 +426,37 @@ export default function CompoundModal({
             }}
             onClick={() => setShowFullStructureModal(true)}
           >
-            {typeof window !== "undefined" && window.RDKit ? (() => {
-              try {
-                const mol = window.RDKit.get_mol(compound.smiles || "");
-                return mol ? (
-                <div
-                  dangerouslySetInnerHTML={{ __html: mol.get_svg() }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                    transform: "scale(0.6)",
-                    transformOrigin: "center",
-                  }}
-                />
-                ) : (
-                  <span className="text-sm text-gray-500">Invalid SMILES</span>
-                );
-              } catch {
-                return <span className="text-sm text-gray-500">Invalid SMILES</span>;
-              }
-            })() : (
-              <span className="text-sm text-gray-500">Loading...</span>
+            {compound.imageUrl ? (
+              <img
+                src={compound.imageUrl}
+                alt={compound.name || compound.id}
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              />
+            ) : (
+              typeof window !== "undefined" && window.RDKit ? (() => {
+                try {
+                  const mol = window.RDKit.get_mol(compound.smiles || "");
+                  return mol ? (
+                  <div
+                    dangerouslySetInnerHTML={{ __html: mol.get_svg() }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                      transform: "scale(0.6)",
+                      transformOrigin: "center",
+                    }}
+                  />
+                  ) : (
+                    <span className="text-sm text-gray-500">Invalid SMILES</span>
+                  );
+                } catch {
+                  return <span className="text-sm text-gray-500">Invalid SMILES</span>;
+                }
+              })() : (
+                <span className="text-sm text-gray-500">Loading...</span>
+              )
             )}
           </div>
         </div>

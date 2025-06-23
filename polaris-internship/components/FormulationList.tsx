@@ -4,6 +4,11 @@ import React, { useEffect, useState } from "react";
 export default function FormulationList() {
   const [formulations, setFormulations] = useState<any[]>([]);
   const [selectedFormulation, setSelectedFormulation] = useState<any | null>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<{
+    name: string;
+    data: { note: string; imageUrl: string };
+  } | null>(null);
+
 
   useEffect(() => {
     fetch("http://localhost:5000/formulations")

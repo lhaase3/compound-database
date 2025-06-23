@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import AttachmentModal from "./AttachmentModal";
 
 export type Compound = {
   id: string;
   name?: string;
   MW?: string; // molecular weight in g/mol
 };
+
 
 type Props = {
   compounds: Compound[];
@@ -25,7 +27,19 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
   const [totalMoles, setTotalMoles] = useState<number>(1);
   const [phaseMap, setPhaseMap] = useState("");
   const [notes, setNotes] = useState("");
-  const [images, setImages] = useState<FileList | null>(null);
+  const [formData, setFormData] = useState<{ [key: string]: string }>({});
+  const [showAddTextField, setShowAddTextField] = useState(false);
+  const [newTextFieldName, setNewTextFieldName] = useState("");
+  const [newTextFieldValue, setNewTextFieldValue] = useState("");
+  const [attachments, setAttachments] = useState<{ [key: string]: { note: string; imageUrl: string } }>({
+    data: { note: "", imageUrl: "" }
+  });
+  const [showAddAttachmentField, setShowAddAttachmentField] = useState(false);
+  const [newAttachmentFieldName, setNewAttachmentFieldName] = useState("");
+  const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
+  
+
+
 
 
   const addComponent = () => {
@@ -57,45 +71,28 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
     });
   };
 
-  const handleSubmit = async () => {
-    const formulation = {
-      name: formulationName,
-      components: calculateMasses(),
-      totalMoles,
-      phaseMap,
-      notes,
-      createdAt: new Date().toISOString(),
-      imageUrls: [] as string[]
-    };
-
-    try {
-      if (images && images.length > 0) {
-        for (const file of Array.from(images)) {
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("note", `Formulation Image: ${file.name}`);
-
-          const res = await fetch("http://localhost:5000/upload-image-to-firebase", {
-            method: "POST",
-            body: formData,
-          });
-
-          const result = await res.json();
-          if (res.ok && result.fileUrl) {
-            formulation.imageUrls.push(result.fileUrl);
-          } else {
-            console.error("Upload failed:", result.error);
-          }
-        }
-      }
-
-      await onCreate(formulation);
-      onClose();
-    } catch (err) {
-      console.error("Formulation creation failed:", err);
-      alert("Failed to save formulation.");
-    }
+const handleSubmit = async () => {
+  const formulation = {
+    ...formData,
+    name: formulationName,
+    components: calculateMasses(),
+    totalMoles,
+    phaseMap,
+    notes,
+    attachments,  // Include attachments
+    createdAt: new Date().toISOString(),
+    imageUrls: [] as string[],
   };
+
+  try {
+    await onCreate(formulation);  // ✅ Send the formulation to parent
+    onClose();                    // ✅ Close the modal
+  } catch (err) {
+    console.error("Formulation creation failed:", err);
+    alert("Failed to save formulation.");
+  }
+};
+
 
 
   return (
@@ -117,6 +114,7 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
             onChange={(e) => setFormulationName(e.target.value)}
             />
         </div>
+
         
 
         <div className="mb-4">
@@ -198,15 +196,50 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
           />
         </div>
 
-        <div className="mb-6">
-          <label className="text-sm font-semibold text-black">Upload Images</label>
-            <input
-              type="file"
-              multiple
-              onChange={(e) => setImages(e.target.files)}
-              className="block w-full text-sm text-gray-700 border border-gray-300 rounded px-2 py-1 mt-2"
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-black mb-6">
+          {Object.entries(formData).map(([key, value]) => (
+            <div key={key} className="flex flex-col">
+              <span className="text-sm font-semibold text-black">{key}</span>
+              <input
+                type="text"
+                value={value}
+                onChange={(e) => setFormData(prev => ({ ...prev, [key]: e.target.value }))}
+                className="border rounded px-2 py-1 text-sm text-black"
+              />
+            </div>
+          ))}
         </div>
+
+
+        <div className="mb-6 flex gap-4 flex-wrap">
+          {Object.keys(attachments).map((key) => (
+            <button
+              key={key}
+              className="text-blue-600 underline hover:text-blue-800"
+              type="button"
+              onClick={() => setSelectedAttachment(key)}
+            >
+              {key.replace(/_/g, " ")}
+            </button>
+          ))}
+        </div>
+
+        <div className="mb-6 flex gap-4">
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+            onClick={() => setShowAddTextField(true)}
+          >
+            ➕ Add Text Field
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+            onClick={() => setShowAddAttachmentField(true)}
+          >
+            ➕ Add Attachment Field
+          </button>
+        </div>
+
+
 
         <div className="flex justify-end gap-4">
           <button className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 cursor-pointer" onClick={onClose}>Cancel</button>
@@ -217,6 +250,99 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
             Save Formulation
           </button>
         </div>
+
+        {showAddTextField && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddTextField(false)}>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">Add Text Field</h2>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                placeholder="Field name"
+                value={newTextFieldName}
+                onChange={e => setNewTextFieldName(e.target.value)}
+              />
+              <textarea
+                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                placeholder="Field value"
+                value={newTextFieldValue}
+                onChange={e => setNewTextFieldValue(e.target.value)}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                  onClick={() => setShowAddTextField(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  onClick={() => {
+                    if (!newTextFieldName.trim()) return;
+                    setFormData((prev) => ({ ...prev, [newTextFieldName]: newTextFieldValue }));
+                    setShowAddTextField(false);
+                    setNewTextFieldName("");
+                    setNewTextFieldValue("");
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showAddAttachmentField && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddAttachmentField(false)}>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">Add Attachment Field</h2>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                placeholder="Attachment field name"
+                value={newAttachmentFieldName}
+                onChange={e => setNewAttachmentFieldName(e.target.value)}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                  onClick={() => setShowAddAttachmentField(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  onClick={() => {
+                    if (!newAttachmentFieldName.trim()) return;
+                    setAttachments((prev) => ({
+                      ...prev,
+                      [newAttachmentFieldName]: { note: "", imageUrl: "" },
+                    }));
+                    setShowAddAttachmentField(false);
+                    setNewAttachmentFieldName("");
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {selectedAttachment && (
+          <AttachmentModal
+            attachmentKey={selectedAttachment}
+            data={attachments[selectedAttachment]}
+            onClose={() => setSelectedAttachment(null)}
+            onSave={(note, fileUrl) => {
+              setAttachments((prev) => ({
+                ...prev,
+                [selectedAttachment]: { note, imageUrl: fileUrl }
+              }));
+              setSelectedAttachment(null);
+            }}
+          />
+        )}
+
+
       </div>
     </div>
   );
