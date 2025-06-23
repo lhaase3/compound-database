@@ -4,12 +4,14 @@ import firebase_admin
 from firebase_admin import credentials, firestore, storage
 from flask_cors import CORS
 from rdkit import Chem
+from rdkit.Chem import Draw
 import re
 import uuid
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import tempfile
+import base64
 
 app = Flask(__name__)
 # CORS(app, origins="*", allow_headers="*", supports_credentials=True, methods=["GET", "POST", "OPTIONS", "DELETE"])
@@ -134,22 +136,31 @@ def add_compound():
 
     phase_map_str = data.get("phase map", "")
     transitions = extract_transitions_with_temps(phase_map_str)
-
     data["parsed_phase_transitions"] = transitions
 
-    # db.collection("compounds").document(data["id"]).set(data, merge=True)
-    fields = [
-        "smiles", "id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
-        "phase map", "r33", "dipole CAMB3LYP SVPD CHCl3 (Cosmo)", "beta CAMB3LYP SVPD CHCl3 (Cosmo)", 
-        "B3LYP SVPD CHCl3 dipole",
-        "B3LYP SVPD CHCl3 beta", "beta/MW", "J/g DSC melt (total)",
-        "kJ/mol DSC melt (total)", "Refractive index (ne/no)", "Notes", "lab?",
-        "first PEO#", "registered PEO#", "Lab book #", "Max loading (%)"
-    ]
+    # Generate and upload structure image if smiles is present and no imageUrl
+    smiles = data.get("smiles")
+    if smiles and not data.get("imageUrl"):
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            if mol:
+                # Generate a high-resolution image
+                img = Draw.MolToImage(mol, size=(1200, 600), dpi=300)
+                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                    img.save(tmp.name, dpi=(300, 300))
+                    tmp.flush()
+                    # Upload to Firebase Storage
+                    bucket = storage.bucket()
+                    filename = f"compound_images/{data['id']}.png"
+                    blob = bucket.blob(filename)
+                    blob.upload_from_filename(tmp.name, content_type="image/png")
+                    blob.make_public()
+                    data["imageUrl"] = blob.public_url
+                os.unlink(tmp.name)
+        except Exception as e:
+            print(f"Failed to generate/upload image for {data['id']}: {e}")
 
     db.collection("compounds").document(data["id"]).set(data, merge=True)
-
-
     return jsonify({"success": True}), 200
 
 
