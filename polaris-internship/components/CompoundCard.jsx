@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import SMILESRenderer from "./SMILESRenderer";
 
-export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggleStar, cardColor = "#00343F", accentColor = "#00E6D2" }) {
+export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggleStar, cardColor = "#00343F", accentColor = "#00E6D2", compareChecked = false, onToggleCompare }) {
   return (
     <motion.div
       className="relative rounded-2xl shadow-lg p-6 flex flex-col items-center gap-4 border transition-all duration-200 cursor-pointer w-72 group"
@@ -23,6 +23,23 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
       >
         {isStarred ? '★' : '☆'}
       </button>
+      {/* Compare checkbox */}
+      {onToggleCompare && (
+        <label
+          className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-white/80 px-2 py-1 rounded shadow border border-[#008080] cursor-pointer text-xs font-bold uppercase tracking-wide text-[#008080] hover:bg-[#e6f9f7]"
+          style={{ userSelect: 'none' }}
+          onClick={e => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={compareChecked}
+            onChange={onToggleCompare}
+            className="accent-[#008080] w-4 h-4 mr-1"
+            onClick={e => e.stopPropagation()}
+          />
+          Compare
+        </label>
+      )}
       <div className="w-full flex justify-center">
         {compound.imageUrl && typeof compound.imageUrl === 'string' && compound.imageUrl.trim() !== '' ? (
           <div className="flex items-center justify-center w-[320px] h-[190px] bg-white rounded" style={{ borderRadius: "0.75rem" }}>
