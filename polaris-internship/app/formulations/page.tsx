@@ -130,215 +130,233 @@ export default function FormulationList() {
       </div>
 
       {/* Formulations Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl px-4">
-      {formulations
-        .filter((form) =>
-          searchTerm.trim() === "" ||
-          form.components?.some((comp: any) =>
-            comp.compoundId?.toLowerCase().includes(searchTerm.toLowerCase())
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl px-4">
+        {formulations
+          .filter((form) =>
+            searchTerm.trim() === "" ||
+            form.components?.some((comp: any) =>
+              comp.compoundId?.toLowerCase().includes(searchTerm.toLowerCase())
+            )
           )
-        )
-        .map((form) => (
-          <div
-            key={form.id}
-            className="bg-[#e6f9f7] border border-[#00E6D2] rounded-2xl p-6 shadow-lg hover:shadow-2xl cursor-pointer transition-all text-[#002C36]"
-            onClick={() => setSelectedFormulation(form)}
-          >
-            <h2 className="text-2xl font-bold mb-2 uppercase tracking-wide text-[#00E6D2]">{form.name || "Unnamed Formulation"}</h2>
-            <p className="text-sm mb-1 font-semibold">Components:</p>
-            <ul className="list-disc pl-5 text-sm">
-              {form.components?.map((comp: any, idx: number) => (
-                <li key={idx}>{comp.compoundId} ({comp.molPercent}%)</li>
-              )) || <li>No components</li>}
-            </ul>
-          </div>
-      ))}
-    </div>
-
-    {selectedFormulation && (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 backdrop-blur-sm"
-        onClick={() => setSelectedFormulation(null)}
-      >
-        <div
-          className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-2xl font-bold text-black">
-              {selectedFormulation.name || "Unnamed Formulation"}
-            </h2>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setEditData({
-                    name: selectedFormulation.name || "",
-                    phaseMap: selectedFormulation.phaseMap || "",
-                    notes: selectedFormulation.notes || "",
-                  });
-                  setEditMode(true);
-                }}
-                className="text-blue-600 border border-blue-600 px-3 py-1 text-sm rounded hover:bg-blue-100"
-              >
-                Edit
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    await fetch(`http://localhost:5000/delete-formulation/${selectedFormulation.id}`, { method: "DELETE" });
-                    setFormulations((prev) => prev.filter((f) => f.id !== selectedFormulation.id));
-                    setSelectedFormulation(null);
-                  } catch (err) {
-                    console.error("Failed to delete formulation", err);
-                    alert("Failed to delete formulation.");
-                  }
-                }}
-                className="text-red-600 border border-red-600 px-3 py-1 text-sm rounded hover:bg-red-100"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setSelectedFormulation(null)}
-                className="text-black text-xl font-bold px-2"
-              >
-                &times;
-              </button>
+          .map((form) => (
+            <div
+              key={form.id}
+              className="bg-white border-2 border-[#008080] rounded-2xl p-6 shadow-lg hover:shadow-2xl cursor-pointer transition-all text-[#002C36]"
+              onClick={() => setSelectedFormulation(form)}
+            >
+              <h2 className="text-2xl font-bold mb-2 uppercase tracking-wide text-[#008080]">{form.name || "Unnamed Formulation"}</h2>
+              <p className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Components:</p>
+              <ul className="list-disc pl-5 text-sm">
+                {form.components?.map((comp: any, idx: number) => (
+                  <li key={idx}>
+                    <span className="font-semibold text-[#002C36]">{comp.compoundId}</span> <span className="text-[#008080]">({comp.lotId || "original"})</span> – <span className="text-[#008080]">{comp.molPercent}%</span> → <span className="text-[#008080]">{comp.mass} g</span>
+                  </li>
+                )) || <li>No components</li>}
+              </ul>
             </div>
-          </div>
+        ))}
+      </div>
 
-          <div className="mb-4">
-            <p className="text-sm text-gray-600">
-              Created: {selectedFormulation.createdAt
+      {selectedFormulation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setSelectedFormulation(null)}
+        >
+          <div
+            className="bg-white border-2 border-[#008080] p-8 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-3xl font-extrabold text-[#002C36] uppercase tracking-wide">{selectedFormulation.name || "Unnamed Formulation"}</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setEditData({
+                      name: selectedFormulation.name || "",
+                      phaseMap: selectedFormulation.phaseMap || "",
+                      notes: selectedFormulation.notes || "",
+                    });
+                    setEditMode(true);
+                  }}
+                  className="text-blue-600 border border-blue-600 px-3 py-1 text-xs rounded hover:bg-blue-100 font-bold uppercase tracking-wide"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await fetch(`http://localhost:5000/delete-formulation/${selectedFormulation.id}`, { method: "DELETE" });
+                      setFormulations((prev) => prev.filter((f) => f.id !== selectedFormulation.id));
+                      setSelectedFormulation(null);
+                    } catch (err) {
+                      console.error("Failed to delete formulation", err);
+                      alert("Failed to delete formulation.");
+                    }
+                  }}
+                  className="text-red-600 border border-red-600 px-3 py-1 text-xs rounded hover:bg-red-100 font-bold uppercase tracking-wide"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setSelectedFormulation(null)}
+                  className="text-black text-xl font-bold px-2"
+                >
+                  &times;
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Created:</span> <span className="text-[#002C36]">{selectedFormulation.createdAt
                 ? new Date(
                   selectedFormulation.createdAt.seconds
                     ? selectedFormulation.createdAt.seconds * 1000
                     : selectedFormulation.createdAt
                 ).toLocaleDateString()
-                : "Unknown"}
-            </p>
-          </div>
+                : "Unknown"}</span>
+            </div>
 
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">Components</h3>
-            <ul className="list-disc pl-5">
-              {selectedFormulation.components?.map((comp: any, idx: number) => (
-                <li key={idx}>
-                  <button
-                    className="text-blue-600 underline hover:text-blue-800"
-                    onClick={async () => {
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Components</span>
+              <ul className="list-disc pl-5 mt-1">
+                {selectedFormulation.components?.map((comp: any, idx: number) => (
+                  <li key={idx}>
+                    <button
+                      className="text-blue-600 underline hover:text-blue-800 text-sm"
+                      onClick={async () => {
+                        try {
+                          const endpoint = comp.lotId
+                            ? `http://localhost:5000/lot/${comp.lotId}`
+                            : `http://localhost:5000/compounds/${comp.compoundId}`;
+
+                          const res = await fetch(endpoint);
+                          const data = await res.json();
+                          let compound;
+
+                          if (comp.lotId) {
+                            compound = data.find((c: any) =>
+                              c.id === comp.compoundId || c.name?.includes(comp.compoundId)
+                            ) || data[0];
+                          } else {
+                            compound = data;
+                          }
+
+                          if (!compound) {
+                            alert("Compound not found.");
+                            return;
+                          }
+
+                          setSelectedCompound(compound);
+                          setCompoundSource(comp.lotId ? "lot" : "main");
+                          setCompoundLotId(comp.lotId || null);
+                        } catch (err) {
+                          console.error("Error loading compound:", err);
+                        }
+                      }}
+                    >
+                      {comp.compoundId} ({comp.lotId || "original"}) – {comp.molPercent}% → {comp.mass} g
+                    </button>
+                  </li>
+                )) || <li>No components</li>}
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Phase Map</span>
+              <div className="bg-gray-100 p-3 rounded whitespace-pre-wrap text-[#002C36]">
+                {selectedFormulation.phaseMap || "N/A"}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Analytical Notes</span>
+              <div className="bg-gray-100 p-3 rounded whitespace-pre-wrap text-[#002C36]">
+                {selectedFormulation.notes || "N/A"}
+              </div>
+            </div>
+
+            {/* Custom Fields */}
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Other Data</span>
+              <div className="mt-2">
+                {Object.entries(selectedFormulation)
+                  .filter(([key]) =>
+                    !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls"].includes(key)
+                  )
+                  .map(([key, value], idx) => {
+                    let displayValue: React.ReactNode = "N/A";
+                    if (value === null || value === undefined) {
+                      displayValue = "N/A";
+                    } else if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+                      displayValue = value.toString();
+                    } else if (Array.isArray(value) || typeof value === "object") {
                       try {
-                        const endpoint = comp.lotId
-                          ? `http://localhost:5000/lot/${comp.lotId}`
-                          : `http://localhost:5000/compounds/${comp.compoundId}`;
-
-                        const res = await fetch(endpoint);
-                        const data = await res.json();
-                        let compound;
-
-                        if (comp.lotId) {
-                          compound = data.find((c: any) =>
-                            c.id === comp.compoundId || c.name?.includes(comp.compoundId)
-                          ) || data[0];
-                        } else {
-                          compound = data;
-                        }
-
-                        if (!compound) {
-                          alert("Compound not found.");
-                          return;
-                        }
-
-                        setSelectedCompound(compound);
-                        setCompoundSource(comp.lotId ? "lot" : "main");
-                        setCompoundLotId(comp.lotId || null);
-                      } catch (err) {
-                        console.error("Error loading compound:", err);
+                        displayValue = <span className="font-mono">{JSON.stringify(value, null, 2)}</span>;
+                      } catch {
+                        displayValue = "[Object]";
                       }
-                    }}
+                    }
+                    return (
+                      <div key={idx} className="mb-2">
+                        <span className="font-semibold text-[#008080] text-xs uppercase mr-2">{key}:</span>
+                        <span className="text-[#002C36]">{displayValue}</span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {/* Attachments with Click-to-View */}
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Attachments</span>
+              <div className="mt-2">
+                {Object.entries(selectedFormulation.attachments || {}).length === 0 && (
+                  <span className="text-[#002C36]">None</span>
+                )}
+                {Object.entries(selectedFormulation.attachments || {}).map(([key, { note, imageUrl }]: any, idx) => (
+                  <div key={idx} className="mb-4">
+                    <button
+                      className="text-blue-600 underline hover:text-blue-800 cursor-pointer text-sm"
+                      onClick={() => setSelectedAttachment({ name: key, data: { note, imageUrl } })}
+                    >
+                      {key.replace(/_/g, " ")}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {selectedAttachment && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setSelectedAttachment(null)}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8" onClick={(e) => e.stopPropagation()}>
+                <h2 className="text-xl font-bold mb-4 text-[#008080] uppercase">{selectedAttachment.name.replace(/_/g, " ")}</h2>
+                {selectedAttachment.data.imageUrl ? (
+                  <img
+                    src={selectedAttachment.data.imageUrl}
+                    alt={selectedAttachment.name}
+                    className="w-full max-h-[70vh] object-contain mb-4 border rounded shadow"
+                  />
+                ) : (
+                  <p className="text-gray-500 mb-4">No image available.</p>
+                )}
+                {selectedAttachment.data.note && (
+                  <div className="bg-gray-100 p-3 rounded whitespace-pre-wrap mb-4 text-[#002C36]">
+                    {selectedAttachment.data.note}
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <button
+                    className="px-4 py-2 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide"
+                    onClick={() => setSelectedAttachment(null)}
                   >
-                    {comp.compoundId} ({comp.lotId || "original"}) – {comp.molPercent}% → {comp.mass} g
+                    Close
                   </button>
-                </li>
-              )) || <li>No components</li>}
-            </ul>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">Phase Map</h3>
-            <div className="bg-gray-100 p-3 rounded whitespace-pre-wrap">
-              {selectedFormulation.phaseMap || "N/A"}
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">Analytical Notes</h3>
-            <div className="bg-gray-100 p-3 rounded whitespace-pre-wrap">
-              {selectedFormulation.notes || "N/A"}
-            </div>
-          </div>
-
-          {/* Custom Fields */}
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">Other Data</h3>
-            {Object.entries(selectedFormulation)
-              .filter(([key]) =>
-                !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls"].includes(key)
-              )
-              .map(([key, value], idx) => (
-                <div key={idx} className="mb-2">
-                  <span className="font-semibold">{key}:</span> {value || "N/A"}
                 </div>
-              ))}
-          </div>
-
-          {/* Attachments with Click-to-View */}
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">Attachments</h3>
-              {Object.entries(selectedFormulation.attachments || {}).map(([key, { note, imageUrl }]: any, idx) => (
-                <div key={idx} className="mb-4">
-                  <p
-                    className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
-                    onClick={() => setSelectedAttachment({ name: key, data: { note, imageUrl } })}
-                  >
-                    {key.replace(/_/g, " ")}
-                  </p>
-                </div>
-              ))}
-
-          </div>
-        </div>
-        {selectedAttachment && (
-  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setSelectedAttachment(null)}>
-    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8" onClick={(e) => e.stopPropagation()}>
-      <h2 className="text-xl font-bold mb-4">{selectedAttachment.name.replace(/_/g, " ")}</h2>
-      {selectedAttachment.data.imageUrl ? (
-        <img
-          src={selectedAttachment.data.imageUrl}
-          alt={selectedAttachment.name}
-          className="w-full max-h-[70vh] object-contain mb-4 border rounded shadow"
-        />
-      ) : (
-        <p className="text-gray-500 mb-4">No image available.</p>
-      )}
-      {selectedAttachment.data.note && (
-        <div className="bg-gray-100 p-3 rounded whitespace-pre-wrap mb-4">
-          {selectedAttachment.data.note}
+              </div>
+            </div>
+          )}
         </div>
       )}
-      <div className="flex justify-end">
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={() => setSelectedAttachment(null)}
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-      </div>
-    )}
       {editMode && (
         <div
             className="fixed inset-0 backdrop-blur-sm bg-opacity-50 z-50 flex items-center justify-center"
@@ -377,11 +395,25 @@ export default function FormulationList() {
                 .filter(([key]) =>
                   !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls"].includes(key)
                 )
-                .map(([key, value], idx) => (
-                  <div key={idx} className="mb-2">
-                    <span className="font-semibold">{key}:</span> {value || "N/A"}
-                  </div>
-                ))}
+                .map(([key, value], idx) => {
+                  let displayValue: React.ReactNode = "N/A";
+                  if (value === null || value === undefined) {
+                    displayValue = "N/A";
+                  } else if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+                    displayValue = value.toString();
+                  } else if (Array.isArray(value) || typeof value === "object") {
+                    try {
+                      displayValue = <span className="font-mono">{JSON.stringify(value, null, 2)}</span>;
+                    } catch {
+                      displayValue = "[Object]";
+                    }
+                  }
+                  return (
+                    <div key={idx} className="mb-2">
+                      <span className="font-semibold">{key}:</span> {displayValue}
+                    </div>
+                  );
+                })}
             </div>
 
 
@@ -406,7 +438,7 @@ export default function FormulationList() {
                             f.id === selectedFormulation.id ? { ...f, ...editData } : f
                         )
                     );
-                    setSelectedFormulation((f) => f && { ...f, ...editData });
+                    setSelectedFormulation((f: typeof selectedFormulation) => f && { ...f, ...editData });
                     setEditMode(false);
                     } catch (err) {
                     console.error("Failed to update formulation", err);

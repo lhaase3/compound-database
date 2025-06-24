@@ -152,31 +152,31 @@ export default function AddStructureModal({ onClose, onSubmit }) {
       onClick={onClose}
     >
       <div
-        className="bg-white p-6 rounded-xl w-[800px] max-h-[90vh] overflow-y-auto shadow-lg"
+        className="bg-white border-2 border-[#008080] rounded-2xl p-8 w-[800px] max-h-[92vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold mb-4 text-black">Add New Structure</h2>
-        <div id="jsme_container" className="mb-6 border rounded-md" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-black mb-6">
+        <h2 className="text-3xl font-extrabold text-[#002C36] uppercase tracking-wide mb-6 border-b-2 border-[#008080] pb-3">Add New Structure</h2>
+        <div id="jsme_container" className="mb-6 border-2 border-[#008080] rounded-lg" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[#002C36] mb-6">
           {[...fields, ...Object.keys(formData).filter((key) => !fields.includes(key) && key !== "attachments")].map((field) => (
             <div key={field} className="flex flex-col">
-              <span className="text-sm font-semibold text-gray-600">{field}</span>
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">{field}</span>
               <input
                 type="text"
                 name={field}
                 value={formData[field] || ""}
                 onChange={handleChange}
-                className="border rounded px-2 py-1 text-sm text-black"
+                className="border border-[#008080] rounded px-2 py-1 text-sm text-[#002C36] bg-white focus:ring-2 focus:ring-[#008080]"
               />
             </div>
           ))}
         </div>
         {/* Attachments Section */}
-        <div className="mt-6 flex gap-4 flex-wrap justify-center">
+        <div className="mt-6 flex gap-2 flex-wrap justify-center">
           {Object.keys(attachments).map((key) => (
             <button
               key={key}
-              className="text-blue-600 underline hover:text-blue-800 mb-1"
+              className="border border-[#008080] text-[#008080] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-[#008080] hover:text-white transition-all mb-1"
               type="button"
               onClick={() => setSelectedAttachment(key)}
             >
@@ -185,52 +185,51 @@ export default function AddStructureModal({ onClose, onSubmit }) {
           ))}
         </div>
         {/* Add Field Buttons */}
-        <div className="mt-8 flex gap-4 justify-center">
+        <div className="mt-8 flex gap-2 justify-center">
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer"
+            className="px-2 py-0.5 bg-[#008080] text-white rounded-md hover:bg-[#006666] font-bold uppercase tracking-wide text-xs"
             onClick={handleAddAttachmentField}
             type="button"
           >
-            Add Attachment Field
+            + Add Attachment Field
           </button>
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer"
+            className="px-2 py-0.5 bg-[#008080] text-white rounded-md hover:bg-[#006666] font-bold uppercase tracking-wide text-xs"
             onClick={handleAddTextField}
             type="button"
           >
-            Add Text Field
+            + Add Text Field
           </button>
         </div>
         {/* Add Text Field Modal */}
         {showAddTextField && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddTextField(false)}>
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
-              <h2 className="text-xl font-bold mb-4">Add Text Field</h2>
+            <div className="bg-white rounded-2xl border-2 border-[#008080] shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-bold mb-4 text-[#002C36] uppercase tracking-wide">Add Text Field</h2>
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                className="w-full border border-[#008080] rounded p-2 mb-4 text-[#002C36] bg-white focus:ring-2 focus:ring-[#008080]"
                 placeholder="Field name"
                 value={newTextFieldName}
                 onChange={e => setNewTextFieldName(e.target.value)}
               />
               <textarea
-                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                className="w-full border border-[#008080] rounded p-2 mb-4 text-[#002C36] bg-white focus:ring-2 focus:ring-[#008080]"
                 placeholder="Field value"
                 value={newTextFieldValue}
                 onChange={e => setNewTextFieldValue(e.target.value)}
               />
               <div className="flex justify-end gap-2">
                 <button
-                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                  className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 text-[#002C36] font-bold uppercase tracking-wide text-xs"
                   onClick={() => setShowAddTextField(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-3 py-1 bg-[#008080] text-white rounded-md hover:bg-[#006666] font-bold uppercase tracking-wide text-xs"
                   onClick={() => {
                     if (!newTextFieldName.trim()) return;
-                    // Add the new field to the fields array if not already present
                     if (!fields.includes(newTextFieldName)) {
                       fields.push(newTextFieldName);
                     }
@@ -249,24 +248,24 @@ export default function AddStructureModal({ onClose, onSubmit }) {
         {/* Add Attachment Field Modal */}
         {showAddAttachmentField && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddAttachmentField(false)}>
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
-              <h2 className="text-xl font-bold mb-4">Add Attachment Field</h2>
+            <div className="bg-white rounded-2xl border-2 border-[#008080] shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-bold mb-4 text-[#002C36] uppercase tracking-wide">Add Attachment Field</h2>
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                className="w-full border border-[#008080] rounded p-2 mb-4 text-[#002C36] bg-white focus:ring-2 focus:ring-[#008080]"
                 placeholder="Attachment field name"
                 value={newAttachmentFieldName}
                 onChange={e => setNewAttachmentFieldName(e.target.value)}
               />
               <div className="flex justify-end gap-2">
                 <button
-                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                  className="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300 text-[#002C36] font-bold uppercase tracking-wide text-xs"
                   onClick={() => setShowAddAttachmentField(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-3 py-1 bg-[#008080] text-white rounded-md hover:bg-[#006666] font-bold uppercase tracking-wide text-xs"
                   onClick={() => {
                     if (!newAttachmentFieldName.trim()) return;
                     setAttachments((prev) => ({
@@ -300,9 +299,9 @@ export default function AddStructureModal({ onClose, onSubmit }) {
         )}
         <button
           onClick={handleSave}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 cursor-pointer rounded"
+          className="bg-[#008080] hover:bg-[#006666] text-white px-4 py-2 cursor-pointer rounded-lg font-bold uppercase tracking-wide text-base mt-6 float-right"
         >
-          ✅ Save Compound
+          Save Compound
         </button>
       </div>
     </div>

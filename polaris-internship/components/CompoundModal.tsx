@@ -72,11 +72,13 @@ export default function CompoundModal({
   const [newTextFieldName, setNewTextFieldName] = useState("");
   const [newTextFieldValue, setNewTextFieldValue] = useState("");
   const [showFullStructureModal, setShowFullStructureModal] = useState(false);
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+
 
 
   // List of unwanted fields to exclude from custom display
   const unwanted = [
-    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl"
+    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl", "tags"
   ];
 
   // Your defined fields (always shown, in order)
@@ -224,46 +226,82 @@ export default function CompoundModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center"
+      className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center"
       onClick={onClose}
+      style={{backdropFilter: 'blur(2px)'}}
     >
       <div
-        className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white border-2 border-[#00E6D2] p-8 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-black">
-            Compound Details{" "}
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6 border-b-2 border-[#00E6D2] pb-3">
+          <h2 className="text-3xl font-extrabold text-[#002C36] uppercase tracking-wide flex items-center gap-2">
+            Compound Details
             {source === "lot" && lotId && (
-              <span className="text-purple-600 text-sm ml-2">(from Lot: {lotId})</span>
+              <span className="text-purple-600 text-base ml-2 font-semibold">(from Lot: {lotId})</span>
             )}
           </h2>
+          <button onClick={onClose} className="text-[#002C36] text-3xl font-bold hover:text-[#00E6D2] transition-colors ml-4">&times;</button>
+        </div>
+
+        {/* Tag and Lot Buttons */}
+        <div className="flex flex-wrap gap-3 mb-6 items-center justify-between">
           <div className="flex gap-2">
             <div className="relative">
               <button
-                className="text-purple-600 border border-purple-600 px-2 py-1 rounded cursor-pointer"
+                className="border border-[#00E6D2] text-[#00E6D2] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-[#00E6D2] hover:text-[#002C36] transition-all"
+                onClick={() => setShowTagDropdown((prev) => !prev)}
+              >
+                🏷️ Tags
+              </button>
+              {showTagDropdown && (
+                <div className="absolute left-0 bg-white shadow-lg border border-[#00E6D2] mt-2 z-50 rounded w-44">
+                  {["testing", "crystals"].map((tag) => (
+                    <div
+                      key={tag}
+                      className="px-4 py-2 text-[#002C36] hover:bg-[#00E6D2]/20 cursor-pointer font-semibold"
+                      onClick={async () => {
+                        const updatedTags = editedCompound.tags?.includes(tag)
+                          ? editedCompound.tags.filter((t: string) => t !== tag)
+                          : [...(editedCompound.tags || []), tag];
+                        const updatedCompound = { ...editedCompound, tags: updatedTags };
+                        setEditedCompound(updatedCompound);
+                        setShowTagDropdown(false);
+                        await onUpdate(updatedCompound);
+                      }}
+                    >
+                      <span className={editedCompound.tags?.includes(tag) ? "font-bold text-[#00E6D2]" : ""}>
+                        {editedCompound.tags?.includes(tag) ? "✔️ " : ""}
+                        {tag}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                className="border border-purple-600 text-purple-600 font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-purple-100 transition-all"
                 onClick={() => setShowLotDropdown((prev) => !prev)}
               >
                 📦 Lots ({lotsForCompound.length})
               </button>
-
               {showLotDropdown && (
-                <div className="absolute bg-white shadow-md border border-gray-200 mt-2 right-0 z-50 rounded w-65">
+                <div className="absolute left-0 bg-white shadow-lg border border-purple-400 mt-2 z-50 rounded w-56">
                   <div
                     onClick={() => {
                       setShowLotDropdown(false);
                       setShowCreateLotModal(true);
                     }}
-                    className="px-3 py-2 text-blue-600 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
+                    className="px-4 py-2 text-blue-600 hover:bg-blue-50 cursor-pointer border-b border-purple-200 font-semibold"
                   >
                     ➕ Create Lot
                   </div>
-
                   {lotsForCompound.map((lotId) => (
-
                     <div
                       key={lotId}
-                      className="px-3 py-2 text-black hover:bg-gray-100 cursor-pointer"
+                      className="px-4 py-2 text-[#002C36] hover:bg-purple-50 cursor-pointer font-semibold"
                       onClick={async () => {
                         try {
                           const res = await fetch(`http://localhost:5000/lot/${lotId}`);
@@ -295,10 +333,6 @@ export default function CompoundModal({
                                 },
                               },
                             });
-                            setShowLotDropdown(false);
-                            onUpdateCompoundFromLot?.(compoundFromLot, lotId);
-                          } else {
-                            alert("No data found for that lot.");
                           }
                         } catch (err) {
                           console.error("Failed to load lot:", err);
@@ -312,13 +346,12 @@ export default function CompoundModal({
               )}
             </div>
             {isLotVersion && (
-            <button
-              className="text-blue-600 border border-blue-600 text-sm px-2 py-1 rounded hover:bg-blue-100 cursor-pointer"
+              <button
+                className="border border-blue-600 text-blue-600 font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-blue-100 transition-all"
                 onClick={async () => {
                   try {
                     const res = await fetch(`http://localhost:5000/compounds/${compound.original_id}`);
                     const original = await res.json();
-
                     setEditedCompound({
                       ...original,
                       attachments: {
@@ -336,8 +369,6 @@ export default function CompoundModal({
                         },
                       },
                     });
-
-                    // reset context if needed
                     onUpdateCompoundFromLot?.(original, null);
                   } catch (err) {
                     console.error("Failed to load original compound", err);
@@ -347,83 +378,102 @@ export default function CompoundModal({
                 ⬅️ Back to Original
               </button>
             )}
-
+          </div>
+          <div className="flex gap-2">
             <button
-              className="text-blue-600 border border-blue-600 px-2 py-1 rounded cursor-pointer"
+              className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
               onClick={() => (editMode ? handleSave() : setEditMode(true))}
             >
               {editMode ? "Save" : "Edit"}
             </button>
-            <button className="text-red-600 border border-red-600 px-2 py-1 rounded cursor-pointer" onClick={handleDelete}>
+            <button className="bg-red-100 hover:bg-red-200 text-red-600 font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all" onClick={handleDelete}>
               Delete
-            </button>
-            <button onClick={onClose} className="text-black text-xl font-bold">
-              &times;
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-black">
+        {/* Section Divider */}
+        <div className="w-full flex items-center mb-6">
+          <hr className="flex-grow border-t border-[#00E6D2]/40" />
+          <span className="mx-4 text-lg text-[#00E6D2] font-bold uppercase tracking-wide">Compound Info</span>
+          <hr className="flex-grow border-t border-[#00E6D2]/40" />
+        </div>
+
+        {/* Fields Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[#002C36] mb-8">
           {fields.map((field) => (
-            <div key={field} className="flex flex-col">
-              <span className="text-sm font-semibold text-gray-600">{field}</span>
+            <div key={field} className="flex flex-col mb-2">
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">{field}</span>
               {editMode ? (
                 <input
-                  className="border rounded px-2 py-1 text-sm"
+                  className="border border-[#00E6D2] rounded px-2 py-1 text-sm bg-white text-[#002C36] focus:ring-2 focus:ring-[#00E6D2]"
                   value={editedCompound[field] ?? ""}
                   onChange={(e) => handleChange(field, e.target.value)}
                 />
               ) : (
-                <span className={compound[field] ? "text-black" : "text-gray-400"}>
+                <span
+                  className={compound[field] ? "text-[#002C36] break-words max-w-[250px]" : "text-gray-400"}
+                  style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}
+                >
                   {compound[field] ? compound[field] : "N/A"}
                 </span>
               )}
             </div>
           ))}
-            {Object.keys(editedCompound)
-              .filter((key) => !fields.includes(key) && !unwanted.includes(key))
-              .map((key) => (
-                <div key={key} className="flex flex-col">
-                  <span className="text-sm font-semibold text-gray-600">{key}</span>
-                  {editMode ? (
-                    <input
-                      className="border rounded px-2 py-1 text-sm"
-                      value={editedCompound[key] ?? ""}
-                      onChange={(e) => handleChange(key, e.target.value)}
-                    />
-                  ) : (
-                    <span className={compound[key] ? "text-black" : "text-gray-400"}>
-                      {compound[key] ? compound[key] : "N/A"}
-                    </span>
-                  )}
-                </div>
+          {Object.keys(editedCompound)
+            .filter((key) => !fields.includes(key) && !unwanted.includes(key))
+            .map((key) => (
+              <div key={key} className="flex flex-col mb-2">
+                <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">{key}</span>
+                {editMode ? (
+                  <input
+                    className="border border-[#00E6D2] rounded px-2 py-1 text-sm bg-white text-[#002C36] focus:ring-2 focus:ring-[#00E6D2]"
+                    value={editedCompound[key] ?? ""}
+                    onChange={(e) => handleChange(key, e.target.value)}
+                  />
+                ) : (
+                  <span className={compound[key] ? "text-[#002C36]" : "text-gray-400"}>
+                    {compound[key] ? compound[key] : "N/A"}
+                  </span>
+                )}
+              </div>
             ))}
         </div>
+
         {/* Attachments Section */}
-        <div className="mt-6 flex gap-4 flex-wrap justify-center">
-          {getAllAttachmentKeys().map((key) => (
+        <div className="w-full flex flex-col items-center mb-8">
+          <div className="flex gap-2 flex-wrap justify-center mb-2">
+            {getAllAttachmentKeys().map((key) => (
+              <button
+                key={key}
+                className="border border-[#00E6D2] text-[#00E6D2] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-[#00E6D2] hover:text-[#002C36] transition-all mb-1"
+                onClick={() => setSelectedAttachment(key)}
+              >
+                {key.replace(/_/g, " ")}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-4 mt-2">
             <button
-              key={key}
-              className="text-blue-600 underline hover:text-blue-800 mb-1"
-              onClick={() => setSelectedAttachment(key)}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer font-bold uppercase tracking-wide"
+              onClick={handleAddAttachmentField}
             >
-              {key.replace(/_/g, " ")}
+              Add Attachment Field
             </button>
-          ))}
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer font-bold uppercase tracking-wide"
+              onClick={() => setShowAddTextField(true)}
+            >
+              Add Text Field
+            </button>
+          </div>
         </div>
 
+        {/* Structure Preview */}
         <div className="mt-6 text-center">
           <div
-            className="bg-white p-2 rounded-lg border shadow hover:shadow-md transition-all cursor-pointer"
-            style={{
-              width: 180,
-              height: 140,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-              margin: "0 auto",
-            }}
+            className="bg-white p-2 rounded-lg border-2 border-[#00E6D2] shadow hover:shadow-md transition-all cursor-pointer mx-auto flex items-center justify-center"
+            style={{ width: 200, height: 150, overflow: "hidden" }}
             onClick={() => setShowFullStructureModal(true)}
           >
             {compound.imageUrl ? (
@@ -437,86 +487,55 @@ export default function CompoundModal({
                 try {
                   const mol = window.RDKit.get_mol(compound.smiles || "");
                   return mol ? (
-                  <div
-                    dangerouslySetInnerHTML={{ __html: mol.get_svg() }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
-                      transform: "scale(0.6)",
-                      transformOrigin: "center",
-                    }}
-                  />
-                  ) : (
-                    <span className="text-sm text-gray-500">Invalid SMILES</span>
-                  );
+                    <div
+                      dangerouslySetInnerHTML={{ __html: mol.get_svg() }}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", transform: "scale(0.6)", transformOrigin: "center" }}
+                    />
+                  ) : null;
                 } catch {
-                  return <span className="text-sm text-gray-500">Invalid SMILES</span>;
+                  return null;
                 }
               })() : (
                 <span className="text-sm text-gray-500">Loading...</span>
               )
             )}
           </div>
+          <div className="text-xs text-gray-500 mt-1">Click to view full structure</div>
         </div>
 
-
-
-
-        {/* Add Field Buttons */}
-        <div className="mt-8 flex gap-4 justify-center">
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer"
-            onClick={handleAddAttachmentField}
-          >
-            Add Attachment Field
-          </button>
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 cursor-pointer"
-            onClick={() => setShowAddTextField(true)}
-          >
-            Add Text Field
-          </button>
-        </div>
-
+        {/* Add Text Field Modal */}
         {showAddTextField && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddTextField(false)}>
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
-              <h2 className="text-xl font-bold mb-4">Add Text Field</h2>
+            <div className="bg-white rounded-2xl border-2 border-[#00E6D2] shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-bold mb-4 text-[#002C36] uppercase tracking-wide">Add Text Field</h2>
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                className="w-full border border-[#00E6D2] rounded p-2 mb-4 text-[#002C36] bg-white focus:ring-2 focus:ring-[#00E6D2]"
                 placeholder="Field name"
                 value={newTextFieldName}
                 onChange={e => setNewTextFieldName(e.target.value)}
               />
               <textarea
-                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                className="w-full border border-[#00E6D2] rounded p-2 mb-4 text-[#002C36] bg-white focus:ring-2 focus:ring-[#00E6D2]"
                 placeholder="Field value"
                 value={newTextFieldValue}
                 onChange={e => setNewTextFieldValue(e.target.value)}
               />
               <div className="flex justify-end gap-2">
                 <button
-                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-[#002C36] font-bold uppercase tracking-wide"
                   onClick={() => setShowAddTextField(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-[#00E6D2] text-[#002C36] rounded hover:bg-[#00bfae] font-bold uppercase tracking-wide"
                   onClick={async () => {
                     if (!newTextFieldName.trim()) return;
-                    const updatedCompound = {
-                      ...editedCompound,
-                      [newTextFieldName]: newTextFieldValue,
-                    };
-                    setEditedCompound(updatedCompound);
+                    setEditedCompound((prev) => ({ ...prev, [newTextFieldName]: newTextFieldValue }));
                     setShowAddTextField(false);
                     setNewTextFieldName("");
                     setNewTextFieldValue("");
-                    await onUpdate(updatedCompound);
                   }}
                 >
                   Save
@@ -525,6 +544,8 @@ export default function CompoundModal({
             </div>
           </div>
         )}
+
+        {/* Attachment Modal */}
         {selectedAttachment && (
           <AttachmentModal
             attachmentKey={selectedAttachment}
@@ -539,31 +560,33 @@ export default function CompoundModal({
                 },
               };
               setEditedCompound(updatedCompound);
-              // Immediately persist the attachment update to Firestore
               await onUpdate(updatedCompound);
             }}
           />
         )}
+
+        {/* Create Lot Modal */}
         {showCreateLotModal && (
           <CreateLotModal
-            compounds={[compound]}  // Only allow creating a lot with this compound
+            compounds={[compound]}
             onClose={() => setShowCreateLotModal(false)}
             onCreate={async () => {
-              // Refresh lots after new one is created
               const res = await fetch(`http://localhost:5000/lots-for-compound/${compound.id}`);
               const updatedLots = await res.json();
               setLotsForCompound(updatedLots);
             }}
           />
         )}
+
+        {/* Full Structure Modal */}
         {showFullStructureModal && (
-          <div className="fixed inset-0 bg-opacity-80 z-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded shadow-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
-              <h2 className="text-lg font-bold mb-2">Full Structure</h2>
+          <div className="fixed inset-0 bg-black/70 z-50 flex justify-center items-center">
+            <div className="bg-white p-8 rounded-2xl border-2 border-[#00E6D2] shadow-2xl max-w-4xl w-full max-h-[92vh] overflow-auto relative">
+              <h2 className="text-2xl font-bold mb-4 text-[#002C36] uppercase tracking-wide">Full Structure</h2>
               <FullStructurePreview smiles={compound.smiles} />
               <button
                 onClick={() => setShowFullStructureModal(false)}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+                className="mt-6 px-6 py-2 bg-[#00E6D2] text-[#002C36] rounded-lg font-bold uppercase tracking-wide hover:bg-[#00bfae]"
               >
                 Close
               </button>
