@@ -1,7 +1,13 @@
-export type AttachmentData = {
+export type MultiAttachmentEntry = {
+  name?: string;
   note: string;
   imageUrl: string;
 };
+
+export type AttachmentData = {
+  note: string;
+  imageUrl: string;
+} | MultiAttachmentEntry[];
 
 export type Compound = {
   id: string;

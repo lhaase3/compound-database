@@ -92,6 +92,23 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const targetId = localStorage.getItem("compoundToOpen");
+    if (targetId && compounds.length > 0) {  // ✅ Wait until compounds are loaded
+      const targetCompound = compounds.find((c) => c.id === targetId);
+      if (targetCompound) {
+        setSelectedCompound(targetCompound);
+        localStorage.removeItem("compoundToOpen");
+      }
+    }
+  }, [compounds]);
+
+
+
+
+
+
+
+  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
         filterRef.current &&
@@ -671,6 +688,7 @@ export default function Home() {
             setSelectedCompound(null);
             setSelectedSource(null);
             setCurrentLotId(null);
+            localStorage.removeItem("compoundToOpen");
           }}
           onDelete={async (id: string) => {
             try {

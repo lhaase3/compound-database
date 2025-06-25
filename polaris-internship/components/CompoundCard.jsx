@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import SMILESRenderer from "./SMILESRenderer";
 
-export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggleStar, cardColor = "#00343F", accentColor = "#00E6D2", compareChecked = false, onToggleCompare }) {
+export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggleStar, cardColor = "#00343F", accentColor = "#00E6D2", compareChecked = false, onToggleCompare, similarity }) {
   return (
     <motion.div
       className="relative rounded-2xl shadow-lg p-6 flex flex-col items-center gap-4 border transition-all duration-200 cursor-pointer w-72 group"
@@ -11,6 +11,7 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
       onClick={() => onMoreInfo(compound)}
       whileHover={{ scale: 1.045 }}
     >
+
       {/* Hover border/glow */}
       <div className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-200 group-hover:shadow-[0_0_0_4px] group-hover:shadow-[var(--accent)]" style={{ '--accent': accentColor }} />
       {/* Star icon button */}
@@ -23,6 +24,7 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
       >
         {isStarred ? '★' : '☆'}
       </button>
+      
       {/* Compare checkbox */}
       {onToggleCompare && (
         <label
@@ -39,6 +41,11 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
           />
           Compare
         </label>
+      )}
+      {similarity !== undefined && (
+        <div className="absolute top-10 left-2 bg-[#00E6D2] text-[#002C36] font-bold text-xs px-2 py-1 rounded z-20">
+          {`${(similarity * 100).toFixed(1)}% Similar`}
+        </div>
       )}
       <div className="w-full flex justify-center">
         {compound.imageUrl && typeof compound.imageUrl === 'string' && compound.imageUrl.trim() !== '' ? (
