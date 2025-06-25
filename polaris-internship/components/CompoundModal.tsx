@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Compound } from "@/types/compound";
+import { Compound, AttachmentData } from "../types/compound";
 import AttachmentModal from "./AttachmentModal";
 import CreateLotModal from "./CreateLotModal";
 
@@ -13,14 +13,137 @@ type Props = {
   onUpdateCompoundFromLot?: (compound: Compound, lotId: string | null) => void;
 };
 
-type AttachmentData = {
-  note: string;
-  imageUrl: string;
-};
+// --- Types for multi-attachment support ---
+type MultiAttachmentEntry = { name: string; note: string; imageUrl: string };
 
-type CompoundWithAttachments = Compound & {
+type CompoundWithAttachments = Omit<Compound, 'attachments'> & {
   attachments: { [key: string]: AttachmentData };
 };
+
+// --- Helper to check if an attachment supports multiple entries ---
+const multiEntryAttachments = ["lcms", "uv_vis", "dsc", "thermal_stability", "pda_detector_spectrum"];
+function isMultiAttachment(key: string) {
+  return multiEntryAttachments.includes(key);
+}
+
+// --- Add to AttachmentModal prop types (at the top of the file, or import if external) ---
+// interface AttachmentModalProps extends ... {
+//   isMulti?: boolean;
+//   isNewEntry?: boolean;
+//   renderHeaderExtra?: React.ReactNode;
+// }
+
+// Helper to merge updates with the full compound
+function getFullCompoundUpdate(base: Compound, updates: Partial<CompoundWithAttachments>): Compound {
+  // Always preserve id, smiles, and all required fields
+  return {
+    ...base,
+    ...updates,
+    id: base.id,
+    smiles: base.smiles,
+    attachments: {
+      ...base.attachments,
+      ...updates.attachments,
+    },
+  };
+}
+
+// --- NewAttachmentEntryModal: Dedicated child component for new multi-attachment entries ---
+function NewAttachmentEntryModal({
+  keyName,
+  onAdd,
+  onClose
+}: {
+  keyName: string;
+  onAdd: (entry: any) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [note, setNote] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (selected) {
+      setFile(selected);
+      setImageUrl(URL.createObjectURL(selected)); // preview
+    }
+  };
+
+  const handleAdd = async () => {
+    setError("");
+    let finalUrl = imageUrl;
+    if (file) {
+      setUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("note", note);
+        const res = await fetch("http://localhost:5000/upload-image-to-firebase", {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Upload failed");
+        }
+        const result = await res.json();
+        finalUrl = result.fileUrl;
+      } catch (err: any) {
+        setError(err.message || "Upload failed");
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+    onAdd({ name, note, imageUrl: finalUrl });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={onClose}>
+      <div className="bg-white rounded-2xl border-2 border-[#00E6D2] shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+        <h2 className="text-2xl font-bold mb-4 text-[#002C36] uppercase tracking-wide">Add New {keyName.replace(/_/g, " ")}</h2>
+        <input
+          type="text"
+          className="w-full border border-[#00E6D2] rounded p-2 mb-4 text-[#002C36] bg-white focus:ring-2 focus:ring-[#00E6D2]"
+          placeholder="Name (optional)"
+          value={name}
+          onChange={e => setName(e.target.value)}
+        />
+        <textarea
+          className="w-full border border-[#00E6D2] rounded p-2 mb-4 text-[#002C36] bg-white focus:ring-2 focus:ring-[#00E6D2]"
+          placeholder="Note"
+          value={note}
+          onChange={e => setNote(e.target.value)}
+        />
+        <input
+          type="file"
+          accept="image/*"
+          className="mb-4"
+          onChange={handleFileChange}
+        />
+        {imageUrl && (
+          <img src={imageUrl} alt="preview" className="w-full max-h-48 object-contain mb-4 rounded border" />
+        )}
+        {error && <div className="text-red-600 mb-2">{error}</div>}
+        <div className="flex gap-2 justify-end">
+          <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" onClick={onClose} disabled={uploading}>Cancel</button>
+          <button
+            className="px-4 py-2 bg-[#00E6D2] text-[#002C36] rounded hover:bg-[#00bfae] font-bold"
+            onClick={handleAdd}
+            disabled={uploading}
+          >
+            {uploading ? "Uploading..." : "Add"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function CompoundModal({
   compound,
@@ -35,35 +158,41 @@ export default function CompoundModal({
   const [editedCompound, setEditedCompound] = useState<CompoundWithAttachments>(() => ({
     ...compound,
     attachments: {
-      uv_vis: {
-        note: compound.attachments?.uv_vis?.note || "",
-        imageUrl: compound.attachments?.uv_vis?.imageUrl || "",
-      },
-      dsc: {
-        note: compound.attachments?.dsc?.note || "",
-        imageUrl: compound.attachments?.dsc?.imageUrl || "",
-      },
-      lcms: {
-        note: compound.attachments?.lcms?.note || "",
-        imageUrl: compound.attachments?.lcms?.imageUrl || "",
-      },
-      thermal_stability: {
-        note: compound.attachments?.thermal_stability?.note || "",
-        imageUrl: compound.attachments?.thermal_stability?.imageUrl || "",
-      },
-      pda_detector_spectrum: {
-        note: compound.attachments?.pda_detector_spectrum?.note || "",
-        imageUrl: compound.attachments?.pda_detector_spectrum?.imageUrl || "",
-      }
+      uv_vis: Array.isArray(compound.attachments?.uv_vis)
+        ? { note: '', imageUrl: '' }
+        : { note: compound.attachments?.uv_vis?.note || '', imageUrl: compound.attachments?.uv_vis?.imageUrl || '' },
+      dsc: Array.isArray(compound.attachments?.dsc)
+        ? { note: '', imageUrl: '' }
+        : { note: compound.attachments?.dsc?.note || '', imageUrl: compound.attachments?.dsc?.imageUrl || '' },
+      lcms: Array.isArray(compound.attachments?.lcms)
+        ? { note: '', imageUrl: '' }
+        : { note: compound.attachments?.lcms?.note || '', imageUrl: compound.attachments?.lcms?.imageUrl || '' },
+      thermal_stability: Array.isArray(compound.attachments?.thermal_stability)
+        ? { note: '', imageUrl: '' }
+        : { note: compound.attachments?.thermal_stability?.note || '', imageUrl: compound.attachments?.thermal_stability?.imageUrl || '' },
+      pda_detector_spectrum: Array.isArray(compound.attachments?.pda_detector_spectrum)
+        ? { note: '', imageUrl: '' }
+        : { note: compound.attachments?.pda_detector_spectrum?.note || '', imageUrl: compound.attachments?.pda_detector_spectrum?.imageUrl || '' },
+      ...Object.fromEntries(
+        Object.entries(compound.attachments || {})
+          .filter(([k]) => !['uv_vis', 'dsc', 'lcms', 'thermal_stability', 'pda_detector_spectrum'].includes(k))
+          .map(([k, att]) => [
+            k,
+            Array.isArray(att)
+              ? []
+              : { note: (att as any)?.note || '', imageUrl: (att as any)?.imageUrl || '' }
+          ])
+      )
     },
   }));
 
   // Track user-added custom fields
   const [lotsForCompound, setLotsForCompound] = useState<string[]>([]);
   const [showLotDropdown, setShowLotDropdown] = useState(false);
-  const [selectedAttachment, setSelectedAttachment] = useState<
-    "uv_vis" | "dsc" | "lcms" | "thermal_stability" | "pda_detector_spectrum" | string | null
-  >(null);
+  const [attachmentDropdown, setAttachmentDropdown] = useState<{key: string, anchor: HTMLElement | null} | null>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
+  const [selectedAttachmentIdx, setSelectedAttachmentIdx] = useState<number | null>(null);
+  const [showNewEntryModal, setShowNewEntryModal] = useState<{key: string}|null>(null);
   const isLotVersion = source === "lot" && compound.original_id;
   const [showCreateLotModal, setShowCreateLotModal] = useState(false);
   const [showAddTextField, setShowAddTextField] = useState(false);
@@ -74,6 +203,7 @@ export default function CompoundModal({
   const [currentLotId, setCurrentLotId] = useState<string | null>(lotId);
   const lotDropdownRef = useRef<HTMLDivElement>(null);
   const tagDropdownRef = useRef<HTMLDivElement>(null);
+  const attachmentDropdownRef = useRef<HTMLDivElement | null>(null); // <-- NEW
 
 
   // List of unwanted fields to exclude from custom display
@@ -110,9 +240,10 @@ export default function CompoundModal({
     setEditedCompound((prev) => ({ ...prev, [field]: value }));
   };
 
+  // --- Fix handleSave (edit/save compound) ---
   const handleSave = async () => {
     try {
-      if (source === "lot" && currentLotId) {
+      if (source === "lot" && onUpdateCompoundFromLot) {
         // Save to lot compound endpoint
         const response = await fetch("http://localhost:5000/update-lot-compound", {
           method: "POST",
@@ -133,7 +264,7 @@ export default function CompoundModal({
         }
         setEditMode(false);
       } else {
-        await onUpdate(editedCompound);
+        await onUpdate(getFullCompoundUpdate(compound, editedCompound));
         setEditMode(false);
       }
     } catch (err) {
@@ -153,31 +284,48 @@ export default function CompoundModal({
     }
   };
 
+  // --- Normalize attachments on load to support arrays for multi ---
   useEffect(() => {
-    const builtIn = [
-      "uv_vis",
-      "dsc",
-      "lcms",
-      "thermal_stability",
-      "pda_detector_spectrum",
-    ];
+    const builtIn = multiEntryAttachments;
     const allKeys = compound.attachments
       ? Array.from(new Set([...Object.keys(compound.attachments), ...builtIn]))
       : builtIn;
-
+    // Fix type for normalizedAttachments
     const normalizedAttachments: { [key: string]: AttachmentData } = {};
     allKeys.forEach((key) => {
-      const att = compound.attachments?.[key] || { note: "", imageUrl: "" };
-      normalizedAttachments[key] = {
-        note: att.note || "",
-        imageUrl: att.imageUrl || "",
-      };
+      const att = compound.attachments?.[key];
+      if (isMultiAttachment(key)) {
+        if (Array.isArray(att)) {
+          normalizedAttachments[key] = att.map((entry) => ({
+            name: entry.name || '',
+            note: entry.note || '',
+            imageUrl: entry.imageUrl || '',
+          }));
+        } else if (att && (Array.isArray(att) ? att.length > 0 : (att.note || att.imageUrl))) {
+          if (Array.isArray(att)) {
+            normalizedAttachments[key] = att;
+          } else {
+            normalizedAttachments[key] = [{
+              name: key.charAt(0).toUpperCase() + key.slice(1),
+              note: att.note || '',
+              imageUrl: att.imageUrl || '',
+            }];
+          }
+        } else {
+          normalizedAttachments[key] = [];
+        }
+      } else {
+        if (Array.isArray(att)) {
+          normalizedAttachments[key] = [];
+        } else {
+          normalizedAttachments[key] = {
+            note: att?.note || '',
+            imageUrl: att?.imageUrl || '',
+          };
+        }
+      }
     });
-
-    setEditedCompound((prev) => ({
-      ...compound,
-      attachments: normalizedAttachments,
-    }));
+    setEditedCompound((prev) => ({ ...compound, attachments: normalizedAttachments }));
   }, [compound]);
 
 
@@ -219,12 +367,32 @@ export default function CompoundModal({
   }, [showTagDropdown]);
 
 
+  useEffect(() => {
+    const handleClickOutsideAttachment = (event: MouseEvent) => {
+      if (
+        attachmentDropdownRef.current &&
+        !attachmentDropdownRef.current.contains(event.target as Node)
+      ) {
+        setAttachmentDropdown(null);
+      }
+    };
+    if (attachmentDropdown) {
+      document.addEventListener("mousedown", handleClickOutsideAttachment);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutsideAttachment);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideAttachment);
+    };
+  }, [attachmentDropdown]);
+
 
 
   // Helper: get all attachment keys (built-in + custom)
   const getAllAttachmentKeys = () => Object.keys(editedCompound.attachments || {});
 
   // Add Attachment Field
+  // --- Fix handleAddAttachmentField ---
   const handleAddAttachmentField = async () => {
     const name = prompt("Enter a name for the new attachment field:");
     if (
@@ -239,7 +407,7 @@ export default function CompoundModal({
         },
       };
       setEditedCompound(updatedCompound);
-      await onUpdate(updatedCompound); // This is critical to immediately save the change
+      await onUpdate(getFullCompoundUpdate(compound, updatedCompound));
     }
   };
 
@@ -344,7 +512,7 @@ export default function CompoundModal({
                         const updatedCompound = { ...editedCompound, tags: updatedTags };
                         setEditedCompound(updatedCompound);
                         setShowTagDropdown(false);
-                        await onUpdate(updatedCompound);
+                        await onUpdate(getFullCompoundUpdate(compound, updatedCompound));
                       }}
                     >
                       <span className={editedCompound.tags?.includes(tag) ? "font-bold text-[#00E6D2]" : ""}>
@@ -409,8 +577,27 @@ export default function CompoundModal({
                   ))}
                 </div>
               )}
-
             </div>
+            <button
+              className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
+              onClick={async () => {
+                try {
+                  const res = await fetch("http://localhost:5000/similar-compounds", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ smiles: compound.smiles, id: compound.id, threshold: 0.7 }),
+                  });
+                  const data = await res.json();
+                  localStorage.setItem("similarCompounds", JSON.stringify(data)); // ✅ Save similar compounds
+                  localStorage.setItem("originalCompound", JSON.stringify(compound)); // ✅ Save the original compound
+                  window.location.href = "/similar-compounds"; // ✅ Redirect
+                } catch (err) {
+                  console.error("Failed to fetch similar compounds:", err);
+                }
+              }}
+            >
+              Similar Compounds
+            </button>
             {isLotVersion && (
               <button
                 className="border border-blue-600 text-blue-600 font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-blue-100 transition-all"
@@ -510,14 +697,63 @@ export default function CompoundModal({
         {/* Attachments Section */}
         <div className="w-full flex flex-col items-center mb-8">
           <div className="flex gap-2 flex-wrap justify-center mb-2">
-            {getAllAttachmentKeys().map((key) => (
-              <button
-                key={key}
-                className="border border-[#00E6D2] text-[#00E6D2] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-[#00E6D2] hover:text-[#002C36] transition-all mb-1"
-                onClick={() => setSelectedAttachment(key)}
-              >
-                {key.replace(/_/g, " ")}
-              </button>
+            {Object.entries(editedCompound.attachments || {}).map(([key, value]) => (
+              isMultiAttachment(key) && Array.isArray(value) ? (
+                <div key={key} className="relative">
+                  <button
+                    className="border border-[#00E6D2] text-[#00E6D2] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-[#00E6D2] hover:text-[#002C36] transition-all mb-1"
+                    onClick={e => setAttachmentDropdown({ key, anchor: e.currentTarget })}
+                  >
+                    {key.replace(/_/g, " ")}
+                  </button>
+                  {attachmentDropdown && attachmentDropdown.key === key && (
+                    <div
+                      ref={attachmentDropdownRef}
+                      className="absolute z-50 bg-white border border-[#00E6D2] rounded shadow-lg mt-2 left-0 min-w-[200px] max-h-72 overflow-y-auto"
+                    >
+                      <div
+                        className="px-4 py-2 hover:bg-[#00E6D2]/10 cursor-pointer font-semibold border-b border-[#00E6D2]"
+                        onClick={() => {
+                          setAttachmentDropdown(null);
+                          setShowNewEntryModal({key});
+                        }}
+                      >
+                        + New {key.replace(/_/g, " ")}
+                      </div>
+                      {value.map((entry, idx) => (
+                        <div
+                          key={idx}
+                          className="px-4 py-2 hover:bg-[#00E6D2]/10 cursor-pointer font-semibold"
+                          onClick={() => {
+                            setAttachmentDropdown(null);
+                            setSelectedAttachment(key);
+                            setSelectedAttachmentIdx(idx);
+                          }}
+                        >
+                          {entry.name || `${key} ${idx + 1}`}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  key={key}
+                  className="border border-[#00E6D2] text-[#00E6D2] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-[#00E6D2] hover:text-[#002C36] transition-all mb-1"
+                  onClick={() => {
+                    if (isMultiAttachment(key)) {
+                      // If only one entry, open directly
+                      setSelectedAttachment(key);
+                      setSelectedAttachmentIdx(0);
+                    } else {
+                      setSelectedAttachment(key);
+                      setSelectedAttachmentIdx(null);
+                    }
+                  }}
+                >
+                  {key.replace(/_/g, " ")}
+                </button>
+              )
             ))}
           </div>
           <div className="flex gap-4 mt-2">
@@ -607,7 +843,7 @@ export default function CompoundModal({
                     setShowAddTextField(false);
                     setNewTextFieldName("");
                     setNewTextFieldValue("");
-                    await onUpdate(updatedCompound); // This is what you are missing in your new version
+                    await onUpdate(getFullCompoundUpdate(compound, updatedCompound));
                   }}
                 >
                   Save
@@ -617,25 +853,65 @@ export default function CompoundModal({
           </div>
         )}
 
-        {/* Attachment Modal */}
-        {selectedAttachment && (
-          <AttachmentModal
-            attachmentKey={selectedAttachment}
-            data={editedCompound.attachments?.[selectedAttachment] || undefined}
-            onClose={() => setSelectedAttachment(null)}
-            onSave={async (note, fileUrl) => {
-              const updatedCompound = {
-                ...editedCompound,
-                attachments: {
-                  ...(editedCompound.attachments || {}),
-                  [selectedAttachment]: { note, imageUrl: fileUrl },
-                },
-              };
-              setEditedCompound(updatedCompound);
-              await onUpdate(updatedCompound);
+        {/* New Attachment Entry Modal (always rendered, toggled by state) */}
+        {showNewEntryModal && (
+          <NewAttachmentEntryModal
+            keyName={showNewEntryModal.key}
+            onAdd={(entry) => {
+              setEditedCompound(prev => {
+                const prevArr = Array.isArray(prev.attachments[showNewEntryModal.key]) ? prev.attachments[showNewEntryModal.key] : [];
+                const updated = {
+                  ...prev,
+                  attachments: {
+                    ...prev.attachments,
+                    [showNewEntryModal.key]: [...(prevArr as MultiAttachmentEntry[]), entry]
+                  }
+                };
+                // Always update with full compound
+                onUpdate(getFullCompoundUpdate(compound, updated));
+                return updated;
+              });
             }}
+            onClose={() => setShowNewEntryModal(null)}
           />
         )}
+
+        {/* Attachment Modal */}
+        {selectedAttachment && (() => {
+          const key = selectedAttachment;
+          const idx = selectedAttachmentIdx;
+          const isMulti = isMultiAttachment(key);
+          let data: MultiAttachmentEntry | { note: string; imageUrl: string } | undefined;
+          if (isMulti && typeof idx === "number" && Array.isArray(editedCompound.attachments[key])) {
+            data = (editedCompound.attachments[key] as MultiAttachmentEntry[])[idx];
+          } else {
+            data = editedCompound.attachments[key] as { note: string; imageUrl: string };
+          }
+          return (
+            <AttachmentModal
+              attachmentKey={key}
+              data={data}
+              isMulti={isMulti}
+              onClose={() => { setSelectedAttachment(null); setSelectedAttachmentIdx(null); }}
+              onSave={async (note: string, fileUrl: string, name?: string) => {
+                let updatedCompound = { ...editedCompound };
+                if (isMulti) {
+                  let arr = Array.isArray(editedCompound.attachments[key]) ? [...(editedCompound.attachments[key] as MultiAttachmentEntry[])] : [];
+                  if (typeof idx === "number") {
+                    arr[idx] = { name: name || arr[idx]?.name || `Entry ${idx+1}`, note, imageUrl: fileUrl };
+                  }
+                  updatedCompound.attachments = { ...updatedCompound.attachments, [key]: arr };
+                } else {
+                  updatedCompound.attachments = { ...updatedCompound.attachments, [key]: { note, imageUrl: fileUrl } };
+                }
+                setEditedCompound(updatedCompound);
+                await onUpdate(getFullCompoundUpdate(compound, updatedCompound));
+                setSelectedAttachment(null);
+                setSelectedAttachmentIdx(null);
+              }}
+            />
+          );
+        })()}
 
         {/* Create Lot Modal */}
         {showCreateLotModal && (

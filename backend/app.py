@@ -5,6 +5,7 @@ from firebase_admin import credentials, firestore, storage
 from flask_cors import CORS
 from rdkit import Chem
 from rdkit.Chem import Draw
+from rdkit.Chem import AllChem, DataStructs
 import re
 import uuid
 from google.oauth2 import service_account
@@ -201,6 +202,36 @@ def delete_compound(compound_id):
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/similar-compounds", methods=["POST"])
+def similar_compounds():
+    data = request.get_json()
+    smiles = data.get("smiles")
+    threshold = float(data.get("threshold", 0.7))  # Default threshold for similarity
+
+    if not smiles:
+        return jsonify({"error": "No SMILES provided"}), 400
+
+    query_mol = Chem.MolFromSmiles(smiles)
+    if query_mol is None:
+        return jsonify([])
+
+    query_fp = AllChem.GetMorganFingerprintAsBitVect(query_mol, 2, nBits=2048)
+
+    similar = []
+    for doc in db.collection("compounds").stream():
+        compound = doc.to_dict()
+        compound_smiles = compound.get("smiles", "")
+        mol = Chem.MolFromSmiles(compound_smiles)
+        if mol:
+            fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048)
+            similarity = DataStructs.TanimotoSimilarity(query_fp, fp)
+            if similarity >= threshold and compound["id"] != data.get("id"):
+                compound["similarity"] = similarity
+                similar.append(compound)
+
+    similar.sort(key=lambda x: x["similarity"], reverse=True)
+    return jsonify(similar)
     
 @app.route("/filter-phase-map", methods=["POST"])
 def filter_phase_map():
