@@ -32,7 +32,6 @@ export default function CompoundModal({
   onUpdateCompoundFromLot,
 }: Props) {
   const [editMode, setEditMode] = useState(false);
-
   const [editedCompound, setEditedCompound] = useState<CompoundWithAttachments>(() => ({
     ...compound,
     attachments: {
@@ -60,7 +59,6 @@ export default function CompoundModal({
   }));
 
   // Track user-added custom fields
-
   const [lotsForCompound, setLotsForCompound] = useState<string[]>([]);
   const [showLotDropdown, setShowLotDropdown] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<
@@ -73,12 +71,14 @@ export default function CompoundModal({
   const [newTextFieldValue, setNewTextFieldValue] = useState("");
   const [showFullStructureModal, setShowFullStructureModal] = useState(false);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
-
+  const [currentLotId, setCurrentLotId] = useState<string | null>(lotId);
+  const lotDropdownRef = useRef<HTMLDivElement>(null);
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
 
 
   // List of unwanted fields to exclude from custom display
   const unwanted = [
-    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl", "tags"
+    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl", "tags", "lotId", "Lambda Max (DCM/Ac CN)"
   ];
 
   // Your defined fields (always shown, in order)
@@ -101,14 +101,41 @@ export default function CompoundModal({
     }
   }, [compound.id]);
 
+  useEffect(() => {
+  setCurrentLotId(lotId);
+}, [lotId]);
+
+
   const handleChange = (field: string, value: string) => {
     setEditedCompound((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
     try {
-      await onUpdate(editedCompound);
-      setEditMode(false);
+      if (source === "lot" && currentLotId) {
+        // Save to lot compound endpoint
+        const response = await fetch("http://localhost:5000/update-lot-compound", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...editedCompound, lotId: currentLotId }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to update lot compound");
+        }
+        // Fetch the updated lot compound from Firestore and update editedCompound
+        const updated = await fetch(`http://localhost:5000/lot/${currentLotId}`)
+          .then(res => res.json());
+        // Find the correct compound by id
+        const updatedLotCompound = updated.find((c: any) => c.id === editedCompound.id);
+        if (updatedLotCompound) {
+          setEditedCompound((prev) => ({ ...prev, ...updatedLotCompound }));
+          onUpdateCompoundFromLot?.(updatedLotCompound, currentLotId); // ✅ Force re-sync parent
+        }
+        setEditMode(false);
+      } else {
+        await onUpdate(editedCompound);
+        setEditMode(false);
+      }
     } catch (err) {
       console.error("Update failed:", err);
     }
@@ -126,7 +153,6 @@ export default function CompoundModal({
     }
   };
 
-  // Normalize all attachments, including custom fields, and always include built-in keys
   useEffect(() => {
     const builtIn = [
       "uv_vis",
@@ -135,7 +161,10 @@ export default function CompoundModal({
       "thermal_stability",
       "pda_detector_spectrum",
     ];
-    const allKeys = compound.attachments ? Array.from(new Set([...Object.keys(compound.attachments), ...builtIn])) : builtIn;
+    const allKeys = compound.attachments
+      ? Array.from(new Set([...Object.keys(compound.attachments), ...builtIn]))
+      : builtIn;
+
     const normalizedAttachments: { [key: string]: AttachmentData } = {};
     allKeys.forEach((key) => {
       const att = compound.attachments?.[key] || { note: "", imageUrl: "" };
@@ -144,32 +173,76 @@ export default function CompoundModal({
         imageUrl: att.imageUrl || "",
       };
     });
+
     setEditedCompound((prev) => ({
       ...compound,
       attachments: normalizedAttachments,
-    } as CompoundWithAttachments));
+    }));
   }, [compound]);
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (lotDropdownRef.current && !lotDropdownRef.current.contains(event.target as Node)) {
+        setShowLotDropdown(false);
+      }
+    };
+
+    if (showLotDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showLotDropdown]);
+
+
+  useEffect(() => {
+    const handleClickOutsideTag = (event: MouseEvent) => {
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target as Node)) {
+        setShowTagDropdown(false);
+      }
+    };
+
+    if (showTagDropdown) {
+      document.addEventListener("mousedown", handleClickOutsideTag);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutsideTag);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideTag);
+    };
+  }, [showTagDropdown]);
+
+
 
 
   // Helper: get all attachment keys (built-in + custom)
   const getAllAttachmentKeys = () => Object.keys(editedCompound.attachments || {});
 
   // Add Attachment Field
-  const handleAddAttachmentField = () => {
+  const handleAddAttachmentField = async () => {
     const name = prompt("Enter a name for the new attachment field:");
     if (
       name &&
       !Object.keys(editedCompound.attachments || {}).includes(name)
     ) {
-      setEditedCompound((prev) => ({
-        ...prev,
+      const updatedCompound = {
+        ...editedCompound,
         attachments: {
-          ...prev.attachments,
+          ...editedCompound.attachments,
           [name]: { note: "", imageUrl: "" },
         },
-      }));
+      };
+      setEditedCompound(updatedCompound);
+      await onUpdate(updatedCompound); // This is critical to immediately save the change
     }
   };
+
 
   const FullStructurePreview = ({ smiles }: { smiles: string }) => {
     if (compound.imageUrl && typeof compound.imageUrl === 'string' && compound.imageUrl.trim() !== '') {
@@ -238,8 +311,8 @@ export default function CompoundModal({
         <div className="flex justify-between items-center mb-6 border-b-2 border-[#00E6D2] pb-3">
           <h2 className="text-3xl font-extrabold text-[#002C36] uppercase tracking-wide flex items-center gap-2">
             Compound Details
-            {source === "lot" && lotId && (
-              <span className="text-purple-600 text-base ml-2 font-semibold">(from Lot: {lotId})</span>
+            {currentLotId && (
+              <span className="text-purple-600 text-base ml-2 font-semibold">(from Lot: {currentLotId})</span>
             )}
           </h2>
           <button onClick={onClose} className="text-[#002C36] text-3xl font-bold hover:text-[#00E6D2] transition-colors ml-4">&times;</button>
@@ -256,7 +329,10 @@ export default function CompoundModal({
                 🏷️ Tags
               </button>
               {showTagDropdown && (
-                <div className="absolute left-0 bg-white shadow-lg border border-[#00E6D2] mt-2 z-50 rounded w-44">
+                <div
+                  ref={tagDropdownRef}
+                  className="absolute left-0 bg-white shadow-lg border border-[#00E6D2] mt-2 z-50 rounded w-44"
+                >
                   {["testing", "crystals"].map((tag) => (
                     <div
                       key={tag}
@@ -288,7 +364,7 @@ export default function CompoundModal({
                 📦 Lots ({lotsForCompound.length})
               </button>
               {showLotDropdown && (
-                <div className="absolute left-0 bg-white shadow-lg border border-purple-400 mt-2 z-50 rounded w-56">
+                <div ref={lotDropdownRef} className="absolute left-0 bg-white shadow-lg border border-purple-400 mt-2 z-50 rounded w-56">
                   <div
                     onClick={() => {
                       setShowLotDropdown(false);
@@ -305,37 +381,26 @@ export default function CompoundModal({
                       onClick={async () => {
                         try {
                           const res = await fetch(`http://localhost:5000/lot/${lotId}`);
-                          const data = await res.json();
-                          if (Array.isArray(data) && data.length > 0) {
-                            const compoundFromLot = data[0];
-                            setEditedCompound({
-                              ...compoundFromLot,
-                              attachments: {
-                                uv_vis: {
-                                  note: compoundFromLot.attachments?.uv_vis?.note || "",
-                                  imageUrl: compoundFromLot.attachments?.uv_vis?.imageUrl || "",
-                                },
-                                dsc: {
-                                  note: compoundFromLot.attachments?.dsc?.note || "",
-                                  imageUrl: compoundFromLot.attachments?.dsc?.imageUrl || "",
-                                },
-                                lcms: {
-                                  note: compoundFromLot.attachments?.lcms?.note || "",
-                                  imageUrl: compoundFromLot.attachments?.lcms?.imageUrl || "",
-                                },
-                                thermal_stability: {
-                                  note: compound.attachments?.thermal_stability?.note || "",
-                                  imageUrl: compound.attachments?.thermal_stability?.imageUrl || "",
-                                },
-                                pda_detector_spectrum: {
-                                  note: compound.attachments?.pda_detector_spectrum?.note || "",
-                                  imageUrl: compound.attachments?.pda_detector_spectrum?.imageUrl || "",
-                                },
-                              },
-                            });
+                          const lotCompounds = await res.json();
+                          if (Array.isArray(lotCompounds) && lotCompounds.length > 0) {
+                            let lotCompound;
+                            if (lotCompounds.length === 1) {
+                              lotCompound = lotCompounds[0];
+                            } else {
+                              const options = lotCompounds.map((c, i) => `${i + 1}: ${c.id}`).join("\n");
+                              const idx = window.prompt(`Select which lot compound to view (enter number):\n${options}`, "1");
+                              const i = Number(idx) - 1;
+                              if (!isNaN(i) && i >= 0 && i < lotCompounds.length) {
+                                lotCompound = lotCompounds[i];
+                              } else {
+                                return;
+                              }
+                            }
+                            onUpdateCompoundFromLot?.(lotCompound, lotId);
                           }
+                          setShowLotDropdown(false);
                         } catch (err) {
-                          console.error("Failed to load lot:", err);
+                          console.error("Failed to load lot compound:", err);
                         }
                       }}
                     >
@@ -344,6 +409,7 @@ export default function CompoundModal({
                   ))}
                 </div>
               )}
+
             </div>
             {isLotVersion && (
               <button
@@ -409,14 +475,15 @@ export default function CompoundModal({
                   className="border border-[#00E6D2] rounded px-2 py-1 text-sm bg-white text-[#002C36] focus:ring-2 focus:ring-[#00E6D2]"
                   value={editedCompound[field] ?? ""}
                   onChange={(e) => handleChange(field, e.target.value)}
+                  style={field === "smiles" ? { wordBreak: 'break-all', whiteSpace: 'pre-wrap', maxWidth: '100%' } : {}}
                 />
               ) : (
-                <span
-                  className={compound[field] ? "text-[#002C36] break-words max-w-[250px]" : "text-gray-400"}
-                  style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}
-                >
-                  {compound[field] ? compound[field] : "N/A"}
-                </span>
+              <span
+                className={editedCompound[field] ? "text-[#002C36] ..." : "text-gray-400"}
+                style={field === "smiles" ? { wordBreak: 'break-all', whiteSpace: 'pre-wrap', maxWidth: '100%', display: 'block' } : {}}
+              >
+                {editedCompound[field] ? editedCompound[field] : "N/A"}
+              </span>
               )}
             </div>
           ))}
@@ -432,8 +499,8 @@ export default function CompoundModal({
                     onChange={(e) => handleChange(key, e.target.value)}
                   />
                 ) : (
-                  <span className={compound[key] ? "text-[#002C36]" : "text-gray-400"}>
-                    {compound[key] ? compound[key] : "N/A"}
+                  <span className={editedCompound[key] ? "text-[#002C36]" : "text-gray-400"}>
+                    {editedCompound[key] ? editedCompound[key] : "N/A"}
                   </span>
                 )}
               </div>
@@ -532,10 +599,15 @@ export default function CompoundModal({
                   className="px-4 py-2 bg-[#00E6D2] text-[#002C36] rounded hover:bg-[#00bfae] font-bold uppercase tracking-wide"
                   onClick={async () => {
                     if (!newTextFieldName.trim()) return;
-                    setEditedCompound((prev) => ({ ...prev, [newTextFieldName]: newTextFieldValue }));
+                    const updatedCompound = {
+                      ...editedCompound,
+                      [newTextFieldName]: newTextFieldValue,
+                    };
+                    setEditedCompound(updatedCompound);
                     setShowAddTextField(false);
                     setNewTextFieldName("");
                     setNewTextFieldValue("");
+                    await onUpdate(updatedCompound); // This is what you are missing in your new version
                   }}
                 >
                   Save
@@ -597,4 +669,3 @@ export default function CompoundModal({
     </div>
   );
 }
-
