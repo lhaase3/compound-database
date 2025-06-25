@@ -29,6 +29,21 @@ db = firestore.client()
 
 
 
+# Only treat FN - FNG and FNG - FN as equivalent, not all transitions
+FN_FNG_EQUIV = {('FN', 'FNG'), ('FNG', 'FN')}
+
+def canonicalize_transition(transition: str) -> str:
+    """
+    Only treat 'FN - FNG' and 'FNG - FN' as the same. All other transitions keep their order.
+    """
+    parts = [p.strip().upper() for p in transition.split('-')]
+    if len(parts) == 2:
+        pair = (parts[0], parts[1])
+        if pair in FN_FNG_EQUIV:
+            return 'FN - FNG'
+        return f'{parts[0]} - {parts[1]}'
+    return transition.strip().upper()
+
 def extract_transitions_with_temps(phase_map_str: str):
     if not isinstance(phase_map_str, str):
         return []
@@ -62,7 +77,8 @@ def extract_transitions_with_temps(phase_map_str: str):
                 temp = parsed[i+1][1]
                 phase2 = parsed[i+2][1]
                 if phase1 != phase2:
-                    transitions.append(f"{phase1} - {phase2} @ {temp}")
+                    canonical = canonicalize_transition(f"{phase1} - {phase2}")
+                    transitions.append(f"{canonical} @ {temp}")
                 i += 2
             else:
                 i += 1
@@ -195,11 +211,13 @@ def filter_phase_map():
     print("Received filter:", selected_transition, target_temp)
 
     results = []
+    canonical_selected = canonicalize_transition(selected_transition)
     for doc in db.collection("compounds").stream():
         compound = doc.to_dict()
         parsed_transitions = compound.get("parsed_phase_transitions", [])
 
-        if any(item.strip().upper().startswith(selected_transition.strip().upper()) for item in parsed_transitions):
+        # Use canonical form for matching
+        if any(item.strip().upper().startswith(canonical_selected) for item in parsed_transitions):
             if target_temp is None or check_temp_near(parsed_transitions, selected_transition, target_temp):
                 results.append(compound)
 
@@ -299,7 +317,7 @@ def create_lot():
     excluded_fields = {
         "J/g DSC melt (total)", "kJ/mol DSC melt (total)",
         "Refractive index (ne/no)", "Notes",
-        "Lambda Max (DCM/Ac CN)", "Lambda Max (neat film)",
+        "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
         "phase map", "r33", "attachments"
     }
     for field in excluded_fields:
@@ -466,6 +484,7 @@ def update_formulation(formulation_id):
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 

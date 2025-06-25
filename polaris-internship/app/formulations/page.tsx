@@ -44,6 +44,11 @@ export default function FormulationList() {
   const [compoundLotId, setCompoundLotId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showStickyLogo, setShowStickyLogo] = useState(false);
+  const [showAddTextField, setShowAddTextField] = useState(false);
+  const [newTextFieldName, setNewTextFieldName] = useState("");
+  const [newTextFieldValue, setNewTextFieldValue] = useState("");
+  const [showAddAttachmentField, setShowAddAttachmentField] = useState(false);
+  const [newAttachmentFieldName, setNewAttachmentFieldName] = useState("");
   const heroRef = useRef<HTMLDivElement>(null);
   const [selectedAttachment, setSelectedAttachment] = useState<{
   name: string;
@@ -178,7 +183,7 @@ export default function FormulationList() {
                     });
                     setEditMode(true);
                   }}
-                  className="text-blue-600 border border-blue-600 px-3 py-1 text-xs rounded hover:bg-blue-100 font-bold uppercase tracking-wide"
+                  className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
                 >
                   Edit
                 </button>
@@ -193,7 +198,7 @@ export default function FormulationList() {
                       alert("Failed to delete formulation.");
                     }
                   }}
-                  className="text-red-600 border border-red-600 px-3 py-1 text-xs rounded hover:bg-red-100 font-bold uppercase tracking-wide"
+                  className="bg-red-100 hover:bg-red-200 text-red-600 font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
                 >
                   Delete
                 </button>
@@ -278,58 +283,180 @@ export default function FormulationList() {
             {/* Custom Fields */}
             <div className="mb-4">
               <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Other Data</span>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-wrap gap-4">
                 {Object.entries(selectedFormulation)
                   .filter(([key]) =>
-                    !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls"].includes(key)
+                    !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles"].includes(key)
                   )
-                  .map(([key, value], idx) => {
-                    let displayValue: React.ReactNode = "N/A";
-                    if (value === null || value === undefined) {
-                      displayValue = "N/A";
-                    } else if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-                      displayValue = value.toString();
-                    } else if (Array.isArray(value) || typeof value === "object") {
-                      try {
-                        displayValue = <span className="font-mono">{JSON.stringify(value, null, 2)}</span>;
-                      } catch {
-                        displayValue = "[Object]";
-                      }
-                    }
-                    return (
-                      <div key={idx} className="mb-2">
-                        <span className="font-semibold text-[#008080] text-xs uppercase mr-2">{key}:</span>
-                        <span className="text-[#002C36]">{displayValue}</span>
-                      </div>
-                    );
-                  })}
+                  .map(([key, value], idx) => (
+                    <div key={idx} className="flex flex-col mr-4 mb-2 min-w-[180px]">
+                      <label className="font-semibold text-[#008080] text-xs uppercase mb-1">{key.replace(/_/g, " ")}:</label>
+                      <input
+                        type="text"
+                        className="border border-gray-300 rounded p-2 text-[#002C36] bg-white min-w-[120px]"
+                        value={typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : ""}
+                        readOnly
+                      />
+                    </div>
+                  ))}
               </div>
             </div>
 
             {/* Attachments with Click-to-View */}
             <div className="mb-4">
               <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Attachments</span>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-wrap gap-4">
                 {Object.entries(selectedFormulation.attachments || {}).length === 0 && (
                   <span className="text-[#002C36]">None</span>
                 )}
                 {Object.entries(selectedFormulation.attachments || {}).map(([key, { note, imageUrl }]: any, idx) => (
-                  <div key={idx} className="mb-4">
+                  <div key={idx} className="flex items-center gap-2 border border-gray-200 rounded px-2 py-1 bg-gray-50">
                     <button
                       className="text-blue-600 underline hover:text-blue-800 cursor-pointer text-sm"
                       onClick={() => setSelectedAttachment({ name: key, data: { note, imageUrl } })}
                     >
                       {key.replace(/_/g, " ")}
                     </button>
+                    {imageUrl && (
+                      <img src={imageUrl} alt={key} className="w-8 h-8 object-cover rounded ml-2" />
+                    )}
                   </div>
                 ))}
               </div>
             </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs"
+                onClick={() => setShowAddTextField(true)}
+              >
+                + Add Text Field
+              </button>
+              <button
+                className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs"
+                onClick={() => setShowAddAttachmentField(true)}
+              >
+                + Add Attachment Field
+              </button>
+            </div>
           </div>
+          {showAddTextField && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddTextField(false)}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+                <h2 className="text-xl font-bold mb-4">Add Text Field</h2>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                  placeholder="Field name"
+                  value={newTextFieldName}
+                  onChange={e => setNewTextFieldName(e.target.value)}
+                />
+                <textarea
+                  className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                  placeholder="Field value"
+                  value={newTextFieldValue}
+                  onChange={e => setNewTextFieldValue(e.target.value)}
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                    onClick={() => setShowAddTextField(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    onClick={async () => {
+                      if (!newTextFieldName.trim()) return;
+
+                      const updatedFormulation = { ...selectedFormulation, [newTextFieldName]: newTextFieldValue };
+
+                      await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(updatedFormulation),
+                      });
+
+                      setFormulations((prev) =>
+                        prev.map((f) => (f.id === selectedFormulation.id ? updatedFormulation : f))
+                      );
+
+                      setSelectedFormulation(updatedFormulation);
+                      setShowAddTextField(false);
+                      setNewTextFieldName("");
+                      setNewTextFieldValue("");
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showAddAttachmentField && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddAttachmentField(false)}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+                <h2 className="text-xl font-bold mb-4">Add Attachment Field</h2>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                  placeholder="Attachment field name"
+                  value={newAttachmentFieldName}
+                  onChange={e => setNewAttachmentFieldName(e.target.value)}
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                    onClick={() => setShowAddAttachmentField(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    onClick={async () => {
+                      if (!newAttachmentFieldName.trim()) return;
+
+                      const updatedAttachments = {
+                        ...(selectedFormulation.attachments || {}),
+                        [newAttachmentFieldName]: { note: "", imageUrl: "" },
+                      };
+
+                      const updatedFormulation = { ...selectedFormulation, attachments: updatedAttachments };
+
+                      await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(updatedFormulation),
+                      });
+
+                      setFormulations((prev) =>
+                        prev.map((f) => (f.id === selectedFormulation.id ? updatedFormulation : f))
+                      );
+
+                      setSelectedFormulation(updatedFormulation);
+                      setShowAddAttachmentField(false);
+                      setNewAttachmentFieldName("");
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {selectedAttachment && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setSelectedAttachment(null)}>
-              <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8" onClick={(e) => e.stopPropagation()}>
-                <h2 className="text-xl font-bold mb-4 text-[#008080] uppercase">{selectedAttachment.name.replace(/_/g, " ")}</h2>
+            <div
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6"
+              onClick={() => setSelectedAttachment(null)}
+            >
+              <div
+                className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 className="text-xl font-bold mb-4 text-[#008080] uppercase">
+                  {selectedAttachment.name.replace(/_/g, " ")}
+                </h2>
+
                 {selectedAttachment.data.imageUrl ? (
                   <img
                     src={selectedAttachment.data.imageUrl}
@@ -339,12 +466,98 @@ export default function FormulationList() {
                 ) : (
                   <p className="text-gray-500 mb-4">No image available.</p>
                 )}
-                {selectedAttachment.data.note && (
-                  <div className="bg-gray-100 p-3 rounded whitespace-pre-wrap mb-4 text-[#002C36]">
-                    {selectedAttachment.data.note}
-                  </div>
-                )}
-                <div className="flex justify-end">
+
+                {/* Note editing */}
+                <textarea
+                  className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                  placeholder="Attachment note"
+                  value={selectedAttachment.data.note || ""}
+                  onChange={e => {
+                    setSelectedAttachment((prev) => prev && ({
+                      ...prev,
+                      data: { ...prev.data, note: e.target.value }
+                    }));
+                  }}
+                />
+
+                {/* Image upload */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="mb-4"
+                  onChange={async (e) => {
+                    if (!e.target.files || e.target.files.length === 0) return;
+                    const file = e.target.files[0];
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    try {
+                      const res = await fetch('http://localhost:5000/upload-image-to-firebase', {
+                        method: 'POST',
+                        body: formData,
+                      });
+                      const data = await res.json();
+                      // The backend returns fileUrl, not imageUrl
+                      const imageUrl = data.fileUrl || data.imageUrl;
+                      if (imageUrl) {
+                        // Update image URL in attachment
+                        const updatedAttachments = {
+                          ...(selectedFormulation.attachments || {}),
+                          [selectedAttachment.name]: {
+                            ...selectedAttachment.data,
+                            imageUrl,
+                          },
+                        };
+                        const updatedFormulation = { ...selectedFormulation, attachments: updatedAttachments };
+                        await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(updatedFormulation),
+                        });
+                        setFormulations((prev) =>
+                          prev.map((f) => (f.id === selectedFormulation.id ? updatedFormulation : f))
+                        );
+                        setSelectedFormulation(updatedFormulation);
+                        setSelectedAttachment({
+                          name: selectedAttachment.name,
+                          data: { ...selectedAttachment.data, imageUrl },
+                        });
+                      }
+                    } catch (err) {
+                      console.error("Image upload failed", err);
+                      alert("Image upload failed.");
+                    }
+                  }}
+                />
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                    onClick={async () => {
+                      // Save note changes
+                      const updatedAttachments = {
+                        ...selectedFormulation.attachments,
+                        [selectedAttachment.name]: {
+                          ...selectedAttachment.data,
+                          // Use the latest note
+                          note: selectedAttachment.data.note,
+                        },
+                      };
+                      const updatedFormulation = { ...selectedFormulation, attachments: updatedAttachments };
+                      await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(updatedFormulation),
+                      });
+                      setFormulations((prev) =>
+                        prev.map((f) => (f.id === selectedFormulation.id ? updatedFormulation : f))
+                      );
+                      setSelectedFormulation(updatedFormulation);
+                      setSelectedAttachment(null);
+                    }}
+                  >
+                    Save
+                  </button>
                   <button
                     className="px-4 py-2 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide"
                     onClick={() => setSelectedAttachment(null)}
@@ -355,6 +568,7 @@ export default function FormulationList() {
               </div>
             </div>
           )}
+
         </div>
       )}
       {editMode && (
@@ -393,29 +607,20 @@ export default function FormulationList() {
               <h3 className="text-lg font-semibold">Custom Fields</h3>
               {Object.entries(selectedFormulation)
                 .filter(([key]) =>
-                  !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls"].includes(key)
+                  !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles"].includes(key)
                 )
-                .map(([key, value], idx) => {
-                  let displayValue: React.ReactNode = "N/A";
-                  if (value === null || value === undefined) {
-                    displayValue = "N/A";
-                  } else if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-                    displayValue = value.toString();
-                  } else if (Array.isArray(value) || typeof value === "object") {
-                    try {
-                      displayValue = <span className="font-mono">{JSON.stringify(value, null, 2)}</span>;
-                    } catch {
-                      displayValue = "[Object]";
-                    }
-                  }
-                  return (
-                    <div key={idx} className="mb-2">
-                      <span className="font-semibold">{key}:</span> {displayValue}
-                    </div>
-                  );
-                })}
+                .map(([key, value], idx) => (
+                  <div key={idx} className="mb-2">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">{key.replace(/_/g, " ")}</label>
+                    <input
+                      type="text"
+                      className="w-full border px-2 py-1 rounded text-black"
+                      value={editData[key] !== undefined ? editData[key] : (typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : "")}
+                      onChange={e => setEditData((d) => ({ ...d, [key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
             </div>
-
 
             <div className="flex justify-end gap-4">
                 <button
@@ -427,18 +632,19 @@ export default function FormulationList() {
                 <button
                 onClick={async () => {
                     try {
+                    const updatedFormulation = { ...selectedFormulation, ...editData };
                     await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(editData),
+                        body: JSON.stringify(updatedFormulation),
                     });
 
                     setFormulations((prev) =>
                         prev.map((f: any) =>
-                            f.id === selectedFormulation.id ? { ...f, ...editData } : f
+                            f.id === selectedFormulation.id ? updatedFormulation : f
                         )
                     );
-                    setSelectedFormulation((f: typeof selectedFormulation) => f && { ...f, ...editData });
+                    setSelectedFormulation(updatedFormulation);
                     setEditMode(false);
                     } catch (err) {
                     console.error("Failed to update formulation", err);
@@ -493,7 +699,6 @@ export default function FormulationList() {
     </div>
   );
 }
-
 
 
 

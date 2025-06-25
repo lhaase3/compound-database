@@ -14,7 +14,7 @@ import Link from "next/link";
 const transitionOptions = [
   "CR - FN", "CR - I", "CR - N",  "CR - SMA",
   "FN - CR", "FN - FNG", "FN - I", "FN - N", "FN - NX",
-  "FNG - FN", "I - CR", "I - FN", "I - N",
+  "I - CR", "I - FN", "I - N",
   "N - CR", "N - FN", "N - I",  "N - SMA",
   "SMA - CR", "SMA - N", "SMA - SMX",
   "FN - GLASS", "I - GLASS", "N - GLASS", "CR - GLASS"
@@ -51,14 +51,26 @@ export default function Home() {
   const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareAttachment, setCompareAttachment] = useState<{compoundId: string, key: string, data: any} | null>(null);
+  const [mwRange, setMwRange] = useState<[number, number]>([0, 4000]);
   const filteredCompounds = compounds.filter((compound) => {
+    // Name filter
     const matchesName =
       searchName.trim() === "" || compound.id?.toLowerCase().includes(searchName.toLowerCase());
+    // Starred filter
     const matchesStar = !showOnlyStarred || starred.includes(compound.id);
+    // Tag filter
     const matchesTag = !selectedTag || (compound.tags || []).includes(selectedTag);
-    
-    return matchesName && matchesStar && matchesTag; // ✅ This was missing
-  });
+    // MW filter
+    let matchesMW = true;
+    if (compound.MW === undefined || compound.MW === null || compound.MW === "") {
+      // If MW is empty, only show if lower bound is 0 or 1
+      matchesMW = mwRange[0] <= 1;
+    } else {
+      const mwNum = typeof compound.MW === "number" ? compound.MW : parseFloat(compound.MW);
+      matchesMW = !isNaN(mwNum) && mwNum >= mwRange[0] && mwNum <= mwRange[1];
+    }
+    return matchesName && matchesStar && matchesTag && matchesMW;
+});
   const filterRef = useRef<HTMLDivElement>(null);
   const lotRef = useRef<HTMLDivElement>(null);
   const [lotMapping, setLotMapping] = useState<Record<string, string[]>>({});
@@ -154,6 +166,8 @@ export default function Home() {
     setTemperature("");
     setSearchName("");
     setShowOnlyStarred(false);
+    setSelectedTag(null);
+    setMwRange([0, 4000]);
 
     try {
       const res = await fetch("http://localhost:5000/compounds");
@@ -262,7 +276,7 @@ export default function Home() {
           }`}
         />
         {/* Optional: circuit/tech background effect */}
-        <div className="absolute inset-0 opacity-30 pointer-events-none select-none" style={{background: 'url(/circuit-bg.svg) center/cover no-repeat'}} />
+        <div className="absolute inset-0 opacity-30 pointer-events-none select-none" style={{background: ' center/cover no-repeat'}} />
         <h1 className="text-5xl font-extrabold mb-3 text-[#00E6D2] tracking-tight drop-shadow uppercase z-10 flex items-center gap-4">
           Compound Database
         </h1>
@@ -317,11 +331,25 @@ export default function Home() {
                     onClick={async () => {
                       setShowLotModal(false);
                       try {
+                        // Fetch all compounds for this lot
                         const res = await fetch(`http://localhost:5000/lot/${lot}`);
-                        const data = await res.json();
-                        setCompounds(data);
-                        setSelectedSource("lot");
-                        setCurrentLotId(lot);
+                        const lotCompounds = await res.json();
+                        if (lotCompounds.length === 1) {
+                          // If only one compound in lot, open modal directly for that lot compound
+                          setSelectedCompound(lotCompounds[0]);
+                          setSelectedSource("lot");
+                          setCurrentLotId(lot);
+                        } else if (lotCompounds.length > 1) {
+                          // If multiple, prompt user to select which one
+                          const options = lotCompounds.map((c, i) => `${i + 1}: ${c.id}`).join("\n");
+                          const idx = window.prompt(`Select which lot compound to view (enter number):\n${options}`, "1");
+                          const i = Number(idx) - 1;
+                          if (!isNaN(i) && i >= 0 && i < lotCompounds.length) {
+                            setSelectedCompound(lotCompounds[i]);
+                            setSelectedSource("lot");
+                            setCurrentLotId(lot);
+                          }
+                        }
                       } catch (err) {
                         console.error("Failed to load lot compounds:", err);
                       }
@@ -344,10 +372,14 @@ export default function Home() {
             onClick={() => setShowFilterDropdown((prev) => !prev)}
             className="bg-[#00343F] hover:bg-[#00545F] text-[#00E6D2] px-6 py-2 rounded-lg shadow font-bold uppercase tracking-wide flex items-center gap-2 transition-all border border-[#00E6D2]"
           >
-            <span role="img" aria-label="filter">🔽</span> Filter
+            <span role="img" aria-label="filter">🔎</span> Filter
           </button>
           {showFilterDropdown && (
-            <div ref={filterRef} className="absolute bg-[#002C36] shadow-lg border border-[#00E6D2] mt-2 p-5 rounded-lg z-30 w-80 text-white">
+            <div
+              ref={filterRef}
+              className="absolute z-20 bg-[#002C36] shadow-lg mt-2 rounded-lg w-80 max-h-96 overflow-y-auto border border-[#00E6D2] p-4"
+            >
+              {/* Search by Name */}
               <div className="mb-4">
                 <label className="block text-sm font-bold mb-1 uppercase tracking-wide text-[#00E6D2]">Search by Name</label>
                 <input
@@ -357,6 +389,50 @@ export default function Home() {
                   onChange={(e) => setSearchName(e.target.value)}
                   className="w-full border border-[#00E6D2] bg-[#00343F] px-3 py-2 rounded text-[#00E6D2] focus:outline-none focus:ring-2 focus:ring-[#00E6D2] placeholder-[#00E6D2]/60"
                 />
+              </div>
+              {/* MW Range Slider - dual sliders, top for min, bottom for max */}
+              <div className="mb-4">
+                <label className="block text-[#00E6D2] font-semibold mb-1">MW Range</label>
+                <div className="flex flex-col gap-2">
+                  {/* Top slider for min MW */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-white text-xs w-10 text-right">{mwRange[0]}</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={mwRange[1]}
+                      step={1}
+                      value={mwRange[0]}
+                      onChange={e => {
+                        let val = Number(e.target.value);
+                        if (val > mwRange[1]) val = mwRange[1];
+                        setMwRange([val, mwRange[1]]);
+                      }}
+                      className="w-full accent-[#00E6D2] h-2 rounded-lg appearance-none bg-[#00343F]"
+                      style={{ accentColor: '#00E6D2' }}
+                    />
+                    <span className="text-white text-xs w-10 text-right">{mwRange[1]}</span>
+                  </div>
+                  {/* Bottom slider for max MW */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-white text-xs w-10 text-right">{mwRange[0]}</span>
+                    <input
+                      type="range"
+                      min={mwRange[0]}
+                      max={4000}
+                      step={1}
+                      value={mwRange[1]}
+                      onChange={e => {
+                        let val = Number(e.target.value);
+                        if (val < mwRange[0]) val = mwRange[0];
+                        setMwRange([mwRange[0], val]);
+                      }}
+                      className="w-full accent-[#00E6D2] h-2 rounded-lg appearance-none bg-[#00343F]"
+                      style={{ accentColor: '#00E6D2' }}
+                    />
+                    <span className="text-white text-xs w-10 text-right">{mwRange[1]}</span>
+                  </div>
+                </div>
               </div>
               <div className="flex gap-4 mb-4">
                 {["testing", "crystals"].map((tag) => (
@@ -490,10 +566,6 @@ export default function Home() {
             <div className="overflow-x-auto flex-1 max-h-[70vh]">
               <table className="min-w-full border border-[#008080] rounded-lg">
                 <tbody>
-                  {/* Structure image/SMILES */}
-                  <tr>
-                    <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb]">Structure</td>
-                  </tr>
                   {/* Display only the desired fields in order */}
                   {[
                     "id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",

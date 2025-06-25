@@ -16,9 +16,6 @@ type Props = {
 };
 
 export default function CreateFormulationModal({ compounds, lots, onClose, onCreate }: Props) {
-  console.log("🧪 COMPOUND IDS:", compounds.map(c => c.id));
-  console.log("🧪 LOTS OBJECT KEYS:", Object.keys(lots));
-
   const [formulationName, setFormulationName] = useState("");
   const [selectedComponents, setSelectedComponents] = useState<
     { compoundId: string; lotId: string; molPercent: number }[]
@@ -326,8 +323,6 @@ const handleSubmit = async () => {
             }}
           />
         )}
-
-
       </div>
     </div>
   );
