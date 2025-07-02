@@ -73,6 +73,8 @@ function NewAttachmentEntryModal({
     }
   };
 
+
+
   const handleAdd = async () => {
     setError("");
     let finalUrl = imageUrl;
@@ -208,7 +210,7 @@ export default function CompoundModal({
 
   // List of unwanted fields to exclude from custom display
   const unwanted = [
-    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl", "tags", "lotId", "Lambda Max (DCM/Ac CN)"
+    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl", "tags", "lotId", "Lambda Max (DCM/Ac CN)", "views", "similarity"
   ];
 
   // Your defined fields (always shown, in order)
@@ -230,11 +232,6 @@ export default function CompoundModal({
         .catch((err) => console.error("Failed to fetch lots:", err));
     }
   }, [compound.id]);
-
-  useEffect(() => {
-  setCurrentLotId(lotId);
-}, [lotId]);
-
 
   const handleChange = (field: string, value: string) => {
     setEditedCompound((prev) => ({ ...prev, [field]: value }));

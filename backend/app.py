@@ -13,6 +13,8 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import tempfile
 import base64
+import datetime
+from collections import Counter
 
 app = Flask(__name__)
 # CORS(app, origins="*", allow_headers="*", supports_credentials=True, methods=["GET", "POST", "OPTIONS", "DELETE"])
@@ -150,6 +152,8 @@ def add_compound():
 
     if "id" not in data:
         return jsonify({"error": "Compound must have an 'id' field"}), 400
+
+    data["createdAt"] = firestore.SERVER_TIMESTAMP
 
     phase_map_str = data.get("phase map", "")
     transitions = extract_transitions_with_temps(phase_map_str)
@@ -515,12 +519,115 @@ def update_formulation(formulation_id):
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+# Dashboard logic
+@app.route('/compound-analytics', methods=['GET'])
+def compound_analytics():
+    try:
+        compounds_ref = db.collection('compounds')
+        docs = compounds_ref.stream()
+        compounds = [doc.to_dict() for doc in docs]
+
+        if not compounds:
+            return jsonify({"error": "No compounds found"}), 404
+
+        total_compounds = len(compounds)
+        most_viewed = max(compounds, key=lambda c: c.get("views", 0))
+
+        # Only include compounds that have MW
+        mw_values = [c.get("MW") for c in compounds if "MW" in c and isinstance(c.get("MW"), (int, float))]
+
+        avg_mw = round(sum(mw_values) / len(mw_values), 2) if mw_values else "N/A"
+
+        # Build MW histogram (simple bins)
+        bins = ["0-500", "501-700", "701-900", "901-1100", "1101+"]
+        bin_counts = {bin: 0 for bin in bins}
+
+        for c in compounds:
+            mw = c.get("MW")
+            if mw is None:
+                continue
+            if mw <= 500:
+                bin_counts["0-500"] += 1
+            elif mw <= 700:
+                bin_counts["501-700"] += 1
+            elif mw <= 900:
+                bin_counts["701-900"] += 1
+            elif mw <= 1100:
+                bin_counts["901-1100"] += 1
+            else:
+                bin_counts["1101+"] += 1
+
+        mw_distribution = [{"range": bin, "count": count} for bin, count in bin_counts.items()]
+
+        # ✅ Build Creation Timeline
+        creation_data = {}
+        for c in compounds:
+            created_at = c.get("createdAt")
+            if created_at and isinstance(created_at, dict) and "seconds" in created_at:
+                timestamp = datetime.datetime.fromtimestamp(created_at["seconds"])
+                month_str = timestamp.strftime("%Y-%m")
+                creation_data[month_str] = creation_data.get(month_str, 0) + 1
+
+        timeline = [{"month": k, "count": v} for k, v in sorted(creation_data.items())]
+
+        return jsonify({
+            "totalCompounds": total_compounds,
+            "mostViewedCompound": most_viewed.get("id", "N/A"),
+            "averageMW": avg_mw,
+            "mwDistribution": mw_distribution,
+            "creationData": timeline
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
+@app.route('/increment-compound-view/<compound_id>', methods=['POST'])
+def increment_compound_view(compound_id):
+    try:
+        compound_ref = db.collection('compounds').document(compound_id)
+        compound_ref.update({"views": firestore.Increment(1)})
+        return jsonify({"message": "View count incremented"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+@app.route('/compound-similarity-matrix', methods=['GET'])
+def compound_similarity_matrix():
+    try:
+        compounds_ref = db.collection('compounds')
+        docs = compounds_ref.stream()
+        compounds = [doc.to_dict() for doc in docs]
 
+        if not compounds:
+            return jsonify({"error": "No compounds found"}), 404
 
+        matrix = []
+        smiles_list = [c.get("smiles", "") for c in compounds]
+        ids = [c.get("id", "Unknown") for c in compounds]
 
+        fps = []
+        for smi in smiles_list:
+            mol = Chem.MolFromSmiles(smi)
+            if mol:
+                fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048)
+                fps.append(fp)
+            else:
+                fps.append(None)
+
+        for i in range(len(fps)):
+            row = []
+            for j in range(len(fps)):
+                if fps[i] is None or fps[j] is None:
+                    row.append(0)
+                else:
+                    sim = DataStructs.TanimotoSimilarity(fps[i], fps[j])
+                    row.append(round(sim, 2))
+            matrix.append(row)
+
+        return jsonify({"ids": ids, "matrix": matrix})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import CompoundModal from "@/components/CompoundModal";
+import CreateFormulationModal from "@/components/CreateFormulationModal";
 
 
 
@@ -32,13 +33,68 @@ function AttachmentViewer({ name, note, imageUrl }: { name: string, note: string
   );
 }
 
+function recalculateComponents(components: any[], totalMass: number) {
+  const totalTargetMoles = components.reduce((sum, c) => {
+    const mw = parseFloat(c.molecularWeight || c.MW) || 1;  // ✅ Correct field now
+    const targetMassLocal = (parseFloat(c.massPercent) || 0) / 100 * totalMass;
+    return sum + (targetMassLocal / mw);
+  }, 0);
+
+
+  const updatedComponents = components.map(comp => {
+    const massPercent = parseFloat(comp.massPercent) || 0;
+    const actualMass = parseFloat(comp.actualMass) || 0;
+    const molecularWeight = parseFloat(comp.molecularWeight || comp.MW) || 1;
+
+    const targetMass = (massPercent / 100) * totalMass;
+    const targetMoles = targetMass / molecularWeight;
+
+    const totalActualMass = components.reduce((sum, c) => sum + (parseFloat(c.actualMass) || 0), 0);
+    const actualMassPercent = totalActualMass ? (actualMass / totalActualMass) * 100 : 0;
+
+    const totalActualMoles = components.reduce((sum, c) => {
+      const mw = parseFloat(c.molecularWeight || c.MW) || 1;
+      return sum + ((parseFloat(c.actualMass) || 0) / mw);
+    }, 0);
+    const actualMolPercent = totalActualMoles ? ((actualMass / molecularWeight) / totalActualMoles) * 100 : 0;
+
+    const outputMolPercent = totalTargetMoles ? (targetMoles / totalTargetMoles) * 100 : 0;
+
+    return {
+      ...comp,
+      targetMass: parseFloat(targetMass.toFixed(3)),
+      actualMassPercent: parseFloat(actualMassPercent.toFixed(2)),
+      actualMolPercent: parseFloat(actualMolPercent.toFixed(2)),
+      outputMolPercent: parseFloat(outputMolPercent.toFixed(2)),
+    };
+  });
+  return updatedComponents;
+}
+
+
+
+// --- Types for editData state ---
+type EditComponent = {
+  massPercent?: number | string;
+  actualMass?: number | string;
+  [key: string]: any;
+};
+type EditData = {
+  name: string;
+  phaseMap: string;
+  notes: string;
+  totalMass?: number | string;
+  components?: EditComponent[];
+  [key: string]: any;
+};
+
 
 
 export default function FormulationList() {
   const [formulations, setFormulations] = useState<any[]>([]);
   const [selectedFormulation, setSelectedFormulation] = useState<any | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [editData, setEditData] = useState({ name: "", phaseMap: "", notes: "" });
+  const [editData, setEditData] = useState<EditData>({ name: "", phaseMap: "", notes: "" });
   const [selectedCompound, setSelectedCompound] = useState<any | null>(null);
   const [compoundSource, setCompoundSource] = useState<"main" | "lot">("main");
   const [compoundLotId, setCompoundLotId] = useState<string | null>(null);
@@ -49,12 +105,20 @@ export default function FormulationList() {
   const [newTextFieldValue, setNewTextFieldValue] = useState("");
   const [showAddAttachmentField, setShowAddAttachmentField] = useState(false);
   const [newAttachmentFieldName, setNewAttachmentFieldName] = useState("");
+  const [showFormulationModal, setShowFormulationModal] = useState(false);
+  const [compounds, setCompounds] = useState<any[]>([]);
+  const [lotMapping, setLotMapping] = useState<Record<string, string[]>>({});
   const heroRef = useRef<HTMLDivElement>(null);
   const [selectedAttachment, setSelectedAttachment] = useState<{
   name: string;
   data: { note: string; imageUrl: string };
 } | null>(null);
-
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [showFullStructureModal, setShowFullStructureModal] = useState<{
+    imageUrl: string;
+    smiles?: string;
+    name: string;
+  } | null>(null);
 
 
 
@@ -64,6 +128,31 @@ export default function FormulationList() {
       .then(setFormulations)
       .catch((err) => console.error("Failed to fetch formulations", err));
   }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/compounds")
+      .then((res) => res.json())
+      .then((data) => setCompounds(data))
+      .catch((err) => console.error("Failed to fetch compounds", err));
+  }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/lots")
+      .then((res) => res.json())
+      .then((data) => {
+        const mapping: Record<string, string[]> = {};
+        data.forEach((lot: any) => {
+          if (!mapping[lot.compoundId]) {
+            mapping[lot.compoundId] = [];
+          }
+          mapping[lot.compoundId].push(lot.lotId);
+        });
+        setLotMapping(mapping);
+      })
+      .catch((err) => console.error("Failed to fetch lots", err));
+  }, []);
+
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -82,6 +171,27 @@ export default function FormulationList() {
       window.scrollBy(0, -Math.max(120, Math.floor(c / 4)));
       setTimeout(fastScrollToTop, 4);
     }
+  };
+
+  // When opening edit mode, initialize editData with all editable fields
+  const handleEditClick = () => {
+    const editable: EditData = {
+      name: selectedFormulation.name || "",
+      phaseMap: selectedFormulation.phaseMap || "",
+      notes: selectedFormulation.notes || "",
+      totalMass: selectedFormulation.totalMass || "",
+      components: selectedFormulation.components?.map((c: any) => ({
+        ...c // Carry over everything: molecularWeight, compoundId, compoundName, imageUrl, lotId, etc.
+      })) || [],
+    };
+    // Add all custom fields
+    Object.entries(selectedFormulation).forEach(([key, value]) => {
+      if (!["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles"].includes(key)) {
+        editable[key] = value;
+      }
+    });
+    setEditData(editable);
+    setEditMode(true);
   };
 
   return (
@@ -123,6 +233,17 @@ export default function FormulationList() {
         </div>
       </div>
 
+      {/* Create Formulation Button */}
+      <div className="mb-6">
+        <button
+          onClick={() => setShowFormulationModal(true)}
+          className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-6 py-2 rounded-lg shadow font-bold uppercase tracking-wide flex items-center gap-2 transition-all"
+        >
+          <span role="img" aria-label="formulation">🧪</span> Create Formulation
+        </button>
+      </div>
+
+
       {/* Search Bar */}
       <div className="mb-8 w-full max-w-md">
         <input
@@ -154,7 +275,7 @@ export default function FormulationList() {
               <ul className="list-disc pl-5 text-sm">
                 {form.components?.map((comp: any, idx: number) => (
                   <li key={idx}>
-                    <span className="font-semibold text-[#002C36]">{comp.compoundId}</span> <span className="text-[#008080]">({comp.lotId || "original"})</span> – <span className="text-[#008080]">{comp.molPercent}%</span> → <span className="text-[#008080]">{comp.mass} g</span>
+                    <span className="font-semibold text-[#002C36]">{comp.compoundName || comp.compoundId}</span> <span className="text-[#008080]">({comp.lotId || "original"})</span> – <span className="text-[#008080]">{comp.massPercent !== undefined ? comp.massPercent + "%" : "-"}</span>
                   </li>
                 )) || <li>No components</li>}
               </ul>
@@ -167,46 +288,56 @@ export default function FormulationList() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
           onClick={() => setSelectedFormulation(null)}
         >
+          {/* Delete Confirmation Modal */}
+          {deleteConfirm && (
+            <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-6" onClick={() => setDeleteConfirm(false)}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+                <h2 className="text-xl font-bold mb-4 text-red-700">Are you sure you want to delete '{selectedFormulation.name || "this formulation"}'?</h2>
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                    onClick={() => setDeleteConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    onClick={async () => {
+                      try {
+                        await fetch(`http://localhost:5000/delete-formulation/${selectedFormulation.id}`, { method: "DELETE" });
+                        setFormulations((prev) => prev.filter((f) => f.id !== selectedFormulation.id));
+                        setSelectedFormulation(null);
+                        setDeleteConfirm(false);
+                      } catch (err) {
+                        console.error("Failed to delete formulation", err);
+                        alert("Failed to delete formulation.");
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <div
-            className="bg-white border-2 border-[#008080] p-8 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+            className="bg-white border-2 border-[#008080] p-8 rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-y-auto relative"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-3xl font-extrabold text-[#002C36] uppercase tracking-wide">{selectedFormulation.name || "Unnamed Formulation"}</h2>
               <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    setEditData({
-                      name: selectedFormulation.name || "",
-                      phaseMap: selectedFormulation.phaseMap || "",
-                      notes: selectedFormulation.notes || "",
-                    });
-                    setEditMode(true);
-                  }}
+                  onClick={handleEditClick}
                   className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={async () => {
-                    try {
-                      await fetch(`http://localhost:5000/delete-formulation/${selectedFormulation.id}`, { method: "DELETE" });
-                      setFormulations((prev) => prev.filter((f) => f.id !== selectedFormulation.id));
-                      setSelectedFormulation(null);
-                    } catch (err) {
-                      console.error("Failed to delete formulation", err);
-                      alert("Failed to delete formulation.");
-                    }
-                  }}
+                  onClick={() => setDeleteConfirm(true)}
                   className="bg-red-100 hover:bg-red-200 text-red-600 font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
                 >
                   Delete
-                </button>
-                <button
-                  onClick={() => setSelectedFormulation(null)}
-                  className="text-black text-xl font-bold px-2"
-                >
-                  &times;
                 </button>
               </div>
             </div>
@@ -222,48 +353,89 @@ export default function FormulationList() {
             </div>
 
             <div className="mb-4">
-              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Components</span>
-              <ul className="list-disc pl-5 mt-1">
-                {selectedFormulation.components?.map((comp: any, idx: number) => (
-                  <li key={idx}>
-                    <button
-                      className="text-blue-600 underline hover:text-blue-800 text-sm"
-                      onClick={async () => {
-                        try {
-                          const endpoint = comp.lotId
-                            ? `http://localhost:5000/lot/${comp.lotId}`
-                            : `http://localhost:5000/compounds/${comp.compoundId}`;
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Operator:</span> <span className="text-[#002C36]">{selectedFormulation.operator}</span>
+            </div>
 
-                          const res = await fetch(endpoint);
-                          const data = await res.json();
-                          let compound;
-
-                          if (comp.lotId) {
-                            compound = data.find((c: any) =>
-                              c.id === comp.compoundId || c.name?.includes(comp.compoundId)
-                            ) || data[0];
-                          } else {
-                            compound = data;
-                          }
-
-                          if (!compound) {
-                            alert("Compound not found.");
-                            return;
-                          }
-
-                          setSelectedCompound(compound);
-                          setCompoundSource(comp.lotId ? "lot" : "main");
-                          setCompoundLotId(comp.lotId || null);
-                        } catch (err) {
-                          console.error("Error loading compound:", err);
-                        }
-                      }}
-                    >
-                      {comp.compoundId} ({comp.lotId || "original"}) – {comp.molPercent}% → {comp.mass} g
-                    </button>
-                  </li>
-                )) || <li>No components</li>}
-              </ul>
+            {/* Mass Calculator Table in Modal */}
+            <div className="mb-8 border border-[#008080] rounded-lg p-4 bg-[#F8FAFB]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-[#008080]">Mass Calculator</h3>
+                <span className="text-sm font-semibold text-[#008080]">Total Desired Mass: <span className="text-[#002C36]">{selectedFormulation.totalMass}</span></span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border border-[#008080]">
+                  <thead>
+                    <tr className="text-xs text-[#008080] uppercase text-center">
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Compound</th>
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Image</th>
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Lot</th>
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Desired Mass %</th>
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Output Mol %</th>
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Target Mass (mg)</th>
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mass (mg)</th>
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mass %</th>
+                      <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mol %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedFormulation.components?.map((comp: any, idx: number) => (
+                      <tr key={idx} className="align-middle text-center border-b border-[#008080]">
+                        <td className="px-2 py-2 border-r border-[#008080]">
+                          <button
+                            className="text-blue-600 underline hover:text-blue-800 text-sm cursor-pointer"
+                            onClick={async () => {
+                              try {
+                                const endpoint = comp.lotId
+                                  ? `http://localhost:5000/lot/${comp.lotId}`
+                                  : `http://localhost:5000/compounds/${comp.compoundId}`;
+                                const res = await fetch(endpoint);
+                                const data = await res.json();
+                                let compound;
+                                if (comp.lotId) {
+                                  compound = data.find((c: any) =>
+                                    c.id === comp.compoundId || c.name?.includes(comp.compoundId)
+                                  ) || data[0];
+                                } else {
+                                  compound = data;
+                                }
+                                if (!compound) {
+                                  alert("Compound not found.");
+                                  return;
+                                }
+                                setSelectedCompound(compound);
+                                setCompoundSource(comp.lotId ? "lot" : "main");
+                                setCompoundLotId(comp.lotId || null);
+                              } catch (err) {
+                                console.error("Error loading compound:", err);
+                              }
+                            }}
+                          >
+                            {comp.compoundName || comp.compoundId}
+                          </button>
+                        </td>
+                        <td className="px-2 py-2 border-r border-[#008080]">
+                          {comp.imageUrl && typeof comp.imageUrl === 'string' && comp.imageUrl.trim() !== '' ? (
+                            <img
+                              src={comp.imageUrl}
+                              alt={comp.compoundName || comp.compoundId}
+                              style={{ maxWidth: '220px', maxHeight: '220px', objectFit: 'contain', background: 'white', borderRadius: '0.375rem', border: '1px solid #e5e7eb', marginBottom: '0.25rem', cursor: 'pointer' }}
+                              onClick={() => setShowFullStructureModal({ imageUrl: comp.imageUrl, smiles: comp.smiles, name: comp.compoundName || comp.compoundId })}
+                              onError={e => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          ) : null}
+                        </td>
+                        <td className="px-2 py-2 border-r border-[#008080]">{comp.lotId || "original"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080]">{comp.massPercent !== undefined ? comp.massPercent + "%" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080]">{comp.outputMolPercent !== undefined ? comp.outputMolPercent.toFixed(2) + "%" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080]">{comp.targetMass !== undefined ? comp.targetMass + " mg" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080]">{comp.actualMass !== undefined ? comp.actualMass + " mg" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080]">{comp.actualMassPercent !== undefined ? comp.actualMassPercent + "%" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080]">{comp.actualMolPercent !== undefined ? comp.actualMolPercent + "%" : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="mb-4">
@@ -286,7 +458,7 @@ export default function FormulationList() {
               <div className="mt-2 flex flex-wrap gap-4">
                 {Object.entries(selectedFormulation)
                   .filter(([key]) =>
-                    !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles"].includes(key)
+                    !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles", "operator", "totalMass"].includes(key)
                   )
                   .map(([key, value], idx) => (
                     <div key={idx} className="flex flex-col mr-4 mb-2 min-w-[180px]">
@@ -569,96 +741,224 @@ export default function FormulationList() {
             </div>
           )}
 
+          {showFullStructureModal && (
+            <div className="fixed inset-0 bg-black/70 z-50 flex justify-center items-center" onClick={() => setShowFullStructureModal(null)}>
+              <div className="bg-white p-8 rounded-2xl border-2 border-[#00E6D2] shadow-2xl max-w-4xl w-full max-h-[92vh] overflow-auto relative" onClick={e => e.stopPropagation()}>
+                <div className="flex flex-col items-center">
+                  {showFullStructureModal.imageUrl ? (
+                    <img
+                      src={showFullStructureModal.imageUrl}
+                      alt={showFullStructureModal.name}
+                      style={{ maxWidth: '100%', maxHeight: 560, objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <div className="text-gray-500">No image available.</div>
+                  )}
+                  <div className="text-lg font-bold text-[#002C36] mt-4">{showFullStructureModal.name}</div>
+                  <button
+                    className="mt-6 px-4 py-2 bg-[#00E6D2] text-[#002C36] rounded hover:bg-[#00bfae] font-bold"
+                    onClick={() => setShowFullStructureModal(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {editMode && (
-        <div
-            className="fixed inset-0 backdrop-blur-sm bg-opacity-50 z-50 flex items-center justify-center"
-            onClick={() => setEditMode(false)}
-        >
-            <div
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-xl"
-            onClick={(e) => e.stopPropagation()}
-            >
-            <h2 className="text-xl font-bold mb-4 text-black">Edit Formulation</h2>
-
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
-            <input
-                type="text"
-                value={editData.name}
-                onChange={(e) => setEditData((d) => ({ ...d, name: e.target.value }))}
-                className="w-full mb-4 border px-2 py-1 rounded text-black"
-            />
-
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Phase Map</label>
-            <textarea
-                value={editData.phaseMap}
-                onChange={(e) => setEditData((d) => ({ ...d, phaseMap: e.target.value }))}
-                className="w-full mb-4 border px-2 py-1 rounded text-black"
-            />
-
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Analytical Notes</label>
-            <textarea
-                value={editData.notes}
-                onChange={(e) => setEditData((d) => ({ ...d, notes: e.target.value }))}
-                className="w-full mb-4 border px-2 py-1 rounded text-black"
-            />
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Custom Fields</h3>
-              {Object.entries(selectedFormulation)
-                .filter(([key]) =>
-                  !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles"].includes(key)
-                )
-                .map(([key, value], idx) => (
-                  <div key={idx} className="mb-2">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">{key.replace(/_/g, " ")}</label>
-                    <input
-                      type="text"
-                      className="w-full border px-2 py-1 rounded text-black"
-                      value={editData[key] !== undefined ? editData[key] : (typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : "")}
-                      onChange={e => setEditData((d) => ({ ...d, [key]: e.target.value }))}
-                    />
-                  </div>
-                ))}
-            </div>
-
-            <div className="flex justify-end gap-4">
-                <button
-                onClick={() => setEditMode(false)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
-                >
-                Cancel
-                </button>
-                <button
-                onClick={async () => {
-                    try {
-                    const updatedFormulation = { ...selectedFormulation, ...editData };
-                    await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(updatedFormulation),
-                    });
-
-                    setFormulations((prev) =>
-                        prev.map((f: any) =>
-                            f.id === selectedFormulation.id ? updatedFormulation : f
-                        )
-                    );
-                    setSelectedFormulation(updatedFormulation);
-                    setEditMode(false);
-                    } catch (err) {
-                    console.error("Failed to update formulation", err);
-                    alert("Update failed");
-                    }
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                Save
-                </button>
-            </div>
-            </div>
+  <div
+    className="fixed inset-0 backdrop-blur-sm bg-opacity-50 z-50 flex items-center justify-center"
+    onClick={() => setEditMode(false)}
+  >
+    <div
+      className="bg-white p-6 rounded-lg shadow-lg w-full max-w-6xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2 className="text-xl font-bold mb-4 text-black">Edit Formulation</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+          <input
+            type="text"
+            value={editData.name}
+            onChange={(e) => setEditData((d) => ({ ...d, name: e.target.value }))}
+            className="w-full mb-4 border px-2 py-1 rounded text-black"
+          />
         </div>
-        )}
+        {/* Total Desired Mass */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Total Desired Mass</label>
+          <input
+            type="number"
+            value={editData.totalMass !== undefined ? editData.totalMass : selectedFormulation.totalMass || ''}
+            onChange={(e) => setEditData((d) => ({ ...d, totalMass: e.target.value }))}
+            className="w-full mb-4 border px-2 py-1 rounded text-black"
+          />
+        </div>
+      </div>
+      {/* Mass Calculator Table (editable desired mass % and actual mass) */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-2">Mass Calculator</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-[#008080]">
+            <thead>
+              <tr className="text-xs text-[#008080] uppercase text-center">
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Compound</th>
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Image</th>
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Lot</th>
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Desired Mass %</th>
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mass (mg)</th>
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Target Mass (mg)</th>
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mass %</th>
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mol %</th>
+                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Output Mol %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(editData.components || selectedFormulation.components)?.map((comp: any, idx: number) => (
+                <tr key={idx} className="align-middle text-center border-b border-[#008080]">
+                  <td className="px-2 py-2 border-r border-[#008080]">{comp.compoundName || comp.compoundId}</td>
+                  <td className="px-2 py-2 border-r border-[#008080]">
+                    {comp.imageUrl && typeof comp.imageUrl === 'string' && comp.imageUrl.trim() !== '' ? (
+                      <img
+                        src={comp.imageUrl}
+                        alt={comp.compoundName || comp.compoundId}
+                        style={{ maxWidth: '90px', maxHeight: '90px', objectFit: 'contain', background: 'white', borderRadius: '0.375rem', border: '1px solid #e5e7eb' }}
+                      />
+                    ) : null}
+                  </td>
+                  <td className="px-2 py-2 border-r border-[#008080]">{comp.lotId || 'original'}</td>
+                  <td className="px-2 py-2 border-r border-[#008080]">
+                    <input
+                      type="number"
+                      value={editData.components?.[idx]?.massPercent !== undefined ? editData.components[idx].massPercent : comp.massPercent || ''}
+                      onChange={e => {
+                        const newComponents = [...(editData.components || selectedFormulation.components)];
+                        newComponents[idx].massPercent = e.target.value;
+
+                        const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass));
+
+                        setEditData((d) => ({ ...d, components: updatedComponents }));
+                      }}
+                      className="w-20 border px-1 py-0.5 rounded text-black text-center"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border-r border-[#008080]">
+                    <input
+                      type="number"
+                      value={editData.components?.[idx]?.actualMass !== undefined ? editData.components[idx].actualMass : comp.actualMass || ''}
+                      onChange={e => {
+                        const newComponents = [...(editData.components || selectedFormulation.components)];
+                        if (!newComponents[idx]) newComponents[idx] = { ...comp };
+                        newComponents[idx].actualMass = e.target.value;
+
+                        const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass));
+
+                        setEditData((d) => ({ ...d, components: updatedComponents }));
+                      }}
+                      className="w-20 border px-1 py-0.5 rounded text-black text-center"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border-r border-[#008080]">
+                    {comp.targetMass !== undefined ? comp.targetMass + " mg" : "-"}
+                  </td>
+                  <td className="px-2 py-2 border-r border-[#008080]">
+                    {comp.actualMassPercent !== undefined ? comp.actualMassPercent + "%" : "-"}
+                  </td>
+                  <td className="px-2 py-2 border-r border-[#008080]">
+                    {comp.actualMolPercent !== undefined ? comp.actualMolPercent + "%" : "-"}
+                  </td>
+                  <td className="px-2 py-2 border-r border-[#008080]">
+                    {comp.outputMolPercent !== undefined ? comp.outputMolPercent + "%" : "-"}
+                  </td>
+
+                </tr>
+              ))}
+            </tbody>
+
+          </table>
+        </div>
+      </div>
+      {/* Phase Map */}
+      <label className="block text-sm font-semibold text-gray-700 mb-1">Phase Map</label>
+      <textarea
+        value={editData.phaseMap}
+        onChange={(e) => setEditData((d) => ({ ...d, phaseMap: e.target.value }))}
+        className="w-full mb-4 border px-2 py-1 rounded text-black"
+      />
+      {/* Analytical Notes */}
+      <label className="block text-sm font-semibold text-gray-700 mb-1">Analytical Notes</label>
+      <textarea
+        value={editData.notes}
+        onChange={(e) => setEditData((d) => ({ ...d, notes: e.target.value }))}
+        className="w-full mb-4 border px-2 py-1 rounded text-black"
+      />
+      {/* Custom Fields */}
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold">Custom Fields</h3>
+        {Object.entries(selectedFormulation)
+          .filter(([key]) =>
+            !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles"].includes(key)
+          )
+          .map(([key, value], idx) => (
+            <div key={idx} className="mb-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">{key.replace(/_/g, " ")}</label>
+              <input
+                type="text"
+                className="w-full border px-2 py-1 rounded text-black"
+                value={editData[key] !== undefined ? editData[key] : (typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : "")}
+                onChange={e => setEditData((d) => ({ ...d, [key]: e.target.value }))}
+              />
+            </div>
+          ))}
+      </div>
+      <div className="flex justify-end gap-4">
+        <button
+          onClick={() => setEditMode(false)}
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            try {
+              // Merge updated fields and components
+              const updatedFormulation = {
+                ...selectedFormulation,
+                ...editData,
+                components: (editData.components || selectedFormulation.components).map((comp: any, idx: number) => ({
+                  ...selectedFormulation.components[idx],
+                  ...comp,
+                })),
+              };
+              await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedFormulation),
+              });
+              setFormulations((prev) =>
+                prev.map((f: any) =>
+                  f.id === selectedFormulation.id ? updatedFormulation : f
+                )
+              );
+              setSelectedFormulation(updatedFormulation);
+              setEditMode(false);
+            } catch (err) {
+              console.error("Failed to update formulation", err);
+              alert("Update failed");
+            }
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
         {selectedCompound && (
           <CompoundModal
             compound={selectedCompound}
@@ -696,6 +996,33 @@ export default function FormulationList() {
           />
         )}
 
+    {showFormulationModal && (
+      <CreateFormulationModal
+        compounds={compounds}
+        lots={lotMapping}
+        onClose={() => setShowFormulationModal(false)}
+        onCreate={async (data) => {
+          try {
+            const res = await fetch("http://localhost:5000/create-formulation", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error);
+            alert("Formulation saved!");
+
+            // Refresh formulation list
+            const updatedFormulations = await fetch("http://localhost:5000/formulations").then((res) => res.json());
+            setFormulations(updatedFormulations);
+            setShowFormulationModal(false);
+          } catch (err) {
+            console.error("Failed to save formulation:", err);
+            alert("Failed to save formulation.");
+          }
+        }}
+      />
+    )}
     </div>
   );
 }
