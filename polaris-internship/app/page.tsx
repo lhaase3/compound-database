@@ -614,20 +614,50 @@ export default function Home() {
                     {selectedForComparison.map((id) => {
                       const cmp = compounds.find(c => c.id === id);
                       const atts = cmp?.attachments || {};
-                      const keysWithData = Object.keys(atts).filter(k => atts[k] && (atts[k].note || atts[k].imageUrl));
+                      // For each key, check if it's an array (multi-attachment) or object (single)
+                      const keysWithData = Object.keys(atts).filter(k => {
+                        const att = atts[k];
+                        if (Array.isArray(att)) {
+                          // Multi-attachment: at least one entry with note or imageUrl
+                          return att.some(entry => entry && (entry.note || entry.imageUrl));
+                        } else {
+                          // Single attachment: has note or imageUrl
+                          return att && (att.note || att.imageUrl);
+                        }
+                      });
                       return (
                         <td key={id} className="p-3 text-center text-[#002C36] flex flex-col gap-2 items-center justify-center">
                           {keysWithData.length === 0 && <span>N/A</span>}
-                          {keysWithData.map((key) => (
-                            <button
-                              key={key}
-                              className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
-                              onClick={() => setCompareAttachment({ compoundId: id, key, data: atts[key] })}
-                              type="button"
-                            >
-                              {key.replace(/_/g, " ")}
-                            </button>
-                          ))}
+                          {keysWithData.flatMap((key) => {
+                            const att = atts[key];
+                            if (Array.isArray(att)) {
+                              // Render a button for each entry in the array
+                              return att.map((entry, idx) => (
+                                (entry && (entry.note || entry.imageUrl)) ? (
+                                  <button
+                                    key={key + '-' + idx}
+                                    className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                    onClick={() => setCompareAttachment({ compoundId: id, key, data: entry })}
+                                    type="button"
+                                  >
+                                    {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
+                                  </button>
+                                ) : null
+                              ));
+                            } else {
+                              // Single attachment
+                              return (
+                                <button
+                                  key={key}
+                                  className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                  onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
+                                  type="button"
+                                >
+                                  {key.replace(/_/g, " ")}
+                                </button>
+                              );
+                            }
+                          })}
                         </td>
                       );
                     })}
@@ -812,23 +842,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
