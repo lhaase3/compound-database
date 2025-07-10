@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@rdkit/rdkit": "^2025.3.2-1.0.0",
     "framer-motion": "^12.15.0",
     "jsme-react": "^0.0.9",
