@@ -4,6 +4,8 @@ import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import CompoundModal from "@/components/CompoundModal";
 import CreateFormulationModal from "@/components/CreateFormulationModal";
+import DrawModal from "@/components/DrawModal";
+import { Compound } from "@/types/compound";
 
 
 
@@ -33,7 +35,7 @@ function AttachmentViewer({ name, note, imageUrl }: { name: string, note: string
   );
 }
 
-function recalculateComponents(components: any[], totalMass: number) {
+function recalculateComponents(components: any[], totalMass: number, compounds: any[]) {
   const totalTargetMoles = components.reduce((sum, c) => {
     const mw = parseFloat(c.molecularWeight || c.MW) || 1;  // ✅ Correct field now
     const targetMassLocal = (parseFloat(c.massPercent) || 0) / 100 * totalMass;
@@ -42,6 +44,7 @@ function recalculateComponents(components: any[], totalMass: number) {
 
 
   const updatedComponents = components.map(comp => {
+    const compound = compounds.find(c => c.id === comp.compoundId);  // 🔑 THIS WAS MISSING
     const massPercent = parseFloat(comp.massPercent) || 0;
     const actualMass = parseFloat(comp.actualMass) || 0;
     const molecularWeight = parseFloat(comp.molecularWeight || comp.MW) || 1;
@@ -62,10 +65,15 @@ function recalculateComponents(components: any[], totalMass: number) {
 
     return {
       ...comp,
-      targetMass: parseFloat(targetMass.toFixed(3)),
-      actualMassPercent: parseFloat(actualMassPercent.toFixed(2)),
-      actualMolPercent: parseFloat(actualMolPercent.toFixed(2)),
-      outputMolPercent: parseFloat(outputMolPercent.toFixed(2)),
+    smiles: comp.smiles || compound?.smiles || "",
+    compoundId: compound?.id || comp.compoundId,
+    compoundName: compound?.name || '',
+    targetMass: parseFloat(targetMass.toFixed(3)),
+    targetMoles: parseFloat(targetMoles.toFixed(4)),
+    outputMolPercent: parseFloat(outputMolPercent.toFixed(2)),
+    actualMass,
+    actualMassPercent: parseFloat(actualMassPercent.toFixed(2)),
+    actualMolPercent: parseFloat(actualMolPercent.toFixed(2)),
     };
   });
   return updatedComponents;
@@ -108,6 +116,9 @@ export default function FormulationList() {
   const [showFormulationModal, setShowFormulationModal] = useState(false);
   const [compounds, setCompounds] = useState<any[]>([]);
   const [lotMapping, setLotMapping] = useState<Record<string, string[]>>({});
+  const [starredFormulations, setStarredFormulations] = useState<string[]>([]);
+  const [showDrawModal, setShowDrawModal] = useState(false);
+  const [showOnlyStarred, setShowOnlyStarred] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const [selectedAttachment, setSelectedAttachment] = useState<{
   name: string;
@@ -119,6 +130,20 @@ export default function FormulationList() {
     smiles?: string;
     name: string;
   } | null>(null);
+  const handleResetFilters = async () => {
+    setSearchTerm("");
+    setShowOnlyStarred(false);
+
+    try {
+      const res = await fetch("http://localhost:5000/formulations");
+      const data = await res.json();
+      setFormulations(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error resetting filters", err);
+      setFormulations([]);
+    }
+  };
+
 
 
 
@@ -152,7 +177,14 @@ export default function FormulationList() {
       .catch((err) => console.error("Failed to fetch lots", err));
   }, []);
 
+  useEffect(() => {
+    const stored = localStorage.getItem("starredFormulations");
+    if (stored) setStarredFormulations(JSON.parse(stored));
+  }, []);
 
+  useEffect(() => {
+    localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
+  }, [starredFormulations]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -172,6 +204,30 @@ export default function FormulationList() {
       setTimeout(fastScrollToTop, 4);
     }
   };
+
+  const toggleStarFormulation = (id: string) => {
+    setStarredFormulations((prev) =>
+      prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
+    );
+  };
+
+  const handleDrawFilterSubmit = async (smiles: string) => {
+    try {
+      const res = await fetch("http://localhost:5000/search-substructure-formulations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: smiles }),
+      });
+
+      const data = await res.json();
+      setFormulations(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error filtering formulations by drawn SMILES", err);
+      setFormulations([]);
+    }
+  };
+
+
 
   // When opening edit mode, initialize editData with all editable fields
   const handleEditClick = () => {
@@ -221,9 +277,12 @@ export default function FormulationList() {
       <div ref={heroRef} className="w-full bg-gradient-to-r from-[#00343F] to-[#002C36] py-12 mb-10 shadow flex flex-col items-center relative overflow-hidden">
         {/* Logo in top-left corner */}
         <img src="/polaris-logo-only.png" alt="Polaris Electro-Optics Logo" className={`w-16 h-21 absolute top-6 left-8 z-20 drop-shadow-lg transition-opacity duration-300 ${showStickyLogo ? "opacity-0" : "opacity-100"}`} />
-        <div className="absolute inset-0 opacity-30 pointer-events-none select-none" style={{background: 'url(/circuit-bg.svg) center/cover no-repeat'}} />
+        <div className="absolute inset-0 opacity-30 pointer-events-none select-none"/>
         <h1 className="text-5xl font-extrabold mb-3 text-[#00E6D2] tracking-tight drop-shadow uppercase z-10">Formulations</h1>
-        <p className="text-xl text-white mb-6 max-w-2xl text-center z-10 font-semibold">Polaris Electro-Optics</p>
+        <p className="text-xl text-white mb-6 max-w-2xl text-center z-10 font-semibold flex items-center justify-center gap-3">
+          <img src="/white-logo.png" alt="Polaris Logo" className="w-8 h-10 inline-block" />
+          Polaris Electro-Optics
+        </p>
         <div className="mb-2 z-10">
           <Link href="/">
             <button className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-6 py-2 rounded-lg shadow font-bold text-lg uppercase tracking-wide flex items-center gap-2 transition-all">
@@ -244,33 +303,79 @@ export default function FormulationList() {
       </div>
 
 
-      {/* Search Bar */}
-      <div className="mb-8 w-full max-w-md">
+      <div className="flex flex-wrap items-center gap-4 mb-8 w-full max-w-3xl justify-center">
         <input
           type="text"
           placeholder="🔍 Search by compound ID (e.g. PEO-0100)"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full border border-[#00E6D2] bg-[#00343F] px-3 py-2 rounded text-[#00E6D2] focus:outline-none focus:ring-2 focus:ring-[#00E6D2] placeholder-[#00E6D2]/60"
+          className="flex-1 min-w-[250px] border border-[#00E6D2] bg-[#00343F] px-3 py-2 rounded text-[#00E6D2] focus:outline-none focus:ring-2 focus:ring-[#00E6D2] placeholder-[#00E6D2]/60"
         />
+        
+        <label className="flex items-center gap-2 cursor-pointer text-[#00E6D2] font-bold">
+          <input
+            type="checkbox"
+            checked={showOnlyStarred}
+            onChange={() => setShowOnlyStarred(prev => !prev)}
+            className="accent-[#00E6D2]"
+          />
+          Starred Only
+        </label>
+
+        <button
+          onClick={() => setShowDrawModal(true)}
+          className="bg-[#00343F] hover:bg-[#00545F] text-[#00E6D2] px-6 py-2 rounded-lg shadow font-bold uppercase tracking-wide flex items-center gap-2 transition-all border border-[#00E6D2]"
+        >
+          <span role="img" aria-label="draw">✏️</span> Draw Structure
+        </button>
+
+        <button
+          onClick={handleResetFilters}
+          className="bg-[#00343F] hover:bg-[#00545F] text-[#00E6D2] px-6 py-2 rounded-lg shadow font-bold uppercase tracking-wide flex items-center gap-2 transition-all border border-[#00E6D2]"
+        >
+          <span role="img" aria-label="reset">🔄</span> Reset Filter
+        </button>
+      </div>
+
+      <div className="w-full max-w-6xl flex items-center mb-6">
+        <hr className="flex-grow border-t border-[#00E6D2]/40" />
+        <span className="mx-4 text-lg text-[#00E6D2] font-bold uppercase tracking-wide">Formulations</span>
+        <hr className="flex-grow border-t border-[#00E6D2]/40" />
       </div>
 
       {/* Formulations Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl px-4">
-        {formulations
-          .filter((form) =>
-            searchTerm.trim() === "" ||
-            form.components?.some((comp: any) =>
-              comp.compoundId?.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-          )
-          .map((form) => (
+      {formulations
+        .filter((form) =>
+          (searchTerm.trim() === "" ||
+          form.components?.some((comp: any) =>
+            (comp.compoundId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            comp.compoundName?.toLowerCase().includes(searchTerm.toLowerCase()))
+          )) && 
+          (!showOnlyStarred || starredFormulations.includes(form.id))
+        )
+        .map((form) => (
             <div
               key={form.id}
-              className="bg-white border-2 border-[#008080] rounded-2xl p-6 shadow-lg hover:shadow-2xl cursor-pointer transition-all text-[#002C36]"
+              className="relative bg-white border-2 border-[#008080] rounded-2xl p-6 shadow-lg hover:shadow-2xl cursor-pointer transition-all text-[#002C36]"
               onClick={() => setSelectedFormulation(form)}
             >
-              <h2 className="text-2xl font-bold mb-2 uppercase tracking-wide text-[#008080]">{form.name || "Unnamed Formulation"}</h2>
+              {/* Header with title and star */}
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-2xl font-bold uppercase tracking-wide text-[#008080]">
+                  {form.name || "Unnamed Formulation"}
+                </h2>
+                <button
+                  className={`absolute top-3 right-3 text-3xl z-10 focus:outline-none ${starredFormulations.includes(form.id) ? 'text-[#00E6D2]' : 'text-[#00E6D2]/50 hover:text-[#00E6D2]'}`}
+                  title={starredFormulations.includes(form.id) ? 'Unstar' : 'Star'}
+                  onClick={(e) => { e.stopPropagation(); toggleStarFormulation(form.id); }}
+                  tabIndex={0}
+                  style={{ textShadow: starredFormulations.includes(form.id) ? `0 0 8px #00E6D2` : '0 0 8px #00E6D2' }}
+                >
+                  {starredFormulations.includes(form.id) ? '★' : '☆'}
+                </button>
+              </div>
+
               <p className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Components:</p>
               <ul className="list-disc pl-5 text-sm">
                 {form.components?.map((comp: any, idx: number) => (
@@ -280,7 +385,7 @@ export default function FormulationList() {
                 )) || <li>No components</li>}
               </ul>
             </div>
-        ))}
+          ))}
       </div>
 
       {selectedFormulation && (
@@ -839,7 +944,7 @@ export default function FormulationList() {
                         const newComponents = [...(editData.components || selectedFormulation.components)];
                         newComponents[idx].massPercent = e.target.value;
 
-                        const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass));
+                        const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass), compounds);
 
                         setEditData((d) => ({ ...d, components: updatedComponents }));
                       }}
@@ -855,7 +960,7 @@ export default function FormulationList() {
                         if (!newComponents[idx]) newComponents[idx] = { ...comp };
                         newComponents[idx].actualMass = e.target.value;
 
-                        const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass));
+                        const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass), compounds);
 
                         setEditData((d) => ({ ...d, components: updatedComponents }));
                       }}
@@ -1021,6 +1126,13 @@ export default function FormulationList() {
             alert("Failed to save formulation.");
           }
         }}
+      />
+    )}
+
+    {showDrawModal && (
+      <DrawModal
+        onClose={() => setShowDrawModal(false)}
+        onSmilesSubmit={handleDrawFilterSubmit}
       />
     )}
     </div>

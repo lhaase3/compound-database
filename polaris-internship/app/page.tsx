@@ -301,10 +301,15 @@ export default function Home() {
           <img src="/white-logo.png" alt="Polaris Logo" className="w-8 h-10 inline-block" />
           Polaris Electro-Optics
         </p>
-        <div className="mb-2 z-10">
+        <div className="mb-2 z-10 flex flex-row gap-4 justify-center">
           <Link href="/formulations">
             <button className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-6 py-2 rounded-lg shadow font-bold text-lg uppercase tracking-wide flex items-center gap-2 transition-all">
-              <span role="img" aria-label="formulations">📋</span> View Formulations
+              <span role="img" aria-label="formulations"></span> View Formulations
+            </button>
+          </Link>
+          <Link href="/plans">
+            <button className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-6 py-2 rounded-lg shadow font-bold text-lg uppercase tracking-wide flex items-center gap-2 transition-all">
+              <span role="img" aria-label="plans"></span> View Plans
             </button>
           </Link>
         </div>
@@ -341,7 +346,7 @@ export default function Home() {
                 ➕ Create New Lot
               </div>
               {lotList.length > 0 &&
-                lotList.map((lot) => (
+                lotList.map((lot: string) => (
                   <div
                     key={lot}
                     className="p-3 hover:bg-[#00343F] cursor-pointer text-white border-b border-[#00E6D2] last:border-b-0"
@@ -358,7 +363,7 @@ export default function Home() {
                           setCurrentLotId(lot);
                         } else if (lotCompounds.length > 1) {
                           // If multiple, prompt user to select which one
-                          const options = lotCompounds.map((c, i) => `${i + 1}: ${c.id}`).join("\n");
+                          const options = lotCompounds.map((c: any, i: number) => `${i + 1}: ${c.id}`).join("\n");
                           const idx = window.prompt(`Select which lot compound to view (enter number):\n${options}`, "1");
                           const i = Number(idx) - 1;
                           if (!isNaN(i) && i >= 0 && i < lotCompounds.length) {
@@ -549,6 +554,7 @@ export default function Home() {
             accentColor="#00E6D2"
             compareChecked={selectedForComparison.includes(compound.id)}
             onToggleCompare={() => toggleCompare(compound.id)}
+            similarity={undefined}
           />
         ))}
       </div>
@@ -562,8 +568,6 @@ export default function Home() {
           <span role="img" aria-label="compare">📊</span> Compare ({selectedForComparison.length})
         </button>
       )}
-
-      {/* Compare Modal */}
       {showCompareModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowCompareModal(false)}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full p-8 relative overflow-x-auto max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
@@ -614,26 +618,14 @@ export default function Home() {
                     {selectedForComparison.map((id) => {
                       const cmp = compounds.find(c => c.id === id);
                       const atts = cmp?.attachments || {};
-                      // For each key, check if it's an array (multi-attachment) or object (single)
-                      const keysWithData = Object.keys(atts).filter(k => {
-                        const att = atts[k];
+
+                      // Create an array of rendered buttons for this specific compound
+                      const attachmentButtons = Object.entries(atts).flatMap(([key, att]) => {
                         if (Array.isArray(att)) {
-                          // Multi-attachment: at least one entry with note or imageUrl
-                          return att.some(entry => entry && (entry.note || entry.imageUrl));
-                        } else {
-                          // Single attachment: has note or imageUrl
-                          return att && (att.note || att.imageUrl);
-                        }
-                      });
-                      return (
-                        <td key={id} className="p-3 text-center text-[#002C36] flex flex-col gap-2 items-center justify-center">
-                          {keysWithData.length === 0 && <span>N/A</span>}
-                          {keysWithData.flatMap((key) => {
-                            const att = atts[key];
-                            if (Array.isArray(att)) {
-                              // Render a button for each entry in the array
-                              return att.map((entry, idx) => (
-                                (entry && (entry.note || entry.imageUrl)) ? (
+                          return att
+                            .map((entry, idx) => {
+                              if (entry && (entry.note || entry.imageUrl)) {
+                                return (
                                   <button
                                     key={key + '-' + idx}
                                     className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
@@ -642,22 +634,29 @@ export default function Home() {
                                   >
                                     {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
                                   </button>
-                                ) : null
-                              ));
-                            } else {
-                              // Single attachment
-                              return (
-                                <button
-                                  key={key}
-                                  className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
-                                  onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
-                                  type="button"
-                                >
-                                  {key.replace(/_/g, " ")}
-                                </button>
-                              );
-                            }
-                          })}
+                                );
+                              }
+                              return null;
+                            })
+                            .filter(Boolean);
+                        } else if (att && (att.note || att.imageUrl)) {
+                          return (
+                            <button
+                              key={key}
+                              className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                              onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
+                              type="button"
+                            >
+                              {key.replace(/_/g, " ")}
+                            </button>
+                          );
+                        }
+                        return null;
+                      });
+
+                      return (
+                        <td key={id} className="p-3 text-center text-[#002C36] flex flex-col gap-2 items-center justify-center">
+                          {attachmentButtons.length > 0 ? attachmentButtons : <span>N/A</span>}
                         </td>
                       );
                     })}
@@ -702,6 +701,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
       {/* Modals */}
       {showDrawModal && (
         <DrawModal
@@ -804,7 +804,7 @@ export default function Home() {
               let tries = 0;
               while (
                 tries < 4 &&
-                updated.some(c => c.id === newCompound.id && (!c.imageUrl || c.imageUrl === ""))
+                updated.some((c: any) => c.id === newCompound.id && (!c.imageUrl || c.imageUrl === ""))
               ) {
                 await new Promise(res => setTimeout(res, 1000));
                 updated = await fetch("http://localhost:5000/compounds").then((res) => res.json());

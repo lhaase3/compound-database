@@ -56,6 +56,7 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
               className="w-full h-full object-contain"
               style={{ display: "block", margin: "auto" }}
               onError={e => { e.currentTarget.style.display = 'none'; }}
+              loading="lazy"
             />
           </div>
         ) : (

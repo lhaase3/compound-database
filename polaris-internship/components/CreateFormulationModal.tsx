@@ -5,6 +5,8 @@ export type Compound = {
   id: string;
   name?: string;
   MW?: string; // molecular weight in g/mol
+  smiles?: string;
+  imageUrl?: string;
 };
 
 type Props = {
@@ -256,6 +258,7 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
                               const selectedCompound = compounds.find(c => c.id === e.target.value);
                               updateComponent(idx, 'compoundId', e.target.value);
                               updateComponent(idx, 'imageUrl', selectedCompound?.imageUrl || '');
+                              updateComponent(idx, 'smiles', selectedCompound?.smiles || '');  // ✅ Add this
                             }}
                           >
                             <option value="" disabled>Select Compound</option>
