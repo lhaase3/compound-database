@@ -585,11 +585,10 @@ export default function Home() {
               Clear
             </button>
             <div className="overflow-x-auto flex-1 max-h-[70vh]">
-              <table className="min-w-full border border-[#008080] rounded-lg">
+              <table className="min-w-full border border-[#008080] rounded-lg divide-y divide-[#008080]">
                 <tbody>
                   {/* Display only the desired fields in order */}
-                  {[
-                    "id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
+                  {["id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
                     "phase map", "r33", "dipole CAMB3LYP SVPD CHCl3 (Cosmo)",
                     "beta CAMB3LYP SVPD CHCl3 (Cosmo)", "dipole B3LYP SVPD CHCl3",
                     "beta B3LYP SVPD CHCl3", "beta/MW", "J/g DSC melt (total)",
@@ -603,60 +602,64 @@ export default function Home() {
                       return val !== undefined && val !== null && val !== "" && val !== "N/A";
                     });
                   }).map((field) => (
-                    <tr key={field}>
-                      <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb]">{field}</td>
-                      {selectedForComparison.map((id) => {
+                    <tr key={field} className="border-b border-[#008080] last:border-b-0">
+                      <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb] border-r border-[#008080]">{field}</td>
+                      {selectedForComparison.map((id, idx) => {
                         const cmp = compounds.find(c => c.id === id);
                         const val = cmp?.[field];
-                        return <td key={id} className="p-3 text-center text-[#002C36]">{val !== undefined && val !== null && val !== "" && val !== "N/A" ? val : "N/A"}</td>;
+                        return <td key={id} className={`p-3 text-center text-[#002C36] border-r border-[#008080] ${idx === selectedForComparison.length - 1 ? 'last:border-r-0' : ''}`}>{val !== undefined && val !== null && val !== "" && val !== "N/A" ? val : "N/A"}</td>;
                       })}
                     </tr>
                   ))}
                   {/* Attachments row (rendered only once, after all fields) */}
                   <tr>
-                    <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb]">Attachments</td>
+                    <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb] border-r border-[#008080]">Attachments</td>
                     {selectedForComparison.map((id) => {
                       const cmp = compounds.find(c => c.id === id);
                       const atts = cmp?.attachments || {};
-
-                      // Create an array of rendered buttons for this specific compound
-                      const attachmentButtons = Object.entries(atts).flatMap(([key, att]) => {
+                      
+                      const keysWithData = Object.keys(atts).filter(k => {
+                        const att = atts[k];
                         if (Array.isArray(att)) {
-                          return att
-                            .map((entry, idx) => {
-                              if (entry && (entry.note || entry.imageUrl)) {
-                                return (
-                                  <button
-                                    key={key + '-' + idx}
-                                    className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
-                                    onClick={() => setCompareAttachment({ compoundId: id, key, data: entry })}
-                                    type="button"
-                                  >
-                                    {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
-                                  </button>
-                                );
-                              }
-                              return null;
-                            })
-                            .filter(Boolean);
-                        } else if (att && (att.note || att.imageUrl)) {
-                          return (
-                            <button
-                              key={key}
-                              className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
-                              onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
-                              type="button"
-                            >
-                              {key.replace(/_/g, " ")}
-                            </button>
-                          );
+                          return att.some(entry => entry && (entry.note || entry.imageUrl));
+                        } else {
+                          return att && (att.note || att.imageUrl);
                         }
-                        return null;
                       });
 
                       return (
-                        <td key={id} className="p-3 text-center text-[#002C36] flex flex-col gap-2 items-center justify-center">
-                          {attachmentButtons.length > 0 ? attachmentButtons : <span>N/A</span>}
+                        <td key={id} className="p-3 text-center text-[#002C36] border-r border-[#008080]">
+                          <div className="flex flex-col gap-2 items-center justify-center min-w-[150px]">
+                            {keysWithData.length === 0 && <span>N/A</span>}
+                            {keysWithData.map((key) => {
+                              const att = atts[key];
+                              if (Array.isArray(att)) {
+                                return att.map((entry, idx) => (
+                                  (entry && (entry.note || entry.imageUrl)) ? (
+                                    <button
+                                      key={key + '-' + idx}
+                                      className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                      onClick={() => setCompareAttachment({ compoundId: id, key, data: entry })}
+                                      type="button"
+                                    >
+                                      {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
+                                    </button>
+                                  ) : null
+                                ));
+                              } else {
+                                return (
+                                  <button
+                                    key={key}
+                                    className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                    onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
+                                    type="button"
+                                  >
+                                    {key.replace(/_/g, " ")}
+                                  </button>
+                                );
+                              }
+                            })}
+                          </div>
                         </td>
                       );
                     })}
