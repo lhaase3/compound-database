@@ -1,0 +1,8 @@
+Flask==2.3.2
+Flask-CORS==3.0.10
+firebase-admin==6.2.0
+rdkit-pypi==2022.9.5
+google-api-python-client==2.99.0
+google-auth==2.21.0
+google-auth-oauthlib==1.0.0
+google-cloud-storage
