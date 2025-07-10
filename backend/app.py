@@ -629,6 +629,81 @@ def compound_similarity_matrix():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/plans", methods=["GET"])
+def list_plans():
+    try:
+        docs = db.collection("plans").stream()
+        plans = [{"id": doc.id, **doc.to_dict()} for doc in docs]
+        return jsonify(plans), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/create-plan", methods=["POST"])
+def create_plan():
+    try:
+        data = request.get_json()
+        # Ensure completed is always set to False by default
+        if "completed" not in data:
+            data["completed"] = False
+        # Generate and upload structure image if smiles is present and no imageUrl
+        smiles = data.get("smiles")
+        if smiles and not data.get("imageUrl"):
+            try:
+                from rdkit import Chem
+                from rdkit.Chem import Draw
+                import io
+                import base64
+                mol = Chem.MolFromSmiles(smiles)
+                if mol:
+                    img = Draw.MolToImage(mol, size=(1200, 600), dpi=300, kekulize=True, wedgeBonds=True, bgcolor=(255,255,255))
+                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                        img.save(tmp.name, dpi=(300, 300))
+                        tmp.flush()
+                        bucket = storage.bucket()
+                        filename = f"plan_images/{data.get('id', 'plan')}.png"
+                        blob = bucket.blob(filename)
+                        blob.upload_from_filename(tmp.name, content_type="image/png")
+                        blob.make_public()
+                        data["imageUrl"] = blob.public_url
+                    os.unlink(tmp.name)
+            except Exception as e:
+                print(f"Failed to generate/upload image for plan {data.get('id')}: {e}")
+        # Use the provided id as the Firestore document ID
+        plan_id = data.get("id")
+        if not plan_id:
+            plan_ref = db.collection("plans").document()  # fallback to auto-id if not provided
+        else:
+            plan_ref = db.collection("plans").document(str(plan_id))
+        data["createdAt"] = firestore.SERVER_TIMESTAMP
+        plan_ref.set(data)
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/delete-plan/<plan_id>", methods=["DELETE"])
+def delete_plan(plan_id):
+    try:
+        db.collection("plans").document(plan_id).delete()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/update-plan/<plan_id>", methods=["POST"])
+def update_plan(plan_id):
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        doc_ref = db.collection("plans").document(plan_id)
+        if not doc_ref.get().exists:
+            return jsonify({"error": "Plan not found"}), 404
+
+        doc_ref.update(data)  # Use update instead of set
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 
