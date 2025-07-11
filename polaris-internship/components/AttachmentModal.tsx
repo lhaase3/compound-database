@@ -4,14 +4,12 @@ import React, { useState } from "react";
 type Props = {
   attachmentKey: string;
   data?: { note: string; imageUrl: string } | import("@/types/compound").MultiAttachmentEntry;
-  isMulti?: boolean;
-  isNewEntry?: boolean;
   onClose: () => void;
   onSave: (note: string, fileUrl: string, name?: string) => void;
   renderHeaderExtra?: React.ReactNode;
 };
 
-export default function AttachmentModal({ attachmentKey, data, isMulti, isNewEntry, onClose, onSave, renderHeaderExtra }: Props) {
+export default function AttachmentModal({ attachmentKey, data, onClose, onSave, renderHeaderExtra }: Props) {
   console.log("AttachmentModal opened for:", attachmentKey, data); // Debug log
   const [note, setNote] = useState(data?.note || "");
   const [imageUrl, setImageUrl] = useState(data?.imageUrl || "");
@@ -130,3 +128,9 @@ export default function AttachmentModal({ attachmentKey, data, isMulti, isNewEnt
     </div>
   );
 }
+
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/

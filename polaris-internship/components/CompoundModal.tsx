@@ -156,6 +156,7 @@ export default function CompoundModal({
   lotId,
   onUpdateCompoundFromLot,
 }: Props) {
+  // Removed duplicate declaration of showBWFullStructure
   const [editMode, setEditMode] = useState(false);
   const [editedCompound, setEditedCompound] = useState<CompoundWithAttachments>(() => ({
     ...compound,
@@ -210,7 +211,7 @@ export default function CompoundModal({
 
   // List of unwanted fields to exclude from custom display
   const unwanted = [
-    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl", "tags", "lotId", "Lambda Max (DCM/Ac CN)", "views", "similarity"
+    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl", "tags", "lotId", "Lambda Max (DCM/Ac CN)", "views", "similarity", "bwImageUrl"
   ];
 
   // Your defined fields (always shown, in order)
@@ -233,6 +234,7 @@ export default function CompoundModal({
     }
   }, [compound.id]);
 
+  const [showBWFullStructure, setShowBWFullStructure] = useState(false);
   const handleChange = (field: string, value: string) => {
     setEditedCompound((prev) => ({ ...prev, [field]: value }));
   };
@@ -288,7 +290,7 @@ export default function CompoundModal({
       ? Array.from(new Set([...Object.keys(compound.attachments), ...builtIn]))
       : builtIn;
     // Fix type for normalizedAttachments
-    const normalizedAttachments: { [key: string]: AttachmentData } = {};
+    const normalizedAttachments: Record<string, AttachmentData | MultiAttachmentEntry[]> = {};
     allKeys.forEach((key) => {
       const att = compound.attachments?.[key];
       if (isMultiAttachment(key)) {
@@ -298,22 +300,27 @@ export default function CompoundModal({
             note: entry.note || '',
             imageUrl: entry.imageUrl || '',
           }));
-        } else if (att && (Array.isArray(att) ? att.length > 0 : (att.note || att.imageUrl))) {
-          if (Array.isArray(att)) {
-            normalizedAttachments[key] = att;
-          } else {
-            normalizedAttachments[key] = [{
-              name: key.charAt(0).toUpperCase() + key.slice(1),
-              note: att.note || '',
-              imageUrl: att.imageUrl || '',
-            }];
-          }
+        } else if (att && (att.note || att.imageUrl)) {
+          normalizedAttachments[key] = [{
+            name: key.charAt(0).toUpperCase() + key.slice(1),
+            note: att.note || '',
+            imageUrl: att.imageUrl || '',
+          }];
         } else {
           normalizedAttachments[key] = [];
+              <div style={{ position: 'absolute', top: 24, right: 32, zIndex: 10 }}>
+                <button
+                  onClick={() => setShowBWFullStructure((prev) => !prev)}
+                  className="px-4 py-2 bg-[#002C36] text-[#00E6D2] rounded-lg font-bold uppercase tracking-wide hover:bg-[#00bfae]"
+                  style={{ minWidth: 120 }}
+                >
+                  {showBWFullStructure ? 'Show Colored' : 'Show B&W'}
+                </button>
+              </div>
         }
       } else {
         if (Array.isArray(att)) {
-          normalizedAttachments[key] = [];
+          normalizedAttachments[key] = { note: '', imageUrl: '' };
         } else {
           normalizedAttachments[key] = {
             note: att?.note || '',
@@ -410,6 +417,18 @@ export default function CompoundModal({
 
 
   const FullStructurePreview = ({ smiles }: { smiles: string }) => {
+    if (showBWFullStructure && compound.bwImageUrl && typeof compound.bwImageUrl === 'string' && compound.bwImageUrl.trim() !== '') {
+      return (
+        <div className="flex justify-center items-center w-full h-[600px]">
+          <img
+            src={compound.bwImageUrl}
+            alt={compound.name || compound.id}
+            style={{ maxWidth: "100%", maxHeight: 560, objectFit: "contain", background: 'white' }}
+            onError={e => { e.currentTarget.style.display = 'none'; }}
+          />
+        </div>
+      );
+    }
     if (compound.imageUrl && typeof compound.imageUrl === 'string' && compound.imageUrl.trim() !== '') {
       return (
         <div className="flex justify-center items-center w-full h-[600px]">
@@ -449,7 +468,7 @@ export default function CompoundModal({
         }
       }
       mol.delete();
-    }, [smiles]);
+    }, [smiles, showBWFullStructure]);
     return (
       <div
         className="flex justify-center items-center overflow-auto"
@@ -461,6 +480,48 @@ export default function CompoundModal({
       />
     );
   };
+
+  // Print handler
+  const printRef = useRef<HTMLDivElement>(null);
+  const handlePrint = () => {
+  const printContents = document.getElementById('printable-area')?.innerHTML;
+
+  if (!printContents) return;
+
+  const printWindow = window.open('', 'compound-print', 'width=800,height=900');
+  if (!printWindow) return;
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Compound</title>
+        <style>
+          @media print {
+            @page {
+              margin: 0;
+            }
+            html, body {
+              margin: 0;
+              padding: 0;
+              font-family: Arial, sans-serif;
+              background: white;
+              color: black;
+            }
+            img {
+              filter: grayscale(100%) !important;
+            }
+          }
+        </style>
+      </head>
+      <body onload="window.print(); window.close();">
+        ${printContents}
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+};
 
   return (
     <div
@@ -632,6 +693,12 @@ export default function CompoundModal({
           <div className="flex gap-2">
             <button
               className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
+              onClick={handlePrint}
+            >
+              Print
+            </button>
+            <button
+              className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
               onClick={() => (editMode ? handleSave() : setEditMode(true))}
             >
               {editMode ? "Save" : "Edit"}
@@ -641,6 +708,47 @@ export default function CompoundModal({
             </button>
           </div>
         </div>
+
+        <div
+          id="printable-area"
+          style={{
+            display: 'none',
+            textAlign: 'center',
+            fontSize: '14px',
+            color: '#000',
+            padding: 0,
+            margin: 0,
+            lineHeight: 1.2,       // tighter spacing
+          }}
+        >
+          {compound.bwImageUrl && typeof compound.bwImageUrl === 'string' && compound.bwImageUrl.trim() !== '' && (
+            <img
+              src={compound.bwImageUrl}
+              alt={compound.name || compound.id}
+              style={{
+                width: '60%',
+                maxWidth: '500px',
+                margin: '0 auto',
+                height: 'auto',
+                display: 'block',
+                paddingTop: '15px',    // tighter gap
+                paddingBottom: '0px',    // tighter gap
+              }}
+            />
+            )}
+            <div
+              style={{
+                fontSize: '2.4rem',
+                fontWeight: '600',
+                letterSpacing: '0.05em',
+                marginTop: '0px',         // no extra gap
+                textAlign: 'center',
+              }}
+            >
+              {compound.id}
+            </div>
+        </div>
+        
 
         {/* Section Divider */}
         <div className="w-full flex items-center mb-6">
@@ -928,6 +1036,15 @@ export default function CompoundModal({
           <div className="fixed inset-0 bg-black/70 z-50 flex justify-center items-center">
             <div className="bg-white p-8 rounded-2xl border-2 border-[#00E6D2] shadow-2xl max-w-4xl w-full max-h-[92vh] overflow-auto relative">
               <h2 className="text-2xl font-bold mb-4 text-[#002C36] uppercase tracking-wide">Full Structure</h2>
+              <div style={{ position: 'absolute', top: 24, right: 32, zIndex: 10 }}>
+                <button
+                  onClick={() => setShowBWFullStructure((prev) => !prev)}
+                  className="px-4 py-2 bg-[#002C36] text-[#00E6D2] rounded-lg font-bold uppercase tracking-wide hover:bg-[#00bfae]"
+                  style={{ minWidth: 120 }}
+                >
+                  {showBWFullStructure ? 'Show Colored' : 'Show B&W'}
+                </button>
+              </div>
               <FullStructurePreview smiles={compound.smiles} />
               <button
                 onClick={() => setShowFullStructureModal(false)}
@@ -942,3 +1059,9 @@ export default function CompoundModal({
     </div>
   );
 }
+
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/

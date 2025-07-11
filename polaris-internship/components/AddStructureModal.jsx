@@ -136,7 +136,9 @@ export default function AddStructureModal({ onClose, onSubmit }) {
         throw new Error(errData.error || "Failed to add compound");
       }
 
+      const newCompound = await res.json();
       console.log("✅ Compound added successfully");
+      if (onSubmit) onSubmit(newCompound); // Notify parent to update list
       onClose();
     } catch (err) {
       console.error("❌ Error:", err.message);
@@ -307,3 +309,9 @@ export default function AddStructureModal({ onClose, onSubmit }) {
     </div>
   );
 }
+
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/

@@ -38,3 +38,9 @@ export default function RootLayout({
     </html>
   );
 }
+
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/

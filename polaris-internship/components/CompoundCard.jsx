@@ -1,9 +1,38 @@
 "use client";
 
 import { motion } from "framer-motion";
+import React, { useRef } from "react";
 import SMILESRenderer from "./SMILESRenderer";
 
 export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggleStar, cardColor = "#00343F", accentColor = "#00E6D2", compareChecked = false, onToggleCompare, similarity }) {
+  const printRef = useRef(null);
+
+  function handlePrint(e) {
+    e.stopPropagation();
+    const printContents = document.getElementById(`printable-${compound.id}`)?.innerHTML;
+    if (!printContents) return;
+    const win = window.open('', '', 'width=600,height=800');
+    if (!win) return;
+    win.document.write(`
+      <html>
+        <head>
+          <title>Print Compound</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+            .compound-img { max-width: 350px; max-height: 220px; margin: 0 auto 24px auto; display: block; border: 2px solid #00E6D2; border-radius: 16px; }
+            .compound-id { font-size: 2rem; font-weight: bold; color: #008080; margin-top: 16px; letter-spacing: 0.1em; }
+          </style>
+        </head>
+        <body>
+          ${printContents}
+        </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  }
+
   return (
     <motion.div
       className="relative rounded-2xl shadow-lg p-6 flex flex-col items-center gap-4 border transition-all duration-200 cursor-pointer w-72 group"
@@ -56,7 +85,6 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
               className="w-full h-full object-contain"
               style={{ display: "block", margin: "auto" }}
               onError={e => { e.currentTarget.style.display = 'none'; }}
-              loading="lazy"
             />
           </div>
         ) : (
@@ -73,3 +101,8 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
   );
 }
 
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/

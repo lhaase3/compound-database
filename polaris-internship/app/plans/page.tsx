@@ -273,7 +273,7 @@ export default function PlansPage() {
           </Link>
         </div>
       </div>
-      <h1 className="text-4xl font-bold text-[#00E6D2] mt-10 mb-6">Planning Workspace</h1>
+              
       <div className="w-full max-w-3xl flex justify-center mb-6">
         <button
           className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-6 py-2 rounded-lg shadow font-bold uppercase tracking-wide flex items-center gap-2 transition-all"
@@ -281,6 +281,11 @@ export default function PlansPage() {
         >
           <span role="img" aria-label="add">➕</span> Create Plan
         </button>
+      </div>
+      <div className="w-full max-w-6xl flex items-center mb-6">
+        <hr className="flex-grow border-t border-[#00E6D2]/40" />
+        <span className="mx-4 text-lg text-[#00E6D2] font-bold uppercase tracking-wide">Plans</span>
+        <hr className="flex-grow border-t border-[#00E6D2]/40" />
       </div>
       {showCreatePlan && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCreatePlan(false)}>
@@ -450,7 +455,7 @@ export default function PlansPage() {
         </DragDropContext>
         {completedPlans.length > 0 && (
           <>
-            <h3 className="text-xl font-bold text-[#008080] mt-8 mb-2">Completed</h3>
+            <h3 className="text-2xl font-bold text-[#008080] mt-8 mb-2">Completed</h3>
             <table className="min-w-full border border-[#008080] bg-white rounded-lg">
               <thead>
                 <tr className="text-xs text-[#008080] uppercase text-center">
@@ -542,7 +547,7 @@ export default function PlansPage() {
               className="object-contain mx-auto"
               style={{ width: '900px', height: '600px', maxWidth: '100%', maxHeight: '85vh', display: 'block' }}
             />
-            <div className="text-center mt-4 text-lg font-bold text-[#008080]">{showFullStructureModal.name}</div>
+            <div className="text-center mt-4 text-4xl font-bold text-[#008080]">{showFullStructureModal.name}</div>
             <button
               className="absolute top-2 right-4 text-3xl text-[#008080] font-bold bg-white/80 rounded-full px-3 py-1 hover:bg-[#00E6D2]/80 hover:text-white transition-all"
               onClick={() => setShowFullStructureModal(null)}
@@ -556,3 +561,10 @@ export default function PlansPage() {
     </div>
   );
 }
+
+
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/
