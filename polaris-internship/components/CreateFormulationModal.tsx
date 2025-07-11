@@ -5,8 +5,6 @@ export type Compound = {
   id: string;
   name?: string;
   MW?: string; // molecular weight in g/mol
-  smiles?: string;
-  imageUrl?: string;
 };
 
 type Props = {
@@ -161,16 +159,12 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
         {/* Operator Dropdown */}
         <div className="mb-4">
           <label className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">Operator</label>
-          <select
+          <input
+            type="text"
             className="border border-[#008080] rounded px-2 py-1 w-full text-[#002C36] bg-white focus:ring-2 focus:ring-[#008080]"
             value={formulationOperator}
-            onChange={e => setFormulationOperator(e.target.value)}
-          >
-            <option value="">Select Operator</option>
-            <option value="Cory">Cory</option>
-            <option value="Chirag">Chirag</option>
-            <option value="Pavel">Pavel</option>
-          </select>
+            onChange={(e) => setFormulationOperator(e.target.value)}
+          />
         </div>
         {/* Total Desired Mass (mg) */}
         <div className="mb-4">
@@ -258,7 +252,6 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
                               const selectedCompound = compounds.find(c => c.id === e.target.value);
                               updateComponent(idx, 'compoundId', e.target.value);
                               updateComponent(idx, 'imageUrl', selectedCompound?.imageUrl || '');
-                              updateComponent(idx, 'smiles', selectedCompound?.smiles || '');  // ✅ Add this
                             }}
                           >
                             <option value="" disabled>Select Compound</option>
@@ -507,3 +500,9 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
     </div>
   );
 }
+
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/

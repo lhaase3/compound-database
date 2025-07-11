@@ -5,35 +5,7 @@ import Link from "next/link";
 import CompoundModal from "@/components/CompoundModal";
 import CreateFormulationModal from "@/components/CreateFormulationModal";
 import DrawModal from "@/components/DrawModal";
-import { Compound } from "@/types/compound";
 
-
-
-function AttachmentViewer({ name, note, imageUrl }: { name: string, note: string, imageUrl: string }) {
-  const [showImage, setShowImage] = useState(false);
-
-  return (
-    <div className="mb-4">
-      <p className="font-semibold">{name}</p>
-      {note && <p className="text-gray-700 mb-2">Note: {note}</p>}
-      {imageUrl && (
-        <p
-          className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
-          onClick={() => setShowImage((prev) => !prev)}
-        >
-          {showImage ? "Hide Image" : "View Image"}
-        </p>
-      )}
-      {imageUrl && showImage && (
-        <img
-          src={imageUrl}
-          alt={name}
-          className="w-160 h-100 object-contain border rounded shadow mt-2"
-        />
-      )}
-    </div>
-  );
-}
 
 function recalculateComponents(components: any[], totalMass: number, compounds: any[]) {
   const totalTargetMoles = components.reduce((sum, c) => {
@@ -1140,4 +1112,8 @@ export default function FormulationList() {
 }
 
 
-
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/

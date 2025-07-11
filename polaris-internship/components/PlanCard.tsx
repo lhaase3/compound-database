@@ -73,10 +73,29 @@ export default function PlanCard({ plan, onClose }: PlanCardProps) {
         >
           {editMode ? "Cancel" : "Edit"}
         </button>
+        <button
+          className="absolute top-5 left-32 px-4 py-2 bg-red-500 text-white rounded font-bold shadow hover:bg-red-600 transition-all"
+          onClick={async () => {
+            if (window.confirm("Are you sure you want to delete this plan?")) {
+              try {
+                const res = await fetch(`http://localhost:5000/delete-plan/${plan.id}`, {
+                  method: "DELETE",
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Failed to delete plan");
+                window.location.reload();
+              } catch (err: any) {
+                alert(err.message || "Failed to delete plan");
+              }
+            }
+          }}
+        >
+          Delete
+        </button>
         <div className="w-full flex justify-center mb-6">
           {/* Only show image once, above both view and edit modes */}
           {plan.imageUrl ? (
-            <div className="flex items-center justify-center w-[260px] h-[180px] bg-white rounded border border-[#00E6D2]">
+            <div className="flex items-center justify-center w-[260px] h-[180px] bg-white rounded border border-[#00E6D2] mt-8">
               <img
                 src={plan.imageUrl}
                 alt={plan.name}
@@ -86,7 +105,7 @@ export default function PlanCard({ plan, onClose }: PlanCardProps) {
               />
             </div>
           ) : (
-            <div className="w-[260px] h-[180px] flex items-center justify-center bg-gray-100 rounded border border-[#00E6D2] text-gray-400">No image</div>
+            <div className="w-[260px] h-[180px] flex items-center justify-center bg-gray-100 rounded border border-[#00E6D2] text-gray-400 mt-8">No image</div>
           )}
         </div>
         {editMode ? (
@@ -111,14 +130,6 @@ export default function PlanCard({ plan, onClose }: PlanCardProps) {
               <div className="flex flex-col">
                 <label className="font-bold mb-1">Beta (CAMB3LYP)</label>
                 <input className="border border-[#00E6D2] rounded px-3 py-2 focus:ring-2 focus:ring-[#00E6D2]" value={form.beta || ""} onChange={e => setForm(f => ({ ...f, beta: e.target.value }))} />
-              </div>
-              <div className="flex flex-col">
-                <label className="font-bold mb-1">B3LYP Dipole</label>
-                <input className="border border-[#00E6D2] rounded px-3 py-2 focus:ring-2 focus:ring-[#00E6D2]" value={form.b3lypDipole || ""} onChange={e => setForm(f => ({ ...f, b3lypDipole: e.target.value }))} />
-              </div>
-              <div className="flex flex-col">
-                <label className="font-bold mb-1">B3LYP Beta</label>
-                <input className="border border-[#00E6D2] rounded px-3 py-2 focus:ring-2 focus:ring-[#00E6D2]" value={form.b3lypBeta || ""} onChange={e => setForm(f => ({ ...f, b3lypBeta: e.target.value }))} />
               </div>
               <div className="flex flex-col md:col-span-2">
                 <label className="font-bold mb-1">Notes</label>
@@ -154,3 +165,9 @@ export default function PlanCard({ plan, onClose }: PlanCardProps) {
     </div>
   );
 }
+
+/*
+  Copyright © 2025 Polaris Electro Optics
+  This code is the property of Polaris Electro Optics and may not be reused,
+  modified, or distributed without explicit permission.
+*/

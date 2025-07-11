@@ -6,6 +6,8 @@ from flask_cors import CORS
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem import AllChem, DataStructs
+from rdkit.Chem import rdDepictor
+from rdkit.Chem.Draw import rdMolDraw2D
 import re
 import uuid
 from google.oauth2 import service_account
@@ -138,6 +140,10 @@ def search_substructure():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+
+from rdkit.Chem import rdDepictor
+from rdkit.Chem.Draw import rdMolDraw2D
+
 @app.route("/add-compound", methods=["POST", "OPTIONS"])
 def add_compound():
     print("🧪 Received method:", request.method)
@@ -146,7 +152,6 @@ def add_compound():
 
     data = request.get_json()
 
-    # 🚫 Prevent saving lot-based compounds directly
     if "original_id" in data:
         return jsonify({"error": "Cannot add a compound that originates from a lot."}), 400
 
@@ -159,25 +164,71 @@ def add_compound():
     transitions = extract_transitions_with_temps(phase_map_str)
     data["parsed_phase_transitions"] = transitions
 
-    # Generate and upload structure image if smiles is present and no imageUrl
     smiles = data.get("smiles")
     if smiles and not data.get("imageUrl"):
         try:
             mol = Chem.MolFromSmiles(smiles)
             if mol:
-                # Generate a high-resolution image
-                img = Draw.MolToImage(mol, size=(1200, 600), dpi=300)
+                rdDepictor.Compute2DCoords(mol)
+
+                # Use even larger canvas and adjust draw options for bigger molecule and slightly smaller font
+                width, height = 2400, 1200  # Keep large canvas
+                drawer = rdMolDraw2D.MolDraw2DCairo(width, height)
+                options = drawer.drawOptions()
+                num_atoms = mol.GetNumAtoms()
+                # Dynamically set both minFontSize and maxFontSize for atom labels
+                if num_atoms <= 20:
+                    options.minFontSize = 120
+                    options.maxFontSize = 120
+                elif num_atoms <= 40:
+                    options.minFontSize = 90
+                    options.maxFontSize = 90
+                else:
+                    options.minFontSize = 58
+                    options.maxFontSize = 58
+                options.bondLineWidth = 4
+                options.padding = 0.01    # Minimal padding to fill image
+                options.fixedScale = True # Force molecule to fill canvas
+
+                # options.useBWAtomPalette()
+
+                drawer.DrawMolecule(mol)
+                drawer.FinishDrawing()
+
+                # Save image using WriteDrawingText (RDKit >=2022)
                 with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                    img.save(tmp.name, dpi=(300, 300))
+                    drawer.WriteDrawingText(tmp.name)
                     tmp.flush()
-                    # Upload to Firebase Storage
+
                     bucket = storage.bucket()
                     filename = f"compound_images/{data['id']}.png"
                     blob = bucket.blob(filename)
                     blob.upload_from_filename(tmp.name, content_type="image/png")
                     blob.make_public()
                     data["imageUrl"] = blob.public_url
+
                 os.unlink(tmp.name)
+                # Generate true black and white image for printing
+                drawer_bw = rdMolDraw2D.MolDraw2DCairo(width, height)
+                options_bw = drawer_bw.drawOptions()
+                options_bw.minFontSize = options.minFontSize
+                options_bw.maxFontSize = options.maxFontSize
+                options_bw.bondLineWidth = options.bondLineWidth
+                options_bw.padding = options.padding
+                options_bw.fixedScale = options.fixedScale
+                options_bw.useBWAtomPalette()  # Force black atom labels and bonds
+                drawer_bw.DrawMolecule(mol)
+                drawer_bw.FinishDrawing()
+                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_bw:
+                    drawer_bw.WriteDrawingText(tmp_bw.name)
+                    tmp_bw.flush()
+                    filename_bw = f"compound_images/{data['id']}_bw.png"
+                    blob_bw = bucket.blob(filename_bw)
+                    blob_bw.upload_from_filename(tmp_bw.name, content_type="image/png")
+                    blob_bw.make_public()
+                    data["bwImageUrl"] = blob_bw.public_url
+                os.unlink(tmp_bw.name)
+
         except Exception as e:
             print(f"Failed to generate/upload image for {data['id']}: {e}")
 
@@ -710,3 +761,67 @@ def update_plan(plan_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+
+#   Copyright © 2025 Polaris Electro Optics
+#   This code is the property of Polaris Electro Optics and may not be reused, modified, or distributed without explicit permission.
+
+
+
+
+
+
+
+
+
+
+
+
+# @app.route("/add-compound", methods=["POST", "OPTIONS"])
+# def add_compound():
+#     print("🧪 Received method:", request.method)
+#     if request.method == "OPTIONS":
+#         return '', 200
+
+#     data = request.get_json()
+
+#     # 🚫 Prevent saving lot-based compounds directly
+#     if "original_id" in data:
+#         return jsonify({"error": "Cannot add a compound that originates from a lot."}), 400
+
+#     if "id" not in data:
+#         return jsonify({"error": "Compound must have an 'id' field"}), 400
+
+#     data["createdAt"] = firestore.SERVER_TIMESTAMP
+
+#     phase_map_str = data.get("phase map", "")
+#     transitions = extract_transitions_with_temps(phase_map_str)
+#     data["parsed_phase_transitions"] = transitions
+
+#     # Generate and upload structure image if smiles is present and no imageUrl
+#     smiles = data.get("smiles")
+#     if smiles and not data.get("imageUrl"):
+#         try:
+#             mol = Chem.MolFromSmiles(smiles)
+#             if mol:
+#                 # Generate a high-resolution image
+#                 img = Draw.MolToImage(mol, size=(1200, 600), dpi=300)
+#                 with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+#                     img.save(tmp.name, dpi=(300, 300))
+#                     tmp.flush()
+#                     # Upload to Firebase Storage
+#                     bucket = storage.bucket()
+#                     filename = f"compound_images/{data['id']}.png"
+#                     blob = bucket.blob(filename)
+#                     blob.upload_from_filename(tmp.name, content_type="image/png")
+#                     blob.make_public()
+#                     data["imageUrl"] = blob.public_url
+#                 os.unlink(tmp.name)
+#         except Exception as e:
+#             print(f"Failed to generate/upload image for {data['id']}: {e}")
+
+#     db.collection("compounds").document(data["id"]).set(data, merge=True)
+#     return jsonify({"success": True}), 200
