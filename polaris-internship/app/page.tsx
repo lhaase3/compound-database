@@ -1,5 +1,10 @@
+
 "use client";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { auth } from "@/utils/firebase";
+import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
+import LoginModal from "../components/LoginModal";
 import CompoundCard from "../components/CompoundCard";
 import CompoundModal from "../components/CompoundModal";
 import DrawModal from "../components/DrawModal";
@@ -8,6 +13,8 @@ import CreateLotModal from "@/components/CreateLotModal";
 import { Compound } from "@/types/compound";
 import CreateFormulationModal from "../components/CreateFormulationModal";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 
 
 
@@ -30,6 +37,21 @@ type NewCompound = {
 };
 
 export default function Home() {
+  const router = useRouter();
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser && firebaseUser.email && firebaseUser.email.endsWith("@polariseo.com")) {
+        setUser(firebaseUser);
+      } else {
+        setUser(null);
+        router.push("/login"); // Redirect to login page if not authenticated
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
   const [compounds, setCompounds] = useState<Compound[]>([]);
   const [selectedCompound, setSelectedCompound] = useState<Compound | null>(null);
   const [showDrawModal, setShowDrawModal] = useState(false);
@@ -78,11 +100,32 @@ export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
 
 
+  // useEffect(() => {
+  //   fetch("http://localhost:5000/compounds")
+  //     .then((res) => res.json())
+  //     .then((data) => setCompounds(data));
+  // }, []);
+
+  // On mount, fetch starred from localStorage and compounds from backend
   useEffect(() => {
+    const stored = localStorage.getItem("starredCompounds");
+    const starredList = stored ? JSON.parse(stored) : [];
+    setStarred(starredList);
     fetch("http://localhost:5000/compounds")
       .then((res) => res.json())
-      .then((data) => setCompounds(data));
+      .then((data) => {
+        setCompounds(
+          Array.isArray(data)
+            ? data.map((compound: Compound) => ({
+                ...compound,
+                isStarred: starredList.includes(compound.id),
+              }))
+            : []
+        );
+      })
+      .catch((err) => console.error("Failed to fetch compounds:", err));
   }, []);
+
 
   useEffect(() => {
     fetch("http://localhost:5000/lots")
@@ -177,6 +220,44 @@ export default function Home() {
     }
   };
 
+    useEffect(() => {
+    if (user && user.email) {
+      fetch(`http://localhost:5000/get-starred?email=${user.email}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data.starred)) {
+            setStarred(data.starred);
+            localStorage.setItem("starredCompounds", JSON.stringify(data.starred));
+            setCompounds(prev =>
+              prev.map(compound => ({
+                ...compound,
+                isStarred: data.starred.includes(compound.id),
+              }))
+            );
+          }
+        })
+        .catch(err => console.error("Failed to fetch user-starred compounds:", err));
+    }
+  }, [user]);
+
+
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname === "/") {
+      const stored = localStorage.getItem("starredCompounds");
+      const starredList = stored ? JSON.parse(stored) : [];
+      setStarred(starredList);
+      setCompounds((prev) =>
+        prev.map((compound) => ({
+          ...compound,
+          isStarred: starredList.includes(compound.id),
+        }))
+      );
+    }
+  }, [pathname]);
+
+
   const handleResetFilters = async () => {
     setResetCount((prev) => prev + 1);
     setSelectedTransition("");
@@ -217,22 +298,41 @@ export default function Home() {
     }
   };
 
-  // Load starred from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem("starredCompounds");
-    if (stored) setStarred(JSON.parse(stored));
-  }, []);
-  // Save starred to localStorage when changed
+  // Whenever starred or compounds change, enrich compounds and sync localStorage and backend
   useEffect(() => {
     localStorage.setItem("starredCompounds", JSON.stringify(starred));
-  }, [starred]);
+    setCompounds((prev) =>
+      prev.map((compound) => ({
+        ...compound,
+        isStarred: starred.includes(compound.id),
+      }))
+    );
+    // Sync starred compounds to backend if user is logged in
+    if (user && user.email) {
+      fetch("http://localhost:5000/save-starred", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, starred }),
+      }).catch((err) => console.error("Failed to save starred compounds:", err));
+    }
+  }, [starred, user]);
+
 
   // Toggle star for a compound
+  // const toggleStar = (id: string) => {
+  //   setStarred((prev) =>
+  //     prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+  //   );
+  // };
+
   const toggleStar = (id: string) => {
     setStarred((prev) =>
-      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((sid) => sid !== id)
+        : [...prev, id]
     );
   };
+
 
   // Add/remove compound from comparison
   const toggleCompare = (id: string) => {
@@ -255,8 +355,52 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      const stored = localStorage.getItem("starredCompounds");
+      if (stored) {
+        const starredList = JSON.parse(stored);
+        setStarred(starredList);
+        setCompounds((prev) =>
+          prev.map((compound) => ({
+            ...compound,
+            isStarred: starredList.includes(compound.id),
+          }))
+        );
+      }
+    }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  return () => {
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
+}, []);
+
   return (
     <div className="min-h-screen bg-[#002C36] flex flex-col items-center p-0">
+      {/* Auth Bar */}
+      <div className="w-full flex justify-end items-center px-8 py-2">
+        {user ? (
+          <div className="flex gap-4 items-center">
+            <span className="text-[#00E6D2] font-bold">{user.email}</span>
+            <button
+              className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-4 py-2 rounded-lg font-bold shadow uppercase tracking-wide"
+              onClick={() => signOut(auth)}
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <button
+            className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-4 py-2 rounded-lg font-bold shadow uppercase tracking-wide"
+            onClick={() => setShowLoginModal(true)}
+          >
+            Login
+          </button>
+        )}
+      </div>
       {/* Sticky Logo Taskbar */}
       <div
         className={`fixed top-0 left-0 w-full z-50 flex justify-start pointer-events-none transition-opacity duration-300 ${
@@ -579,8 +723,11 @@ export default function Home() {
               &times;
             </button>
             <button
-              className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold px-4 py-2 rounded-md uppercase tracking-wide text-xs"
-              onClick={clearComparison}
+              className="absolute top-4 right-10 bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold px-4 py-2 rounded-md uppercase tracking-wide text-xs"
+              onClick={() => {
+                clearComparison();
+                setShowCompareModal(false);
+              }}
             >
               Clear
             </button>
@@ -706,6 +853,7 @@ export default function Home() {
       )}
 
       {/* Modals */}
+      {/* Remove inline login modal and block overlay. Redirect handled above. */}
       {showDrawModal && (
         <DrawModal
           onClose={() => setShowDrawModal(false)}
@@ -845,6 +993,8 @@ export default function Home() {
     </div>
   );
 }
+
+
 
 
 /*

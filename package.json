@@ -2,6 +2,7 @@
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
     "@rdkit/rdkit": "^2025.3.2-1.0.0",
+    "firebase": "^11.10.0",
     "flask": "^0.2.10",
     "framer-motion": "^12.15.0",
     "ketcher-standalone": "^3.2.0",

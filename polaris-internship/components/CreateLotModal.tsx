@@ -78,22 +78,23 @@ export default function CreateLotModal({ compounds, onClose, onCreate }: Props) 
         className="bg-white p-6 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold mb-4 text-black">Create New Lot</h2>
-
-        <input
-          type="text"
-          value={lotName}
-          onChange={(e) => setLotName(e.target.value)}
-          placeholder="Enter lot name"
-          className="w-full p-2 mb-4 border border-gray-300 rounded text-black"
-        />
+        <h2 className="text-4xl font-extrabold text-[#002C36] uppercase tracking-wide mb-8 border-b-2 border-[#008080] pb-4">Create New Lot</h2>
+        <div className="mb-3">
+          <label className="block font-semibold mb-1 text-[#008080]">Lot Name</label>
+          <input
+            type="text"
+            value={lotName}
+            onChange={(e) => setLotName(e.target.value)}
+            className="w-full p-2 mb-4 border border-[#008080] rounded text-black"
+          />
+        </div>
 
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search compounds..."
-          className="w-full p-2 mb-3 border border-gray-300 rounded text-black"
+          className="w-full p-2 mb-3 border border-[#008080] rounded text-black"
         />
 
         <div className="mb-4 max-h-64 overflow-y-scroll border border-gray-200 rounded p-2">

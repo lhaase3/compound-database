@@ -1,6 +1,9 @@
 "use client"
 
 import React, { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { auth } from "@/utils/firebase";
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import Link from "next/link";
 import CompoundModal from "@/components/CompoundModal";
 import CreateFormulationModal from "@/components/CreateFormulationModal";
@@ -71,6 +74,11 @@ type EditData = {
 
 
 export default function FormulationList() {
+  const router = useRouter();
+  // Firebase Auth
+  const [user, setUser] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const provider = new GoogleAuthProvider();
   const [formulations, setFormulations] = useState<any[]>([]);
   const [selectedFormulation, setSelectedFormulation] = useState<any | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -102,6 +110,47 @@ export default function FormulationList() {
     smiles?: string;
     name: string;
   } | null>(null);
+  // Firebase Auth: Check if user is logged in
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthChecked(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Load starred formulations for user
+  useEffect(() => {
+    if (user && user.email) {
+      fetch(`http://localhost:5000/get-starred-formulations?email=${user.email}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data.starred)) {
+            setStarredFormulations(data.starred);
+            localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
+          }
+        })
+        .catch(err => console.error("Failed to fetch starred formulations:", err));
+    } else {
+      // fallback to localStorage if not logged in
+      const stored = localStorage.getItem("starredFormulations");
+      if (stored) setStarredFormulations(JSON.parse(stored));
+      else setStarredFormulations([]);
+    }
+  }, [user]);
+
+  // Sync starred formulations to backend and localStorage
+  useEffect(() => {
+    localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
+    if (user && user.email) {
+      fetch("http://localhost:5000/save-starred-formulations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, starred: starredFormulations }),
+      }).catch((err) => console.error("Failed to save starred formulations:", err));
+    }
+  }, [starredFormulations, user]);
   const handleResetFilters = async () => {
     setSearchTerm("");
     setShowOnlyStarred(false);
@@ -178,6 +227,10 @@ export default function FormulationList() {
   };
 
   const toggleStarFormulation = (id: string) => {
+    if (!user || !user.email) {
+      alert("You must be signed in to star formulations.");
+      return;
+    }
     setStarredFormulations((prev) =>
       prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
     );
@@ -185,16 +238,19 @@ export default function FormulationList() {
 
   const handleDrawFilterSubmit = async (smiles: string) => {
     try {
-      const res = await fetch("http://localhost:5000/search-substructure-formulations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: smiles }),
-      });
-
+    const res = await fetch("http://localhost:5000/search-substructure-formulations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: smiles }),
+    });  
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
       const data = await res.json();
       setFormulations(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error filtering formulations by drawn SMILES", err);
+      alert("Failed to filter by drawn structure. Please check your backend and network connection.");
       setFormulations([]);
     }
   };
@@ -222,8 +278,47 @@ export default function FormulationList() {
     setEditMode(true);
   };
 
+  useEffect(() => {
+    if (authChecked && !user) {
+      router.push("/login");
+    }
+  }, [authChecked, user, router]);
+  if (!user) {
+    return null;
+  }
   return (
     <div className="min-h-screen bg-[#002C36] flex flex-col items-center p-0">
+      {/* Auth Bar */}
+      <div className="w-full flex justify-end items-center px-8 py-2">
+        {user ? (
+          <div className="flex gap-4 items-center">
+            <span className="text-[#00E6D2] font-bold">{user.email}</span>
+            <button
+              className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-4 py-2 rounded-lg font-bold shadow uppercase tracking-wide"
+              onClick={() => signOut(auth)}
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <button
+            className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-4 py-2 rounded-lg font-bold shadow uppercase tracking-wide"
+            onClick={async () => {
+              if (!auth) {
+                alert("Auth not initialized");
+                return;
+              }
+              try {
+                await signInWithPopup(auth, provider);
+              } catch (err) {
+                alert("Sign in failed");
+              }
+            }}
+          >
+            Login
+          </button>
+        )}
+      </div>
       {/* Sticky Logo Taskbar */}
       <div
         className={`fixed top-0 left-0 w-full z-50 flex justify-start pointer-events-none transition-opacity duration-300 ${
@@ -276,6 +371,24 @@ export default function FormulationList() {
 
 
       <div className="flex flex-wrap items-center gap-4 mb-8 w-full max-w-3xl justify-center">
+        {!user && (
+          <button
+            className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-6 py-2 rounded-lg shadow font-bold text-lg uppercase tracking-wide flex items-center gap-2 transition-all"
+        onClick={async () => {
+          if (!auth) {
+            alert("Auth not initialized");
+            return;
+          }
+          try {
+            await signInWithPopup(auth, provider);
+          } catch (err) {
+            alert("Sign in failed");
+          }
+        }}
+          >
+            <span role="img" aria-label="google">🔒</span> Sign in with Google
+          </button>
+        )}
         <input
           type="text"
           placeholder="🔍 Search by compound ID (e.g. PEO-0100)"
@@ -1117,3 +1230,6 @@ export default function FormulationList() {
   This code is the property of Polaris Electro Optics and may not be reused,
   modified, or distributed without explicit permission.
 */
+
+
+

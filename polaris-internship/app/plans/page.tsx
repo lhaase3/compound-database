@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { auth } from "@/utils/firebase";
+import { onAuthStateChanged, signOut, GoogleAuthProvider } from "firebase/auth";
 import Link from "next/link";
 import DrawModal from "@/components/DrawModal";
 import PlanCard from "@/components/PlanCard";
@@ -25,6 +28,10 @@ type PlannedStructure = {
 };
 
 export default function PlansPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const provider = new GoogleAuthProvider();
   const [plans, setPlans] = useState<PlannedStructure[]>([]);
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [draft, setDraft] = useState<Partial<PlannedStructure>>({ priority: 1 });
@@ -33,6 +40,21 @@ export default function PlansPage() {
   const [showFullStructureModal, setShowFullStructureModal] = useState<{ imageUrl: string; name: string } | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const [showStickyLogo, setShowStickyLogo] = useState(false);
+
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthChecked(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (authChecked && !user) {
+      router.push("/login");
+    }
+  }, [authChecked, user, router]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -232,8 +254,28 @@ export default function PlansPage() {
     }
   }
 
+  if (!user) {
+    return null;
+  }
+  // Auth bar
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
+  };
   return (
     <div className="min-h-screen bg-[#002C36] flex flex-col items-center p-0">
+      {/* Auth Bar */}
+      <div className="w-full bg-[#00343F] text-white flex justify-end items-center px-8 py-3 shadow z-50" style={{ minHeight: '56px' }}>
+        <div className="flex items-center gap-4">
+          <span className="font-semibold text-lg">{user?.email}</span>
+          <button
+            className="bg-[#00E6D2] text-[#002C36] px-4 py-2 rounded font-bold hover:bg-[#00bfae] transition-all"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+      </div>
       {/* Sticky Logo Taskbar */}
       <div
         className={`fixed top-0 left-0 w-full z-50 flex justify-start pointer-events-none transition-opacity duration-300 ${
@@ -290,21 +332,22 @@ export default function PlansPage() {
       {showCreatePlan && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCreatePlan(false)}>
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl relative max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-4 text-[#008080]">Create New Plan</h2>
+            {/* <h2 className="text-2xl font-bold mb-4 text-black">Create New Plan</h2> */}
+            <h2 className="text-4xl font-extrabold text-[#002C36] uppercase tracking-wide mb-8 border-b-2 border-[#008080] pb-4">Create New Plan</h2>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">Name</label>
-              <input type="text" className="w-full border rounded p-2" value={draft.name || ""} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
+              <label className="block font-semibold mb-1 text-[#008080]">Name</label>
+              <input type="text" className="w-full border border-[#008080] rounded p-2 text-black" value={draft.name || ""} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
             </div>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">Priority (1 = highest)</label>
-              <input type="number" min={1} className="w-full border rounded p-2" value={draft.priority || 1} onChange={e => setDraft(d => ({ ...d, priority: Number(e.target.value) }))} />
+              <label className="block font-semibold mb-1 text-[#008080]">Priority (1 = highest)</label>
+              <input type="number" min={1} className="w-full border border-[#008080] rounded p-2 text-black" value={draft.priority || 1} onChange={e => setDraft(d => ({ ...d, priority: Number(e.target.value) }))} />
             </div>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">Owner</label>
-              <input type="text" className="w-full border rounded p-2" value={draft.owner || ""} onChange={e => setDraft(d => ({ ...d, owner: e.target.value }))} />
+              <label className="block font-semibold mb-1 text-[#008080]">Owner</label>
+              <input type="text" className="w-full border border-[#008080] rounded p-2 text-black" value={draft.owner || ""} onChange={e => setDraft(d => ({ ...d, owner: e.target.value }))} />
             </div>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">Draw Structure</label>
+              <label className="block font-semibold mb-1 text-[#008080]">Draw Structure</label>
               <button className="bg-[#00E6D2] text-[#002C36] px-4 py-2 rounded font-bold" onClick={() => setShowDrawModal(true)}>
                 {draft.smiles ? "Edit Structure" : "Draw Structure"}
               </button>
@@ -313,43 +356,30 @@ export default function PlansPage() {
               )}
             </div>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">SMILES</label>
+              <label className="block font-semibold mb-1 text-[#008080]">SMILES</label>
               <input
                 type="text"
-                className="w-full border rounded p-2"
+                className="w-full border border-[#008080] rounded p-2 text-black placeholder:text-gray-500"
                 value={draft.smiles || ""}
                 onChange={e => setDraft(d => ({ ...d, smiles: e.target.value }))}
                 placeholder="Enter SMILES or use Draw Structure"
               />
             </div>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">MW</label>
-              <input type="number" className="w-full border rounded p-2" value={draft.mw || ""} onChange={e => setDraft(d => ({ ...d, mw: Number(e.target.value) }))} />
+              <label className="block font-semibold mb-1 text-[#008080]">MW</label>
+              <input type="number" className="w-full border border-[#008080] rounded p-2 text-black" value={draft.mw || ""} onChange={e => setDraft(d => ({ ...d, mw: Number(e.target.value) }))} />
             </div>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">Dipole CAMB3LYP SVPD CHCl3 (Cosmo)</label>
-              <input type="text" className="w-full border rounded p-2" value={draft.dipole || ""} onChange={e => setDraft(d => ({ ...d, dipole: e.target.value }))} />
+              <label className="block font-semibold mb-1 text-[#008080]">Dipole CAMB3LYP SVPD CHCl3 (Cosmo)</label>
+              <input type="text" className="w-full border border-[#008080] rounded p-2 text-black" value={draft.dipole || ""} onChange={e => setDraft(d => ({ ...d, dipole: e.target.value }))} />
             </div>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">Beta CAMB3LYP SVPD CHCl3 (Cosmo)</label>
-              <input type="text" className="w-full border rounded p-2" value={draft.beta || ""} onChange={e => setDraft(d => ({ ...d, beta: e.target.value }))} />
+              <label className="block font-semibold mb-1 text-[#008080]">Beta CAMB3LYP SVPD CHCl3 (Cosmo)</label>
+              <input type="text" className="w-full border border-[#008080] rounded p-2 text-black" value={draft.beta || ""} onChange={e => setDraft(d => ({ ...d, beta: e.target.value }))} />
             </div>
             <div className="mb-3">
-              <label className="block font-semibold mb-1">Notes</label>
-              <textarea className="w-full border rounded p-2" value={draft.notes || ""} onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))} />
-            </div>
-            <div className="mb-3">
-              <label className="block font-semibold mb-1">Status</label>
-              <select
-                className="w-full border rounded p-2"
-                value={draft.status || 'Not Started'}
-                onChange={e => setDraft(d => ({ ...d, status: e.target.value as any }))
-                }
-              >
-                <option value="Not Started">Not Started</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
+              <label className="block font-semibold mb-1 text-[#008080]">Notes</label>
+              <textarea className="w-full border border-[#008080] rounded p-2 text-black" value={draft.notes || ""} onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))} />
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black" onClick={() => setShowCreatePlan(false)}>
@@ -380,7 +410,7 @@ export default function PlansPage() {
                 </thead>
                 <tbody>
                   {activePlans.length === 0 && (
-                    <tr><td colSpan={7} className="text-center py-4 text-gray-500">No plans yet.</td></tr>
+                    <tr><td colSpan={7} className="text-center py-4 text-[#002C36]">No plans yet.</td></tr>
                   )}
                   {activePlans.map((plan, idx) => (
                     <Draggable key={plan.id} draggableId={plan.id} index={idx}>
@@ -392,9 +422,9 @@ export default function PlansPage() {
                           className={`text-center border-b border-[#008080] hover:bg-[#e6f9f7] cursor-pointer group ${snapshot.isDragging ? 'bg-[#b2f0e9]' : ''}`}
                           onClick={() => setSelectedPlan(plan)}
                         >
-                          <td className="px-1 py-2 border-r border-[#008080] font-bold w-12">{plan.priority}</td>
-                          <td className="px-2 py-2 border-r border-[#008080]" style={{ width: '160px', minWidth: '100px', maxWidth: '160px' }}>{plan.name}</td>
-                          <td className="px-2 py-2 border-r border-[#008080]" style={{ width: '160px', minWidth: '100px', maxWidth: '160px' }}>{plan.owner}</td>
+                          <td className="px-1 py-2 border-r border-[#008080] font-bold w-12 text-[#002C36]">{plan.priority}</td>
+                          <td className="px-2 py-2 border-r border-[#008080] text-[#002C36]" style={{ width: '160px', minWidth: '100px', maxWidth: '160px' }}>{plan.name}</td>
+                          <td className="px-2 py-2 border-r border-[#008080] text-[#002C36]" style={{ width: '160px', minWidth: '100px', maxWidth: '160px' }}>{plan.owner}</td>
                           {/* update this to increase structure column size */}
                           <td className="border-r border-[#008080] bg-white" style={{ padding: 0, verticalAlign: 'middle', width: '320px', minWidth: '400px', maxWidth: '320px' }}>
                             {plan.imageUrl ? (
@@ -421,10 +451,10 @@ export default function PlansPage() {
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-gray-400">No image</span>
+                              <span className="text-[#002C36]">No image</span>
                             )}
                           </td>
-                          <td className="px-2 py-2 border-r border-[#008080]" style={{ width: '160px', minWidth: '150px', maxWidth: '160px' }}>{plan.mw}</td>
+                          <td className="px-2 py-2 border-r border-[#008080] text-[#002C36]" style={{ width: '160px', minWidth: '150px', maxWidth: '160px' }}>{plan.mw}</td>
                           <td className="px-2 py-2 border-r border-[#008080]" style={{ width: '100px', minWidth: '180px', maxWidth: '140px' }}>
                             {/* Status dropdown for active plans, badge for completed */}
                             {plan.status === 'Completed' || plan.completed ? (
@@ -469,8 +499,8 @@ export default function PlansPage() {
               <tbody>
                 {completedPlans.map((plan) => (
                   <tr key={plan.id} className="text-center border-b border-[#008080] bg-[#e6f9f7] group hover:bg-[#d2f5ee] cursor-pointer" onClick={() => setSelectedPlan(plan)}>
-                    <td className="px-2 py-2 border-r border-[#008080]">{plan.name}</td>
-                    <td className="px-2 py-2 border-r border-[#008080] relative">
+                    <td className="px-2 py-2 border-r border-[#008080] text-[#002C36]">{plan.name}</td>
+                    <td className="px-2 py-2 border-r border-[#008080] relative text-[#002C36]">
                       {plan.owner}
                     </td>
                     <td className="border-r border-[#008080] bg-white" style={{ padding: 0, verticalAlign: 'middle', width: '280px', minWidth: '240px', maxWidth: '320px' }}>
@@ -498,10 +528,10 @@ export default function PlansPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-gray-400">No image</span>
+                        <span className="text-[#002C36]">No image</span>
                       )}
                     </td>
-                    <td className="px-2 py-2 border-r border-[#008080] relative">
+                    <td className="px-2 py-2 border-r border-[#008080] relative text-[#002C36]">
                       {plan.mw}
                     </td>
                     <td className="px-2 py-2 border-r border-[#008080]">
