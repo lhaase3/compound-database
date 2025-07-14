@@ -1,15 +1,12 @@
-# Use an official Python runtime as the base image
-FROM python:3.9-slim
+# Use official Python image
+FROM python:3.10-slim
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt .
+COPY . /app
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your project files into the container
-COPY . .
+EXPOSE 8080
 
-# Run the Flask app
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
