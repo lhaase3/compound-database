@@ -4,6 +4,9 @@ node_modules/
 backend/Miniconda3-latest-Linux-x86_64.sh
 
 
+.env.local
+
+
 firebase-key.json
 /backend/firebase-key.json
 

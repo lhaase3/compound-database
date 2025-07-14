@@ -34,6 +34,7 @@ yarn-error.log*
 .env*
 venv/
 backend/venv/
+.env.local
 
 # ignore nested git repo
 backend/DECIMER-image_Transformer/
