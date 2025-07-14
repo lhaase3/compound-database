@@ -43,13 +43,19 @@ export default function CompoundCard({ compound, onMoreInfo, isStarred, onToggle
 
       {/* Hover border/glow */}
       <div className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-200 group-hover:shadow-[0_0_0_4px] group-hover:shadow-[var(--accent)]" style={{ '--accent': accentColor }} />
-      {/* Star icon button */}
+      {/* Star icon button - larger and glowing */}
       <button
-        className={`absolute top-3 right-3 text-2xl z-10 focus:outline-none ${isStarred ? 'text-[#00E6D2]' : 'text-white hover:text-[#00E6D2]'}`}
+        className={`absolute top-3 right-3 text-4xl z-10 focus:outline-none ${isStarred ? 'text-[#00E6D2]' : 'text-white hover:text-[#00E6D2]'}`}
         title={isStarred ? 'Unstar' : 'Star'}
         onClick={e => { e.stopPropagation(); onToggleStar(); }}
         tabIndex={0}
-        style={{ textShadow: isStarred ? `0 0 8px ${accentColor}` : 'none' }}
+        style={{
+          textShadow: isStarred
+            ? `0 0 16px ${accentColor}, 0 0 8px ${accentColor}`
+            : '0 0 8px #00E6D2',
+          filter: isStarred ? 'drop-shadow(0 0 8px #00E6D2)' : 'none',
+          transition: 'text-shadow 0.2s, filter 0.2s',
+        }}
       >
         {isStarred ? '★' : '☆'}
       </button>

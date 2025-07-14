@@ -211,7 +211,7 @@ export default function CompoundModal({
 
   // List of unwanted fields to exclude from custom display
   const unwanted = [
-    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "parsed_phase_transitions", "imageUrl", "tags", "lotId", "Lambda Max (DCM/Ac CN)", "views", "similarity", "bwImageUrl"
+    "attachments", "lots", "original_id", "created_at", "updated_at", "_id", "__v", "isStarred", "parsed_phase_transitions", "imageUrl", "tags", "lotId", "Lambda Max (DCM/Ac CN)", "views", "similarity", "bwImageUrl"
   ];
 
   // Your defined fields (always shown, in order)
@@ -557,12 +557,12 @@ export default function CompoundModal({
               {showTagDropdown && (
                 <div
                   ref={tagDropdownRef}
-                  className="absolute left-0 bg-white shadow-lg border border-[#00E6D2] mt-2 z-50 rounded w-44"
+                  className="absolute left-0 bg-[#00343F] shadow-lg border border-[#00E6D2] mt-2 z-50 rounded w-44 text-[#00E6D2]"
                 >
                   {["testing", "crystals"].map((tag) => (
                     <div
                       key={tag}
-                      className="px-4 py-2 text-[#002C36] hover:bg-[#00E6D2]/20 cursor-pointer font-semibold"
+                      className="px-4 py-2 text-[#00E6D2] hover:bg-[#00545F] cursor-pointer font-semibold"
                       onClick={async () => {
                         const updatedTags = editedCompound.tags?.includes(tag)
                           ? editedCompound.tags.filter((t: string) => t !== tag)
@@ -590,20 +590,20 @@ export default function CompoundModal({
                 📦 Lots ({lotsForCompound.length})
               </button>
               {showLotDropdown && (
-                <div ref={lotDropdownRef} className="absolute left-0 bg-white shadow-lg border border-purple-400 mt-2 z-50 rounded w-56">
+                <div ref={lotDropdownRef} className="absolute left-0 bg-[#00343F] shadow-lg border border-purple-400 mt-2 z-50 rounded w-56 text-[#00E6D2]">
                   <div
                     onClick={() => {
                       setShowLotDropdown(false);
                       setShowCreateLotModal(true);
                     }}
-                    className="px-4 py-2 text-blue-600 hover:bg-blue-50 cursor-pointer border-b border-purple-200 font-semibold"
+                    className="px-4 py-2 text-blue-300 hover:bg-[#00545F] cursor-pointer border-b border-purple-200 font-semibold"
                   >
                     ➕ Create Lot
                   </div>
                   {lotsForCompound.map((lotId) => (
                     <div
                       key={lotId}
-                      className="px-4 py-2 text-[#002C36] hover:bg-purple-50 cursor-pointer font-semibold"
+                      className="px-4 py-2 text-[#00E6D2] hover:bg-[#00545F] cursor-pointer font-semibold"
                       onClick={async () => {
                         try {
                           const res = await fetch(`http://localhost:5000/lot/${lotId}`);
@@ -814,10 +814,10 @@ export default function CompoundModal({
                   {attachmentDropdown && attachmentDropdown.key === key && (
                     <div
                       ref={attachmentDropdownRef}
-                      className="absolute z-50 bg-white border border-[#00E6D2] rounded shadow-lg mt-2 left-0 min-w-[200px] max-h-72 overflow-y-auto"
+                      className="absolute z-50 bg-[#00343F] border border-[#00E6D2] rounded shadow-lg mt-2 left-0 min-w-[200px] max-h-72 overflow-y-auto text-[#00E6D2]"
                     >
                       <div
-                        className="px-4 py-2 hover:bg-[#00E6D2]/10 cursor-pointer font-semibold border-b border-[#00E6D2]"
+                        className="px-4 py-2 hover:bg-[#00545F] cursor-pointer font-semibold border-b border-[#00E6D2]"
                         onClick={() => {
                           setAttachmentDropdown(null);
                           setShowNewEntryModal({key});
@@ -828,7 +828,7 @@ export default function CompoundModal({
                       {value.map((entry, idx) => (
                         <div
                           key={idx}
-                          className="px-4 py-2 hover:bg-[#00E6D2]/10 cursor-pointer font-semibold"
+                          className="px-4 py-2 hover:bg-[#00545F] cursor-pointer font-semibold"
                           onClick={() => {
                             setAttachmentDropdown(null);
                             setSelectedAttachment(key);

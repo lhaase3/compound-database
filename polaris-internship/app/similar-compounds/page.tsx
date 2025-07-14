@@ -1,21 +1,29 @@
 "use client";
 import { useEffect, useState } from "react";
+import { auth } from "@/utils/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import CompoundCard from "@/components/CompoundCard";
 import CompoundModal from "@/components/CompoundModal";
 import { Compound } from "@/types/compound";
 
 export default function SimilarCompoundsPage() {
+  const [user, setUser] = useState<any>(null);
+  // Listen for auth state changes (same as main page)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser && firebaseUser.email && firebaseUser.email.endsWith("@polariseo.com")) {
+        setUser(firebaseUser);
+      } else {
+        setUser(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
   const [compounds, setCompounds] = useState<Compound[]>([]);
   const [originalCompound, setOriginalCompound] = useState<Compound | null>(null);
   const [selectedCompound, setSelectedCompound] = useState<Compound | null>(null);
 
-  const [starred, setStarred] = useState<string[]>(() => {
-    if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("starredCompounds");
-        return stored ? JSON.parse(stored) : [];
-    }
-    return [];
-  });
+  const [starred, setStarred] = useState<string[]>([]);
   const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareAttachment, setCompareAttachment] = useState<{ compoundId: string; key: string; data: any } | null>(null);
@@ -29,18 +37,52 @@ export default function SimilarCompoundsPage() {
     if (original) {
       setOriginalCompound(JSON.parse(original));
     }
-  }, []);
+    // Load starred compounds from backend if logged in, else from localStorage
+    if (user && user.email) {
+      fetch(`http://localhost:5000/get-starred?email=${user.email}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data.starred)) {
+            setStarred(data.starred);
+            localStorage.setItem("starredCompounds", JSON.stringify(data.starred));
+          } else {
+            setStarred([]);
+            localStorage.setItem("starredCompounds", JSON.stringify([]));
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch user-starred compounds:", err);
+          // fallback to localStorage
+          const starredStored = localStorage.getItem("starredCompounds");
+          setStarred(starredStored ? JSON.parse(starredStored) : []);
+        });
+    } else {
+      const starredStored = localStorage.getItem("starredCompounds");
+      setStarred(starredStored ? JSON.parse(starredStored) : []);
+    }
+  }, [user]);
 
-    const toggleStar = (id: string) => {
+  // Star functionality matches main home page
+  const toggleStar = (id: string) => {
     setStarred((prev) => {
-        const updated = prev.includes(id)
+      const updated = prev.includes(id)
         ? prev.filter((sid) => sid !== id)
         : [...prev, id];
-
-        localStorage.setItem("starredCompounds", JSON.stringify(updated)); // ✅ Persist to storage
-        return updated;
+      localStorage.setItem("starredCompounds", JSON.stringify(updated));
+      return updated;
     });
-    };
+  };
+  // Sync starred state to localStorage and backend if logged in
+  useEffect(() => {
+    localStorage.setItem("starredCompounds", JSON.stringify(starred));
+    if (user && user.email) {
+      fetch("http://localhost:5000/save-starred", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, starred }),
+      }).catch((err) => console.error("Failed to save starred compounds:", err));
+    }
+  }, [starred, user]);
 
 
   const toggleCompare = (id: string) => {
@@ -147,17 +189,19 @@ export default function SimilarCompoundsPage() {
               &times;
             </button>
             <button
-              className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold px-4 py-2 rounded-md uppercase tracking-wide text-xs"
-              onClick={clearComparison}
+              className="absolute top-4 right-10 bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold px-4 py-2 rounded-md uppercase tracking-wide text-xs"
+              onClick={() => {
+                clearComparison();
+                setShowCompareModal(false);
+              }}
             >
               Clear
             </button>
             <div className="overflow-x-auto flex-1 max-h-[70vh]">
-              <table className="min-w-full border border-[#008080] rounded-lg">
+              <table className="min-w-full border border-[#008080] rounded-lg divide-y divide-[#008080]">
                 <tbody>
                   {/* Display only the desired fields in order */}
-                  {[
-                    "id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
+                  {["id", "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
                     "phase map", "r33", "dipole CAMB3LYP SVPD CHCl3 (Cosmo)",
                     "beta CAMB3LYP SVPD CHCl3 (Cosmo)", "dipole B3LYP SVPD CHCl3",
                     "beta B3LYP SVPD CHCl3", "beta/MW", "J/g DSC melt (total)",
@@ -171,35 +215,64 @@ export default function SimilarCompoundsPage() {
                       return val !== undefined && val !== null && val !== "" && val !== "N/A";
                     });
                   }).map((field) => (
-                    <tr key={field}>
-                      <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb]">{field}</td>
-                      {selectedForComparison.map((id) => {
+                    <tr key={field} className="border-b border-[#008080] last:border-b-0">
+                      <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb] border-r border-[#008080]">{field}</td>
+                      {selectedForComparison.map((id, idx) => {
                         const cmp = compounds.find(c => c.id === id);
                         const val = cmp?.[field];
-                        return <td key={id} className="p-3 text-center text-[#002C36]">{val !== undefined && val !== null && val !== "" && val !== "N/A" ? val : "N/A"}</td>;
+                        return <td key={id} className={`p-3 text-center text-[#002C36] border-r border-[#008080] ${idx === selectedForComparison.length - 1 ? 'last:border-r-0' : ''}`}>{val !== undefined && val !== null && val !== "" && val !== "N/A" ? val : "N/A"}</td>;
                       })}
                     </tr>
                   ))}
                   {/* Attachments row (rendered only once, after all fields) */}
                   <tr>
-                    <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb]">Attachments</td>
+                    <td className="p-3 font-bold uppercase text-xs text-[#008080] bg-[#f8fafb] border-r border-[#008080]">Attachments</td>
                     {selectedForComparison.map((id) => {
                       const cmp = compounds.find(c => c.id === id);
                       const atts = cmp?.attachments || {};
-                      const keysWithData = Object.keys(atts).filter(k => atts[k] && (atts[k].note || atts[k].imageUrl));
+                      
+                      const keysWithData = Object.keys(atts).filter(k => {
+                        const att = atts[k];
+                        if (Array.isArray(att)) {
+                          return att.some(entry => entry && (entry.note || entry.imageUrl));
+                        } else {
+                          return att && (att.note || att.imageUrl);
+                        }
+                      });
+
                       return (
-                        <td key={id} className="p-3 text-center text-[#002C36] flex flex-col gap-2 items-center justify-center">
-                          {keysWithData.length === 0 && <span>N/A</span>}
-                          {keysWithData.map((key) => (
-                            <button
-                              key={key}
-                              className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
-                              onClick={() => setCompareAttachment({ compoundId: id, key, data: atts[key] })}
-                              type="button"
-                            >
-                              {key.replace(/_/g, " ")}
-                            </button>
-                          ))}
+                        <td key={id} className="p-3 text-center text-[#002C36] border-r border-[#008080]">
+                          <div className="flex flex-col gap-2 items-center justify-center min-w-[150px]">
+                            {keysWithData.length === 0 && <span>N/A</span>}
+                            {keysWithData.map((key) => {
+                              const att = atts[key];
+                              if (Array.isArray(att)) {
+                                return att.map((entry, idx) => (
+                                  (entry && (entry.note || entry.imageUrl)) ? (
+                                    <button
+                                      key={key + '-' + idx}
+                                      className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                      onClick={() => setCompareAttachment({ compoundId: id, key, data: entry })}
+                                      type="button"
+                                    >
+                                      {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
+                                    </button>
+                                  ) : null
+                                ));
+                              } else {
+                                return (
+                                  <button
+                                    key={key}
+                                    className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                    onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
+                                    type="button"
+                                  >
+                                    {key.replace(/_/g, " ")}
+                                  </button>
+                                );
+                              }
+                            })}
+                          </div>
                         </td>
                       );
                     })}
@@ -244,6 +317,7 @@ export default function SimilarCompoundsPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

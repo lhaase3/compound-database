@@ -140,6 +140,49 @@ def search_substructure():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route("/search-substructure-formulations", methods=["POST"])
+def search_substructure_formulations():
+    data = request.get_json()
+    query_smiles = data.get("query")
+
+    if not query_smiles:
+        return jsonify({"error": "No SMILES provided"}), 400
+
+    try:
+        query_mol = Chem.MolFromSmiles(query_smiles)
+        if query_mol is None:
+            return jsonify([])
+
+        # Step 1: Find matching compounds
+        matched_ids = set()
+        compounds_ref = db.collection("compounds")
+        for doc in compounds_ref.stream():
+            compound = doc.to_dict()
+            smiles = compound.get("smiles", "")
+            mol = Chem.MolFromSmiles(smiles)
+            if mol and mol.HasSubstructMatch(query_mol):
+                matched_ids.add(compound.get("id"))
+
+        if not matched_ids:
+            return jsonify([])
+
+        # Step 2: Filter formulations by matching compoundId in components
+        matching_formulations = []
+        formulations_ref = db.collection("formulations")
+        for doc in formulations_ref.stream():
+            formulation = doc.to_dict()
+            components = formulation.get("components", [])
+            for comp in components:
+                if comp.get("compoundId") in matched_ids:
+                    matching_formulations.append({ "id": doc.id, **formulation })
+                    break  # One match is enough
+
+        return jsonify(matching_formulations)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
 
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
@@ -679,6 +722,75 @@ def compound_similarity_matrix():
         return jsonify({"ids": ids, "matrix": matrix})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/save-starred', methods=['POST'])
+def save_starred():
+    data = request.get_json()
+    email = data.get('email')
+    starred = data.get('starred')
+    if not email or not isinstance(starred, list):
+        return jsonify({'error': 'Missing email or starred list'}), 400
+    try:
+        # Save in Firestore under collection 'user_starred', document id is email
+        db.collection('user_starred').document(email).set({
+            'starred': starred,
+            'updated_at': firestore.SERVER_TIMESTAMP
+        }, merge=True)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print('Failed to save starred compounds:', e)
+        return jsonify({'error': str(e)}), 500
+    
+
+    # Get starred compounds for a user
+@app.route('/get-starred', methods=['GET'])
+def get_starred():
+    email = request.args.get('email')
+    if not email:
+        return jsonify({'error': 'Missing email'}), 400
+    try:
+        doc = db.collection('user_starred').document(email).get()
+        if not doc.exists:
+            return jsonify({'starred': []}), 200
+        data = doc.to_dict()
+        return jsonify({'starred': data.get('starred', [])}), 200
+    except Exception as e:
+        print('Failed to fetch starred compounds:', e)
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/save-starred-formulations', methods=['POST'])
+def save_starred_formulations():
+    data = request.get_json()
+    email = data.get('email')
+    starred = data.get('starred')
+    if not email or not isinstance(starred, list):
+        return jsonify({'error': 'Missing email or starred list'}), 400
+    try:
+        db.collection('user_starred_formulations').document(email).set({
+            'starred': starred,
+            'updated_at': firestore.SERVER_TIMESTAMP
+        }, merge=True)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print('Failed to save starred formulations:', e)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/get-starred-formulations', methods=['GET'])
+def get_starred_formulations():
+    email = request.args.get('email')
+    if not email:
+        return jsonify({'error': 'Missing email'}), 400
+    try:
+        doc = db.collection('user_starred_formulations').document(email).get()
+        if not doc.exists:
+            return jsonify({'starred': []}), 200
+        data = doc.to_dict()
+        return jsonify({'starred': data.get('starred', [])}), 200
+    except Exception as e:
+        print('Failed to fetch starred formulations:', e)
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route("/plans", methods=["GET"])
 def list_plans():
