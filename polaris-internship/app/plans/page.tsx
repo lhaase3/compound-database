@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/utils/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import Link from "next/link";
 import DrawModal from "@/components/DrawModal";
 import PlanCard from "@/components/PlanCard";
@@ -264,16 +264,16 @@ export default function PlansPage() {
   return (
     <div className="min-h-screen bg-[#002C36] flex flex-col items-center p-0">
       {/* Auth Bar */}
-      <div className="w-full bg-[#00343F] text-white flex justify-end items-center px-8 py-3 shadow z-50" style={{ minHeight: '56px' }}>
-        <div className="flex items-center gap-4">
-          <span className="font-semibold text-lg">{user?.email}</span>
-          <button
-            className="bg-[#00E6D2] text-[#002C36] px-4 py-2 rounded font-bold hover:bg-[#00bfae] transition-all"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
+      <div className="w-full flex justify-end items-center px-8 py-2">
+          <div className="flex gap-4 items-center">
+            <span className="text-[#00E6D2] font-bold">{user.email}</span>
+            <button
+              className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-4 py-2 rounded-lg font-bold shadow uppercase tracking-wide"
+              onClick={() => signOut(auth)}
+            >
+              Logout
+            </button>
+          </div>
       </div>
       {/* Sticky Logo Taskbar */}
       <div

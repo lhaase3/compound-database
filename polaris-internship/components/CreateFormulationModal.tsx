@@ -289,11 +289,11 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
                         />
                       </td>
                       {/* Output Mol % */}
-                      <td className="px-2 py-2 border-r border-[#008080]">
+                      <td className="px-2 py-2 border-r border-[#008080] text-black">
                         <span>{outputMolPercent ? outputMolPercent.toFixed(2) : "-"}%</span>
                       </td>
                       {/* Target Mass */}
-                      <td className="px-2 py-2 border-r border-[#008080]">
+                      <td className="px-2 py-2 border-r border-[#008080] text-black">
                         <span>{targetMass ? targetMass.toFixed(2) : "-"} mg</span>
                       </td>
                       {/* Actual Mass (input) */}
@@ -309,11 +309,11 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
                         />
                       </td>
                       {/* Actual Mass % */}
-                      <td className="px-2 py-2 border-r border-[#008080]">
+                      <td className="px-2 py-2 border-r border-[#008080] text-black">
                         <span>{actualMassPercent ? actualMassPercent.toFixed(2) : "-"}%</span>
                       </td>
                       {/* Actual Mol % */}
-                      <td className="px-2 py-2 border-r border-[#008080]">
+                      <td className="px-2 py-2 border-r border-[#008080] text-black">
                         <span>{actualMolPercent ? actualMolPercent.toFixed(2) : "-"}%</span>
                       </td>
                       {/* Remove button */}

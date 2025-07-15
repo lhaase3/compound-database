@@ -348,7 +348,7 @@ export default function FormulationList() {
           aria-label="Back to top"
         >
           <img
-            src="/polaris-logo-only.png"
+            src="/polaris-logo-only.PNG"
             alt="Polaris Electro-Optics Logo"
             className="w-16 h-21 drop-shadow-lg"
           />
@@ -357,7 +357,7 @@ export default function FormulationList() {
       {/* Hero Section */}
       <div ref={heroRef} className="w-full bg-gradient-to-r from-[#00343F] to-[#002C36] py-12 mb-10 shadow flex flex-col items-center relative overflow-hidden">
         {/* Logo in top-left corner */}
-        <img src="/polaris-logo-only.png" alt="Polaris Electro-Optics Logo" className={`w-16 h-21 absolute top-6 left-8 z-20 drop-shadow-lg transition-opacity duration-300 ${showStickyLogo ? "opacity-0" : "opacity-100"}`} />
+        <img src="/polaris-logo-only.PNG" alt="Polaris Electro-Optics Logo" className={`w-16 h-21 absolute top-6 left-8 z-20 drop-shadow-lg transition-opacity duration-300 ${showStickyLogo ? "opacity-0" : "opacity-100"}`} />
         <div className="absolute inset-0 opacity-30 pointer-events-none select-none"/>
         <h1 className="text-5xl font-extrabold mb-3 text-[#00E6D2] tracking-tight drop-shadow uppercase z-10">Formulations</h1>
         <p className="text-xl text-white mb-6 max-w-2xl text-center z-10 font-semibold flex items-center justify-center gap-3">
@@ -628,13 +628,13 @@ export default function FormulationList() {
                             />
                           ) : null}
                         </td>
-                        <td className="px-2 py-2 border-r border-[#008080]">{comp.lotId || "original"}</td>
-                        <td className="px-2 py-2 border-r border-[#008080]">{comp.massPercent !== undefined ? comp.massPercent + "%" : "-"}</td>
-                        <td className="px-2 py-2 border-r border-[#008080]">{comp.outputMolPercent !== undefined ? comp.outputMolPercent.toFixed(2) + "%" : "-"}</td>
-                        <td className="px-2 py-2 border-r border-[#008080]">{comp.targetMass !== undefined ? comp.targetMass + " mg" : "-"}</td>
-                        <td className="px-2 py-2 border-r border-[#008080]">{comp.actualMass !== undefined ? comp.actualMass + " mg" : "-"}</td>
-                        <td className="px-2 py-2 border-r border-[#008080]">{comp.actualMassPercent !== undefined ? comp.actualMassPercent + "%" : "-"}</td>
-                        <td className="px-2 py-2 border-r border-[#008080]">{comp.actualMolPercent !== undefined ? comp.actualMolPercent + "%" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.lotId || "original"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.massPercent !== undefined ? comp.massPercent + "%" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.outputMolPercent !== undefined ? comp.outputMolPercent.toFixed(2) + "%" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.targetMass !== undefined ? comp.targetMass + " mg" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.actualMass !== undefined ? comp.actualMass + " mg" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.actualMassPercent !== undefined ? comp.actualMassPercent + "%" : "-"}</td>
+                        <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.actualMolPercent !== undefined ? comp.actualMolPercent + "%" : "-"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -718,7 +718,7 @@ export default function FormulationList() {
           {showAddTextField && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddTextField(false)}>
               <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
-                <h2 className="text-xl font-bold mb-4">Add Text Field</h2>
+                <h2 className="text-xl font-extrabold mb-4 text-[#002C36] uppercase tracking-wide">Add Text Field</h2>
                 <input
                   type="text"
                   className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
@@ -772,7 +772,7 @@ export default function FormulationList() {
           {showAddAttachmentField && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowAddAttachmentField(false)}>
               <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
-                <h2 className="text-xl font-bold mb-4">Add Attachment Field</h2>
+                <h2 className="text-xl font-extrabold mb-4 text-[#002C36] uppercase tracking-wide">Add Attachment Field</h2>
                 <input
                   type="text"
                   className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
@@ -972,197 +972,199 @@ export default function FormulationList() {
         </div>
       )}
       {editMode && (
-  <div
-    className="fixed inset-0 backdrop-blur-sm bg-opacity-50 z-50 flex items-center justify-center"
-    onClick={() => setEditMode(false)}
-  >
-    <div
-      className="bg-white p-6 rounded-lg shadow-lg w-full max-w-6xl"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h2 className="text-xl font-bold mb-4 text-black">Edit Formulation</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Name */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
-          <input
-            type="text"
-            value={editData.name}
-            onChange={(e) => setEditData((d) => ({ ...d, name: e.target.value }))}
-            className="w-full mb-4 border px-2 py-1 rounded text-black"
-          />
-        </div>
-        {/* Total Desired Mass */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Total Desired Mass</label>
-          <input
-            type="number"
-            value={editData.totalMass !== undefined ? editData.totalMass : selectedFormulation.totalMass || ''}
-            onChange={(e) => setEditData((d) => ({ ...d, totalMass: e.target.value }))}
-            className="w-full mb-4 border px-2 py-1 rounded text-black"
-          />
-        </div>
-      </div>
-      {/* Mass Calculator Table (editable desired mass % and actual mass) */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-2">Mass Calculator</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-[#008080]">
-            <thead>
-              <tr className="text-xs text-[#008080] uppercase text-center">
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Compound</th>
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Image</th>
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Lot</th>
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Desired Mass %</th>
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mass (mg)</th>
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Target Mass (mg)</th>
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mass %</th>
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mol %</th>
-                <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Output Mol %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(editData.components || selectedFormulation.components)?.map((comp: any, idx: number) => (
-                <tr key={idx} className="align-middle text-center border-b border-[#008080]">
-                  <td className="px-2 py-2 border-r border-[#008080]">{comp.compoundName || comp.compoundId}</td>
-                  <td className="px-2 py-2 border-r border-[#008080]">
-                    {comp.imageUrl && typeof comp.imageUrl === 'string' && comp.imageUrl.trim() !== '' ? (
-                      <img
-                        src={comp.imageUrl}
-                        alt={comp.compoundName || comp.compoundId}
-                        style={{ maxWidth: '90px', maxHeight: '90px', objectFit: 'contain', background: 'white', borderRadius: '0.375rem', border: '1px solid #e5e7eb' }}
-                      />
-                    ) : null}
-                  </td>
-                  <td className="px-2 py-2 border-r border-[#008080]">{comp.lotId || 'original'}</td>
-                  <td className="px-2 py-2 border-r border-[#008080]">
-                    <input
-                      type="number"
-                      value={editData.components?.[idx]?.massPercent !== undefined ? editData.components[idx].massPercent : comp.massPercent || ''}
-                      onChange={e => {
-                        const newComponents = [...(editData.components || selectedFormulation.components)];
-                        newComponents[idx].massPercent = e.target.value;
+          <div
+            className="fixed inset-0 backdrop-blur-sm bg-opacity-50 z-50 flex items-center justify-center"
+            onClick={() => setEditMode(false)}
+          >
+            <div
+              className="bg-white p-6 rounded-lg shadow-lg w-full max-w-6xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-bold mb-4 text-black">Edit Formulation</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+                  <input
+                    type="text"
+                    value={editData.name}
+                    onChange={(e) => setEditData((d) => ({ ...d, name: e.target.value }))}
+                    className="w-full mb-4 border px-2 py-1 rounded text-black"
+                  />
+                </div>
+                {/* Total Desired Mass */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Total Desired Mass</label>
+                  <input
+                    type="number"
+                    value={editData.totalMass !== undefined ? editData.totalMass : selectedFormulation.totalMass || ''}
+                    onChange={(e) => setEditData((d) => ({ ...d, totalMass: e.target.value }))}
+                    className="w-full mb-4 border px-2 py-1 rounded text-black"
+                  />
+                </div>
+              </div>
+              {/* Mass Calculator Table (editable desired mass % and actual mass) */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2 text-[#008080]">Mass Calculator</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border border-[#008080]">
+                    <thead>
+                      <tr className="text-xs text-[#008080] uppercase text-center">
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Compound</th>
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Image</th>
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Lot</th>
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Desired Mass %</th>
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mass (mg)</th>
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Target Mass (mg)</th>
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mass %</th>
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Actual Mol %</th>
+                        <th className="px-2 py-2 font-bold border-b border-r border-[#008080]">Output Mol %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(editData.components || selectedFormulation.components)?.map((comp: any, idx: number) => (
+                        <tr key={idx} className="align-middle text-center border-b border-[#008080]">
+                          <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.compoundName || comp.compoundId}</td>
+                          <td className="px-2 py-2 border-r border-[#008080]">
+                            {comp.imageUrl && typeof comp.imageUrl === 'string' && comp.imageUrl.trim() !== '' ? (
+                              <img
+                                src={comp.imageUrl}
+                                alt={comp.compoundName || comp.compoundId}
+                                style={{ maxWidth: '90px', maxHeight: '90px', objectFit: 'contain', background: 'white', borderRadius: '0.375rem', border: '1px solid #e5e7eb' }}
+                              />
+                            ) : null}
+                          </td>
+                          <td className="px-2 py-2 border-r border-[#008080] text-black">{comp.lotId || 'original'}</td>
+                          <td className="px-2 py-2 border-r border-[#008080]">
+                            <input
+                              type="number"
+                              value={editData.components?.[idx]?.massPercent !== undefined ? editData.components[idx].massPercent : comp.massPercent || ''}
+                              onChange={e => {
+                                const newComponents = [...(editData.components || selectedFormulation.components)];
+                                newComponents[idx].massPercent = e.target.value;
 
-                        const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass), compounds);
+                                const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass), compounds);
 
-                        setEditData((d) => ({ ...d, components: updatedComponents }));
-                      }}
-                      className="w-20 border px-1 py-0.5 rounded text-black text-center"
-                    />
-                  </td>
-                  <td className="px-2 py-2 border-r border-[#008080]">
-                    <input
-                      type="number"
-                      value={editData.components?.[idx]?.actualMass !== undefined ? editData.components[idx].actualMass : comp.actualMass || ''}
-                      onChange={e => {
-                        const newComponents = [...(editData.components || selectedFormulation.components)];
-                        if (!newComponents[idx]) newComponents[idx] = { ...comp };
-                        newComponents[idx].actualMass = e.target.value;
+                                setEditData((d) => ({ ...d, components: updatedComponents }));
+                              }}
+                              className="w-20 border px-1 py-0.5 rounded text-black text-center"
+                            />
+                          </td>
+                          <td className="px-2 py-2 border-r border-[#008080]">
+                            <input
+                              type="number"
+                              value={editData.components?.[idx]?.actualMass !== undefined ? editData.components[idx].actualMass : comp.actualMass || ''}
+                              onChange={e => {
+                                const newComponents = [...(editData.components || selectedFormulation.components)];
+                                if (!newComponents[idx]) newComponents[idx] = { ...comp };
+                                newComponents[idx].actualMass = e.target.value;
 
-                        const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass), compounds);
+                                const updatedComponents = recalculateComponents(newComponents, parseFloat(editData.totalMass || selectedFormulation.totalMass), compounds);
 
-                        setEditData((d) => ({ ...d, components: updatedComponents }));
-                      }}
-                      className="w-20 border px-1 py-0.5 rounded text-black text-center"
-                    />
-                  </td>
-                  <td className="px-2 py-2 border-r border-[#008080]">
-                    {comp.targetMass !== undefined ? comp.targetMass + " mg" : "-"}
-                  </td>
-                  <td className="px-2 py-2 border-r border-[#008080]">
-                    {comp.actualMassPercent !== undefined ? comp.actualMassPercent + "%" : "-"}
-                  </td>
-                  <td className="px-2 py-2 border-r border-[#008080]">
-                    {comp.actualMolPercent !== undefined ? comp.actualMolPercent + "%" : "-"}
-                  </td>
-                  <td className="px-2 py-2 border-r border-[#008080]">
-                    {comp.outputMolPercent !== undefined ? comp.outputMolPercent + "%" : "-"}
-                  </td>
+                                setEditData((d) => ({ ...d, components: updatedComponents }));
+                              }}
+                              className="w-20 border px-1 py-0.5 rounded text-black text-center"
+                            />
+                          </td>
+                          <td className="px-2 py-2 border-r border-[#008080] text-black">
+                            {comp.targetMass !== undefined ? comp.targetMass + " mg" : "-"}
+                          </td>
+                          <td className="px-2 py-2 border-r border-[#008080] text-black">
+                            {comp.actualMassPercent !== undefined ? comp.actualMassPercent + "%" : "-"}
+                          </td>
+                          <td className="px-2 py-2 border-r border-[#008080] text-black">
+                            {comp.actualMolPercent !== undefined ? comp.actualMolPercent + "%" : "-"}
+                          </td>
+                          <td className="px-2 py-2 border-r border-[#008080] text-black">
+                            {comp.outputMolPercent !== undefined ? comp.outputMolPercent + "%" : "-"}
+                          </td>
 
-                </tr>
-              ))}
-            </tbody>
+                        </tr>
+                      ))}
+                    </tbody>
 
-          </table>
-        </div>
-      </div>
-      {/* Phase Map */}
-      <label className="block text-sm font-semibold text-gray-700 mb-1">Phase Map</label>
-      <textarea
-        value={editData.phaseMap}
-        onChange={(e) => setEditData((d) => ({ ...d, phaseMap: e.target.value }))}
-        className="w-full mb-4 border px-2 py-1 rounded text-black"
-      />
-      {/* Analytical Notes */}
-      <label className="block text-sm font-semibold text-gray-700 mb-1">Analytical Notes</label>
-      <textarea
-        value={editData.notes}
-        onChange={(e) => setEditData((d) => ({ ...d, notes: e.target.value }))}
-        className="w-full mb-4 border px-2 py-1 rounded text-black"
-      />
-      {/* Custom Fields */}
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold">Custom Fields</h3>
-        {Object.entries(selectedFormulation)
-          .filter(([key]) =>
-            !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles"].includes(key)
-          )
-          .map(([key, value], idx) => (
-            <div key={idx} className="mb-2">
-              <label className="block text-xs font-semibold text-gray-700 mb-1">{key.replace(/_/g, " ")}</label>
-              <input
-                type="text"
-                className="w-full border px-2 py-1 rounded text-black"
-                value={editData[key] !== undefined ? editData[key] : (typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : "")}
-                onChange={e => setEditData((d) => ({ ...d, [key]: e.target.value }))}
+                  </table>
+                </div>
+              </div>
+              {/* Phase Map */}
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Phase Map</label>
+              <textarea
+                value={editData.phaseMap}
+                onChange={(e) => setEditData((d) => ({ ...d, phaseMap: e.target.value }))}
+                className="w-full mb-4 border px-2 py-1 rounded text-black"
               />
+              {/* Analytical Notes */}
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Analytical Notes</label>
+              <textarea
+                value={editData.notes}
+                onChange={(e) => setEditData((d) => ({ ...d, notes: e.target.value }))}
+                className="w-full mb-4 border px-2 py-1 rounded text-black"
+              />
+              {/* Custom Fields */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">Custom Fields</h3>
+                <div className="max-h-64 overflow-y-auto border border-gray-300 rounded p-4 bg-white">
+                  {Object.entries(selectedFormulation)
+                    .filter(([key]) =>
+                      !["id", "name", "components", "phaseMap", "notes", "attachments", "createdAt", "imageUrls", "totalmoles"].includes(key)
+                    )
+                    .map(([key, value], idx) => (
+                      <div key={idx} className="mb-2">
+                        <label className="block text-xs font-semibold text-[#008080] mb-1">{key.replace(/_/g, " ")}</label>
+                        <input
+                          type="text"
+                          className="w-full border px-2 py-1 rounded text-[#002C36] bg-white"
+                          value={editData[key] !== undefined ? editData[key] : (typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : "")}
+                          onChange={e => setEditData((d) => ({ ...d, [key]: e.target.value }))}
+                        />
+                      </div>
+                    ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => setEditMode(false)}
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      // Merge updated fields and components
+                      const updatedFormulation = {
+                        ...selectedFormulation,
+                        ...editData,
+                        components: (editData.components || selectedFormulation.components).map((comp: any, idx: number) => ({
+                          ...selectedFormulation.components[idx],
+                          ...comp,
+                        })),
+                      };
+                      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-formulation/${selectedFormulation.id}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(updatedFormulation),
+                      });
+                      setFormulations((prev) =>
+                        prev.map((f: any) =>
+                          f.id === selectedFormulation.id ? updatedFormulation : f
+                        )
+                      );
+                      setSelectedFormulation(updatedFormulation);
+                      setEditMode(false);
+                    } catch (err) {
+                      console.error("Failed to update formulation", err);
+                      alert("Update failed");
+                    }
+                  }}
+                  className="px-4 py-2 bg-[#008080] text-white rounded hover:bg-[#00E6D2]"
+                >
+                  Save
+                </button>
+              </div>
             </div>
-          ))}
-      </div>
-      <div className="flex justify-end gap-4">
-        <button
-          onClick={() => setEditMode(false)}
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={async () => {
-            try {
-              // Merge updated fields and components
-              const updatedFormulation = {
-                ...selectedFormulation,
-                ...editData,
-                components: (editData.components || selectedFormulation.components).map((comp: any, idx: number) => ({
-                  ...selectedFormulation.components[idx],
-                  ...comp,
-                })),
-              };
-              await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-formulation/${selectedFormulation.id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updatedFormulation),
-              });
-              setFormulations((prev) =>
-                prev.map((f: any) =>
-                  f.id === selectedFormulation.id ? updatedFormulation : f
-                )
-              );
-              setSelectedFormulation(updatedFormulation);
-              setEditMode(false);
-            } catch (err) {
-              console.error("Failed to update formulation", err);
-              alert("Update failed");
-            }
-          }}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+          </div>
+        )}
         {selectedCompound && (
           <CompoundModal
             compound={selectedCompound}
