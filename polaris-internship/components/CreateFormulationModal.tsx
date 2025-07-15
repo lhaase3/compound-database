@@ -398,10 +398,10 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
           </button>
         </div>
         <div className="flex justify-end gap-2 mt-6">
-          <button className="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold uppercase tracking-wide text-xs" onClick={onClose}>Cancel</button>
+          {/* <button className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold uppercase tracking-wide text-xs" onClick={onClose}>Cancel</button> */}
           <button
             onClick={handleSubmit}
-            className="px-3 py-1 rounded-md bg-[#008080] text-white font-bold uppercase tracking-wide text-xs hover:bg-[#006666]"
+            className="px-5 py-3 rounded-md bg-[#008080] text-white font-bold uppercase tracking-wide text-md hover:bg-[#006666]"
           >
             Save Formulation
           </button>
