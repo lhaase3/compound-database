@@ -22,9 +22,6 @@ const nextConfig = {
   images: {
     unoptimized: true, // ✅ So images work without Next's image optimization server
   },
-    experimental: {
-    appDir: true, // ✅ enables the app/ directory
-  },
 };
 
 export default nextConfig;
