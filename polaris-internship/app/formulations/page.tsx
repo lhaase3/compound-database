@@ -122,29 +122,26 @@ export default function FormulationList() {
 
   // Load starred formulations for user
   useEffect(() => {
-    if (user && user.email) {
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/get-starred-formulations?email=${user.email}`)
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data.starred)) {
-            setStarredFormulations(data.starred);
-            if (typeof window !== "undefined") {
-              window.localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
+    if (authChecked) {
+      if (user && user.email) {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/get-starred-formulations?email=${user.email}`)
+          .then(res => res.json())
+          .then(data => {
+            if (Array.isArray(data.starred)) {
+              setStarredFormulations(data.starred);
+              localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
             }
-          }
-        })
-        .catch(err => console.error("Failed to fetch starred formulations:", err));
-    } else {
-      // fallback to localStorage if not logged in
-      if (typeof window !== "undefined") {
-        const stored = window.localStorage.getItem("starredFormulations");
-        if (stored) setStarredFormulations(JSON.parse(stored));
-        else setStarredFormulations([]);
+          })
+          .catch(err => console.error("Failed to fetch starred formulations:", err));
       } else {
-        setStarredFormulations([]);
+        const stored = localStorage.getItem("starredFormulations");
+        if (stored) {
+          setStarredFormulations(JSON.parse(stored));
+        }
       }
     }
-  }, [user]);
+  }, [authChecked, user]);
+
 
   // Sync starred formulations to backend and localStorage
   useEffect(() => {
@@ -977,7 +974,7 @@ export default function FormulationList() {
             onClick={() => setEditMode(false)}
           >
             <div
-              className="bg-white p-6 rounded-lg shadow-lg w-full max-w-6xl"
+              className="bg-white p-6 rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-xl font-bold mb-4 text-black">Edit Formulation</h2>
