@@ -223,7 +223,7 @@ export default function CompoundModal({
     "beta B3LYP SVPD CHCl3","beta/MW",
     "J/g DSC melt (total)", "kJ/mol DSC melt (total)", 
     "Refractive index (ne/no)", "Notes", "lab?", "first PEO#",
-    "registered PEO#", "Lab book #", "Max loading (%)", "smiles"
+    "registered PEO#", "Lab book #", "Max loading (%)", "smiles", "createdAt"
   ];
 
   useEffect(() => {
@@ -762,7 +762,9 @@ export default function CompoundModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[#002C36] mb-8">
           {fields.map((field) => (
             <div key={field} className="flex flex-col mb-2">
-              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">{field}</span>
+              <span className="text-xs font-bold uppercase text-[#008080] mb-1 tracking-wide">
+                {field === "createdAt" ? "Created At" : field}
+              </span>
               {editMode ? (
                 <input
                   className="border border-[#00E6D2] rounded px-2 py-1 text-sm bg-white text-[#002C36] focus:ring-2 focus:ring-[#00E6D2]"
@@ -771,12 +773,16 @@ export default function CompoundModal({
                   style={field === "smiles" ? { wordBreak: 'break-all', whiteSpace: 'pre-wrap', maxWidth: '100%' } : {}}
                 />
               ) : (
-              <span
-                className={editedCompound[field] ? "text-[#002C36] ..." : "text-gray-400"}
-                style={field === "smiles" ? { wordBreak: 'break-all', whiteSpace: 'pre-wrap', maxWidth: '100%', display: 'block' } : {}}
-              >
-                {editedCompound[field] ? editedCompound[field] : "N/A"}
-              </span>
+                <span
+                  className={editedCompound[field] ? "text-[#002C36]" : "text-gray-400"}
+                  style={field === "smiles" ? { wordBreak: 'break-all', whiteSpace: 'pre-wrap', maxWidth: '100%', display: 'block' } : {}}
+                >
+                  {field === "createdAt"
+                    ? (editedCompound.createdAt
+                        ? new Date(editedCompound.createdAt).toLocaleDateString()
+                        : "N/A")
+                    : (editedCompound[field] ?? "N/A")}
+                </span>
               )}
             </div>
           ))}
