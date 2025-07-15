@@ -37,7 +37,7 @@ export default function LoginModal({ onClose, onLogin }) {
         >
           &times;
         </button>
-        <img src="/polaris-logo-only.png" alt="Polaris Logo" className="w-16 h-20 mb-4 drop-shadow-lg" />
+        <img src="/polaris-logo-only.PNG" alt="Polaris Logo" className="w-16 h-20 mb-4 drop-shadow-lg" />
         <h2 className="text-3xl font-extrabold mb-4 text-[#008080] uppercase text-center w-full tracking-wide">
           Sign in to Polaris
         </h2>

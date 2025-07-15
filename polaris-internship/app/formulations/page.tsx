@@ -123,28 +123,36 @@ export default function FormulationList() {
   // Load starred formulations for user
   useEffect(() => {
     if (user && user.email) {
-      fetch(`http://localhost:5000/get-starred-formulations?email=${user.email}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/get-starred-formulations?email=${user.email}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data.starred)) {
             setStarredFormulations(data.starred);
-            localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
+            }
           }
         })
         .catch(err => console.error("Failed to fetch starred formulations:", err));
     } else {
       // fallback to localStorage if not logged in
-      const stored = localStorage.getItem("starredFormulations");
-      if (stored) setStarredFormulations(JSON.parse(stored));
-      else setStarredFormulations([]);
+      if (typeof window !== "undefined") {
+        const stored = window.localStorage.getItem("starredFormulations");
+        if (stored) setStarredFormulations(JSON.parse(stored));
+        else setStarredFormulations([]);
+      } else {
+        setStarredFormulations([]);
+      }
     }
   }, [user]);
 
   // Sync starred formulations to backend and localStorage
   useEffect(() => {
-    localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
+    }
     if (user && user.email) {
-      fetch("http://localhost:5000/save-starred-formulations", {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/save-starred-formulations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, starred: starredFormulations }),
@@ -156,7 +164,7 @@ export default function FormulationList() {
     setShowOnlyStarred(false);
 
     try {
-      const res = await fetch("http://localhost:5000/formulations");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/formulations`);
       const data = await res.json();
       setFormulations(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -169,21 +177,21 @@ export default function FormulationList() {
 
 
   useEffect(() => {
-    fetch("http://localhost:5000/formulations")
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/formulations`)
       .then((res) => res.json())
       .then(setFormulations)
       .catch((err) => console.error("Failed to fetch formulations", err));
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/compounds")
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds`)
       .then((res) => res.json())
       .then((data) => setCompounds(data))
       .catch((err) => console.error("Failed to fetch compounds", err));
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/lots")
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lots`)
       .then((res) => res.json())
       .then((data) => {
         const mapping: Record<string, string[]> = {};
@@ -199,12 +207,16 @@ export default function FormulationList() {
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem("starredFormulations");
-    if (stored) setStarredFormulations(JSON.parse(stored));
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem("starredFormulations");
+      if (stored) setStarredFormulations(JSON.parse(stored));
+    }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
+    }
   }, [starredFormulations]);
 
   useEffect(() => {
@@ -219,10 +231,12 @@ export default function FormulationList() {
 
   // Fast scroll-to-top function
   const fastScrollToTop = () => {
-    const c = document.documentElement.scrollTop || document.body.scrollTop;
-    if (c > 0) {
-      window.scrollBy(0, -Math.max(120, Math.floor(c / 4)));
-      setTimeout(fastScrollToTop, 4);
+    if (typeof window !== "undefined") {
+      const c = document.documentElement.scrollTop || document.body.scrollTop;
+      if (c > 0) {
+        window.scrollBy(0, -Math.max(120, Math.floor(c / 4)));
+        setTimeout(fastScrollToTop, 4);
+      }
     }
   };
 
@@ -238,18 +252,18 @@ export default function FormulationList() {
 
   const handleDrawFilterSubmit = async (smiles: string) => {
     try {
-    const res = await fetch("http://localhost:5000/search-substructure-formulations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: smiles }),
-    });  
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/search-substructure-formulations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: smiles }),
+      });
       if (!res.ok) {
         throw new Error(`Request failed: ${res.status}`);
       }
       const data = await res.json();
       setFormulations(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error filtering formulations by drawn SMILES", err);
+    } catch {
+      // error handled by alert below
       alert("Failed to filter by drawn structure. Please check your backend and network connection.");
       setFormulations([]);
     }
@@ -310,7 +324,7 @@ export default function FormulationList() {
               }
               try {
                 await signInWithPopup(auth, provider);
-              } catch (err) {
+              } catch {
                 alert("Sign in failed");
               }
             }}
@@ -347,7 +361,7 @@ export default function FormulationList() {
         <div className="absolute inset-0 opacity-30 pointer-events-none select-none"/>
         <h1 className="text-5xl font-extrabold mb-3 text-[#00E6D2] tracking-tight drop-shadow uppercase z-10">Formulations</h1>
         <p className="text-xl text-white mb-6 max-w-2xl text-center z-10 font-semibold flex items-center justify-center gap-3">
-          <img src="/white-logo.png" alt="Polaris Logo" className="w-8 h-10 inline-block" />
+          <img src="/white-logo.PNG" alt="Polaris Logo" className="w-8 h-10 inline-block" />
           Polaris Electro-Optics
         </p>
         <div className="mb-2 z-10">
@@ -381,7 +395,7 @@ export default function FormulationList() {
           }
           try {
             await signInWithPopup(auth, provider);
-          } catch (err) {
+          } catch {
             alert("Sign in failed");
           }
         }}
@@ -494,7 +508,7 @@ export default function FormulationList() {
                     className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                     onClick={async () => {
                       try {
-                        await fetch(`http://localhost:5000/delete-formulation/${selectedFormulation.id}`, { method: "DELETE" });
+                        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/delete-formulation/${selectedFormulation.id}`, { method: "DELETE" });
                         setFormulations((prev) => prev.filter((f) => f.id !== selectedFormulation.id));
                         setSelectedFormulation(null);
                         setDeleteConfirm(false);
@@ -576,8 +590,8 @@ export default function FormulationList() {
                             onClick={async () => {
                               try {
                                 const endpoint = comp.lotId
-                                  ? `http://localhost:5000/lot/${comp.lotId}`
-                                  : `http://localhost:5000/compounds/${comp.compoundId}`;
+                                  ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/lot/${comp.lotId}`
+                                  : `${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds/${comp.compoundId}`;
                                 const res = await fetch(endpoint);
                                 const data = await res.json();
                                 let compound;
@@ -732,7 +746,7 @@ export default function FormulationList() {
 
                       const updatedFormulation = { ...selectedFormulation, [newTextFieldName]: newTextFieldValue };
 
-                      await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-formulation/${selectedFormulation.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(updatedFormulation),
@@ -785,7 +799,7 @@ export default function FormulationList() {
 
                       const updatedFormulation = { ...selectedFormulation, attachments: updatedAttachments };
 
-                      await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-formulation/${selectedFormulation.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(updatedFormulation),
@@ -854,7 +868,7 @@ export default function FormulationList() {
                     formData.append('file', file);
 
                     try {
-                      const res = await fetch('http://localhost:5000/upload-image-to-firebase', {
+                      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload-image-to-firebase`, {
                         method: 'POST',
                         body: formData,
                       });
@@ -871,7 +885,7 @@ export default function FormulationList() {
                           },
                         };
                         const updatedFormulation = { ...selectedFormulation, attachments: updatedAttachments };
-                        await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-formulation/${selectedFormulation.id}`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify(updatedFormulation),
@@ -906,7 +920,7 @@ export default function FormulationList() {
                         },
                       };
                       const updatedFormulation = { ...selectedFormulation, attachments: updatedAttachments };
-                      await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+                      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-formulation/${selectedFormulation.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(updatedFormulation),
@@ -1124,7 +1138,7 @@ export default function FormulationList() {
                   ...comp,
                 })),
               };
-              await fetch(`http://localhost:5000/update-formulation/${selectedFormulation.id}`, {
+              await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-formulation/${selectedFormulation.id}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updatedFormulation),
@@ -1154,14 +1168,14 @@ export default function FormulationList() {
             compound={selectedCompound}
             onClose={() => setSelectedCompound(null)}
             onDelete={async (id: string) => {
-              await fetch(`http://localhost:5000/delete-compound/${id}`, { method: "DELETE" });
+              await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/delete-compound/${id}`, { method: "DELETE" });
               setSelectedCompound(null);
             }}
             onUpdate={async (updatedCompound) => {
               const endpoint =
                 compoundSource === "lot"
-                  ? "http://localhost:5000/update-lot-compound"
-                  : "http://localhost:5000/update-compound";
+                  ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/update-lot-compound`
+                  : `${process.env.NEXT_PUBLIC_API_BASE_URL}/update-compound`;
 
               const payload =
                 compoundSource === "lot"
@@ -1193,7 +1207,7 @@ export default function FormulationList() {
         onClose={() => setShowFormulationModal(false)}
         onCreate={async (data) => {
           try {
-            const res = await fetch("http://localhost:5000/create-formulation", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-formulation`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(data),
@@ -1203,7 +1217,7 @@ export default function FormulationList() {
             alert("Formulation saved!");
 
             // Refresh formulation list
-            const updatedFormulations = await fetch("http://localhost:5000/formulations").then((res) => res.json());
+            const updatedFormulations = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/formulations`).then((res) => res.json());
             setFormulations(updatedFormulations);
             setShowFormulationModal(false);
           } catch (err) {

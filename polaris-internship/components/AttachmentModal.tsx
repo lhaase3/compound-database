@@ -3,13 +3,18 @@ import React, { useState } from "react";
 
 type Props = {
   attachmentKey: string;
-  data?: { note: string; imageUrl: string } | import("@/types/compound").MultiAttachmentEntry;
+  data?: {
+  note?: string;
+  imageUrl?: string;
+} | import("@/types/compound").MultiAttachmentEntry;
+
   onClose: () => void;
   onSave: (note: string, fileUrl: string, name?: string) => void;
+  isMulti?: boolean;
   renderHeaderExtra?: React.ReactNode;
 };
 
-export default function AttachmentModal({ attachmentKey, data, onClose, onSave, renderHeaderExtra }: Props) {
+export default function AttachmentModal({ attachmentKey, data, onClose, onSave, isMulti, renderHeaderExtra }: Props) {
   console.log("AttachmentModal opened for:", attachmentKey, data); // Debug log
   const [note, setNote] = useState(data?.note || "");
   const [imageUrl, setImageUrl] = useState(data?.imageUrl || "");
@@ -37,7 +42,7 @@ export default function AttachmentModal({ attachmentKey, data, onClose, onSave, 
         formData.append("file", file);
         formData.append("note", note);
 
-        const res = await fetch("http://localhost:5000/upload-image-to-firebase", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload-image-to-firebase`, {
           method: "POST",
           body: formData,
         });

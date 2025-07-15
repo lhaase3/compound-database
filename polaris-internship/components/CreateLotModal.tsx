@@ -39,7 +39,7 @@ export default function CreateLotModal({ compounds, onClose, onCreate }: Props) 
     }
 
     try {
-      const res = await fetch("http://localhost:5000/create-lot", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-lot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ compoundIds: selected, lotName }),

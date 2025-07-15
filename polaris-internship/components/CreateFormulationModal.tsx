@@ -5,6 +5,7 @@ export type Compound = {
   id: string;
   name?: string;
   MW?: string; // molecular weight in g/mol
+  imageUrl?: string;
 };
 
 type Props = {

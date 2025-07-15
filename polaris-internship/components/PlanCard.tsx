@@ -34,7 +34,7 @@ export default function PlanCard({ plan, onClose }: PlanCardProps) {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:5000/update-plan/${plan.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${plan.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -78,7 +78,7 @@ export default function PlanCard({ plan, onClose }: PlanCardProps) {
           onClick={async () => {
             if (window.confirm("Are you sure you want to delete this plan?")) {
               try {
-                const res = await fetch(`http://localhost:5000/delete-plan/${plan.id}`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/delete-plan/${plan.id}`, {
                   method: "DELETE",
                 });
                 const data = await res.json();

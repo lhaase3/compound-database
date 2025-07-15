@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/utils/firebase";
-import { onAuthStateChanged, signOut, GoogleAuthProvider } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import Link from "next/link";
 import DrawModal from "@/components/DrawModal";
 import PlanCard from "@/components/PlanCard";
@@ -31,7 +31,6 @@ export default function PlansPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const provider = new GoogleAuthProvider();
   const [plans, setPlans] = useState<PlannedStructure[]>([]);
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [draft, setDraft] = useState<Partial<PlannedStructure>>({ priority: 1 });
@@ -68,7 +67,7 @@ export default function PlansPage() {
 
   useEffect(() => {
     // Fetch plans from backend on mount
-    fetch("http://localhost:5000/plans")
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setPlans(data.sort((a, b) => a.priority - b.priority));
@@ -79,7 +78,7 @@ export default function PlansPage() {
   // Add helper to upload structure image to backend
   async function uploadStructureImage(smiles: string, planId: string): Promise<string | undefined> {
     try {
-      const res = await fetch("http://localhost:5000/upload-image-to-firebase", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload-image-to-firebase`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ smiles, id: planId, type: "plan" }),
@@ -101,7 +100,7 @@ export default function PlansPage() {
       const plansToShift = activePlans.filter(p => p.priority >= chosenPriority);
       // Increment priorities for all plans at or above the chosen priority
       for (const plan of plansToShift.sort((a, b) => b.priority - a.priority)) {
-        await fetch(`http://localhost:5000/update-plan/${plan.id}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${plan.id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ priority: plan.priority + 1 }),
@@ -114,7 +113,7 @@ export default function PlansPage() {
         imageUrl = await uploadStructureImage(draft.smiles, planId);
       }
       const planData = { ...draft, id: planId, imageUrl, priority: chosenPriority, status: draft.status || 'Not Started', completed: draft.status === 'Completed' };
-      const res = await fetch("http://localhost:5000/create-plan", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(planData),
@@ -122,7 +121,7 @@ export default function PlansPage() {
       const result = await res.json();
       if (result.success) {
         // Fetch updated plans list
-        const plansRes = await fetch("http://localhost:5000/plans");
+        const plansRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`);
         const plansData = await plansRes.json();
         setPlans(Array.isArray(plansData) ? plansData.sort((a, b) => a.priority - b.priority) : []);
         setDraft({ priority: 1 });
@@ -136,13 +135,13 @@ export default function PlansPage() {
   const markPlanCompleted = async (plan: PlannedStructure) => {
     try {
       // 1. Mark the plan as completed and set status
-      await fetch(`http://localhost:5000/update-plan/${plan.id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${plan.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: plan.id, completed: true, status: 'Completed' }),
       });
       // 2. Re-fetch plans to get the latest state
-      const plansRes = await fetch("http://localhost:5000/plans");
+      const plansRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`);
       let plansData = await plansRes.json();
       // 3. Find the completed plan's priority
       const completedPriority = plan.priority;
@@ -151,14 +150,14 @@ export default function PlansPage() {
         (p: PlannedStructure) => !p.completed && p.priority > completedPriority
       );
       for (const p of activePlansToUpdate) {
-        await fetch(`http://localhost:5000/update-plan/${p.id}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${p.id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ priority: p.priority - 1 }),
         });
       }
       // 5. Re-fetch plans again to update UI
-      const plansRes2 = await fetch("http://localhost:5000/plans");
+      const plansRes2 = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`);
       const plansData2 = await plansRes2.json();
       setPlans(Array.isArray(plansData2) ? plansData2.sort((a, b) => a.priority - b.priority) : []);
     } catch (err) {
@@ -194,7 +193,7 @@ export default function PlansPage() {
     // Update priorities in the reordered array
     for (let i = 0; i < reordered.length; i++) {
       if (reordered[i].priority !== i + 1) {
-        await fetch(`http://localhost:5000/update-plan/${reordered[i].id}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${reordered[i].id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ priority: i + 1 }),
@@ -202,7 +201,7 @@ export default function PlansPage() {
       }
     }
     // Refetch plans to update UI
-    const plansRes = await fetch("http://localhost:5000/plans");
+    const plansRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`);
     const plansData = await plansRes.json();
     setPlans(Array.isArray(plansData) ? plansData.sort((a, b) => a.priority - b.priority) : []);
   };
@@ -235,7 +234,7 @@ export default function PlansPage() {
   // Helper to update plan status
   const updatePlanStatus = async (plan: PlannedStructure, status: 'Not Started' | 'In Progress' | 'Completed') => {
     try {
-      await fetch(`http://localhost:5000/update-plan/${plan.id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${plan.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, completed: status === 'Completed' }),
@@ -246,7 +245,7 @@ export default function PlansPage() {
         return;
       }
       // Otherwise, just refetch
-      const plansRes = await fetch("http://localhost:5000/plans");
+      const plansRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`);
       const plansData = await plansRes.json();
       setPlans(Array.isArray(plansData) ? plansData.sort((a, b) => a.priority - b.priority) : []);
     } catch (err) {
@@ -291,7 +290,7 @@ export default function PlansPage() {
           aria-label="Back to top"
         >
           <img
-            src="/polaris-logo-only.png"
+            src="/polaris-logo-only.PNG"
             alt="Polaris Electro-Optics Logo"
             className="w-16 h-21 drop-shadow-lg"
           />
@@ -300,11 +299,11 @@ export default function PlansPage() {
       {/* Hero Section */}
       <div ref={heroRef} className="w-full bg-gradient-to-r from-[#00343F] to-[#002C36] py-12 mb-10 shadow flex flex-col items-center relative overflow-hidden">
         {/* Logo in top-left corner */}
-        <img src="/polaris-logo-only.png" alt="Polaris Electro-Optics Logo" className={`w-16 h-21 absolute top-6 left-8 z-20 drop-shadow-lg transition-opacity duration-300 ${showStickyLogo ? "opacity-0" : "opacity-100"}`} />
+        <img src="/polaris-logo-only.PNG" alt="Polaris Electro-Optics Logo" className={`w-16 h-21 absolute top-6 left-8 z-20 drop-shadow-lg transition-opacity duration-300 ${showStickyLogo ? "opacity-0" : "opacity-100"}`} />
         <div className="absolute inset-0 opacity-30 pointer-events-none select-none" style={{background: 'url(/circuit-bg.svg) center/cover no-repeat'}} />
         <h1 className="text-5xl font-extrabold mb-3 text-[#00E6D2] tracking-tight drop-shadow uppercase z-10">Plans</h1>
         <p className="text-xl text-white mb-6 max-w-2xl text-center z-10 font-semibold flex items-center justify-center gap-3">
-          <img src="/white-logo.png" alt="Polaris Logo" className="w-8 h-10 inline-block" />
+          <img src="/white-logo.PNG" alt="Polaris Logo" className="w-8 h-10 inline-block" />
           Polaris Electro-Optics
         </p>
         <div className="mb-2 z-10">
@@ -332,7 +331,6 @@ export default function PlansPage() {
       {showCreatePlan && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCreatePlan(false)}>
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl relative max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            {/* <h2 className="text-2xl font-bold mb-4 text-black">Create New Plan</h2> */}
             <h2 className="text-4xl font-extrabold text-[#002C36] uppercase tracking-wide mb-8 border-b-2 border-[#008080] pb-4">Create New Plan</h2>
             <div className="mb-3">
               <label className="block font-semibold mb-1 text-[#008080]">Name</label>

@@ -11,6 +11,7 @@ type Props = {
   source: "main" | "lot";
   lotId: string | null;
   onUpdateCompoundFromLot?: (compound: Compound, lotId: string | null) => void;
+  isMulti?: boolean;
 };
 
 // --- Types for multi-attachment support ---
@@ -84,7 +85,7 @@ function NewAttachmentEntryModal({
         const formData = new FormData();
         formData.append("file", file);
         formData.append("note", note);
-        const res = await fetch("http://localhost:5000/upload-image-to-firebase", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload-image-to-firebase`, {
           method: "POST",
           body: formData,
         });
@@ -227,7 +228,7 @@ export default function CompoundModal({
 
   useEffect(() => {
     if (compound?.id) {
-      fetch(`http://localhost:5000/lots-for-compound/${compound.id}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lots-for-compound/${compound.id}`)
         .then((res) => res.json())
         .then(setLotsForCompound)
         .catch((err) => console.error("Failed to fetch lots:", err));
@@ -244,7 +245,7 @@ export default function CompoundModal({
     try {
       if (source === "lot" && onUpdateCompoundFromLot) {
         // Save to lot compound endpoint
-        const response = await fetch("http://localhost:5000/update-lot-compound", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-lot-compound`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...editedCompound, lotId: currentLotId }),
@@ -253,7 +254,7 @@ export default function CompoundModal({
           throw new Error("Failed to update lot compound");
         }
         // Fetch the updated lot compound from Firestore and update editedCompound
-        const updated = await fetch(`http://localhost:5000/lot/${currentLotId}`)
+        const updated = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lot/${currentLotId}`)
           .then(res => res.json());
         // Find the correct compound by id
         const updatedLotCompound = updated.find((c: any) => c.id === editedCompound.id);
@@ -606,7 +607,7 @@ export default function CompoundModal({
                       className="px-4 py-2 text-[#00E6D2] hover:bg-[#00545F] cursor-pointer font-semibold"
                       onClick={async () => {
                         try {
-                          const res = await fetch(`http://localhost:5000/lot/${lotId}`);
+                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lot/${lotId}`);
                           const lotCompounds = await res.json();
                           if (Array.isArray(lotCompounds) && lotCompounds.length > 0) {
                             let lotCompound;
@@ -640,7 +641,7 @@ export default function CompoundModal({
               className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs shadow transition-all"
               onClick={async () => {
                 try {
-                  const res = await fetch("http://localhost:5000/similar-compounds", {
+                  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/similar-compounds`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ smiles: compound.smiles, id: compound.id, threshold: 0.7 }),
@@ -661,7 +662,7 @@ export default function CompoundModal({
                 className="border border-blue-600 text-blue-600 font-bold px-2 py-0.5 rounded-md uppercase tracking-wide text-xs hover:bg-blue-100 transition-all"
                 onClick={async () => {
                   try {
-                    const res = await fetch(`http://localhost:5000/compounds/${compound.original_id}`);
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds/${compound.original_id}`);
                     const original = await res.json();
                     setEditedCompound({
                       ...original,
@@ -985,7 +986,7 @@ export default function CompoundModal({
         {selectedAttachment && (() => {
           const key = selectedAttachment;
           const idx = selectedAttachmentIdx;
-          const isMulti = isMultiAttachment(key);
+          const isMulti = key && typeof key === "string" ? isMultiAttachment(key) : false;
           let data: MultiAttachmentEntry | { note: string; imageUrl: string } | undefined;
           if (isMulti && typeof idx === "number" && Array.isArray(editedCompound.attachments[key])) {
             data = (editedCompound.attachments[key] as MultiAttachmentEntry[])[idx];
@@ -1002,7 +1003,7 @@ export default function CompoundModal({
                 let updatedCompound = { ...editedCompound };
                 if (isMulti) {
                   let arr = Array.isArray(editedCompound.attachments[key]) ? [...(editedCompound.attachments[key] as MultiAttachmentEntry[])] : [];
-                  if (typeof idx === "number") {
+                  if (typeof idx === "number" && arr[idx]) {
                     arr[idx] = { name: name || arr[idx]?.name || `Entry ${idx+1}`, note, imageUrl: fileUrl };
                   }
                   updatedCompound.attachments = { ...updatedCompound.attachments, [key]: arr };
@@ -1024,7 +1025,7 @@ export default function CompoundModal({
             compounds={[compound]}
             onClose={() => setShowCreateLotModal(false)}
             onCreate={async () => {
-              const res = await fetch(`http://localhost:5000/lots-for-compound/${compound.id}`);
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lots-for-compound/${compound.id}`);
               const updatedLots = await res.json();
               setLotsForCompound(updatedLots);
             }}
