@@ -122,32 +122,34 @@ export default function FormulationList() {
 
   // Load starred formulations for user
   useEffect(() => {
-    if (authChecked) {
-      if (user && user.email) {
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/get-starred-formulations?email=${user.email}`)
-          .then(res => res.json())
-          .then(data => {
-            if (Array.isArray(data.starred)) {
-              setStarredFormulations(data.starred);
-              localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
-            }
-          })
-          .catch(err => console.error("Failed to fetch starred formulations:", err));
-      } else {
-        const stored = localStorage.getItem("starredFormulations");
-        if (stored) {
-          setStarredFormulations(JSON.parse(stored));
-        }
-      }
+    if (!authChecked) return;
+
+    const stored = localStorage.getItem("starredFormulations");
+
+    // If user is logged in, load from backend
+    if (user && user.email) {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/get-starred-formulations?email=${user.email}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data.starred)) {
+            setStarredFormulations(data.starred);
+            localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch from backend, falling back to localStorage");
+          if (stored) setStarredFormulations(JSON.parse(stored));
+        });
+    } else if (stored) {
+      setStarredFormulations(JSON.parse(stored));
     }
   }, [authChecked, user]);
 
 
+
   // Sync starred formulations to backend and localStorage
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
-    }
+    localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
     if (user && user.email) {
       fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/save-starred-formulations`, {
         method: "POST",
@@ -156,6 +158,8 @@ export default function FormulationList() {
       }).catch((err) => console.error("Failed to save starred formulations:", err));
     }
   }, [starredFormulations, user]);
+
+
   const handleResetFilters = async () => {
     setSearchTerm("");
     setShowOnlyStarred(false);
