@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { auth } from "@/utils/firebase";
 import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
-import LoginModal from "../components/LoginModal";
 import CompoundCard from "../components/CompoundCard";
 import CompoundModal from "../components/CompoundModal";
 import DrawModal from "../components/DrawModal";
@@ -39,7 +38,6 @@ type NewCompound = {
 export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -55,7 +53,6 @@ export default function Home() {
   const [compounds, setCompounds] = useState<Compound[]>([]);
   const [selectedCompound, setSelectedCompound] = useState<Compound | null>(null);
   const [showDrawModal, setShowDrawModal] = useState(false);
-  const [resetCount, setResetCount] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedTransition, setSelectedTransition] = useState("");
   const [temperature, setTemperature] = useState("");
@@ -100,18 +97,12 @@ export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
 
 
-  // useEffect(() => {
-  //   fetch("http://localhost:5000/compounds")
-  //     .then((res) => res.json())
-  //     .then((data) => setCompounds(data));
-  // }, []);
-
   // On mount, fetch starred from localStorage and compounds from backend
   useEffect(() => {
     const stored = localStorage.getItem("starredCompounds");
     const starredList = stored ? JSON.parse(stored) : [];
     setStarred(starredList);
-    fetch("http://localhost:5000/compounds")
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds`)
       .then((res) => res.json())
       .then((data) => {
         setCompounds(
@@ -128,7 +119,7 @@ export default function Home() {
 
 
   useEffect(() => {
-    fetch("http://localhost:5000/lots")
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lots`)
       .then((res) => res.json())
       .then(setLotList)
       .catch((err) => console.error("Failed to fetch lots:", err));
@@ -177,7 +168,7 @@ export default function Home() {
     const fetchLotMapping = async () => {
       const compoundIds = compounds.map(c => c.id);
       try {
-        const res = await fetch("http://localhost:5000/batch-lots-for-compounds", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/batch-lots-for-compounds`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ compound_ids: compoundIds }),
@@ -206,7 +197,7 @@ export default function Home() {
 
   const handleSmilesSubmit = async (smiles: string) => {
     try {
-      const res = await fetch("http://localhost:5000/search-substructure", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/search-substructure`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: smiles }),
@@ -222,7 +213,7 @@ export default function Home() {
 
     useEffect(() => {
     if (user && user.email) {
-      fetch(`http://localhost:5000/get-starred?email=${user.email}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/get-starred?email=${user.email}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data.starred)) {
@@ -259,7 +250,6 @@ export default function Home() {
 
 
   const handleResetFilters = async () => {
-    setResetCount((prev) => prev + 1);
     setSelectedTransition("");
     setTemperature("");
     setSearchName("");
@@ -268,7 +258,7 @@ export default function Home() {
     setMwRange([0, 4000]);
 
     try {
-      const res = await fetch("http://localhost:5000/compounds");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds`);
       const data = await res.json();
       setCompounds(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -281,7 +271,7 @@ export default function Home() {
     if (!selectedTransition) return;
 
     try {
-      const res = await fetch("http://localhost:5000/filter-phase-map", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/filter-phase-map`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -309,7 +299,7 @@ export default function Home() {
     );
     // Sync starred compounds to backend if user is logged in
     if (user && user.email) {
-      fetch("http://localhost:5000/save-starred", {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/save-starred`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, starred }),
@@ -393,12 +383,12 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <button
-            className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-4 py-2 rounded-lg font-bold shadow uppercase tracking-wide"
-            onClick={() => setShowLoginModal(true)}
-          >
-            Login
-          </button>
+        <button
+          className="bg-[#00E6D2] hover:bg-[#00bfae] text-[#002C36] px-4 py-2 rounded-lg font-bold shadow uppercase tracking-wide"
+          onClick={() => router.push("/login")}
+        >
+          Login
+        </button>
         )}
       </div>
       {/* Sticky Logo Taskbar */}
@@ -416,7 +406,7 @@ export default function Home() {
           aria-label="Back to top"
         >
           <img
-            src="/polaris-logo-only.png"
+            src="/polaris-logo-only.PNG"
             alt="Polaris Electro-Optics Logo"
             className="w-16 h-21 drop-shadow-lg"
           />
@@ -430,7 +420,7 @@ export default function Home() {
       >
         {/* Logo in top-left corner (hide when sticky logo is visible) */}
         <img
-          src="/polaris-logo-only.png"
+          src="/polaris-logo-only.PNG"
           alt="Polaris Electro-Optics Logo"
           className={`w-16 h-21 absolute top-6 left-8 z-20 drop-shadow-lg transition-opacity duration-300 ${
             showStickyLogo ? "opacity-0" : "opacity-100"
@@ -442,7 +432,7 @@ export default function Home() {
           Compound Database
         </h1>
         <p className="text-xl text-white mb-6 max-w-2xl text-center z-10 font-semibold flex items-center justify-center gap-3">
-          <img src="/white-logo.png" alt="Polaris Logo" className="w-8 h-10 inline-block" />
+          <img src="/white-logo.PNG" alt="Polaris Logo" className="w-8 h-10 inline-block" />
           Polaris Electro-Optics
         </p>
         <div className="mb-2 z-10 flex flex-row gap-4 justify-center">
@@ -498,7 +488,7 @@ export default function Home() {
                       setShowLotModal(false);
                       try {
                         // Fetch all compounds for this lot
-                        const res = await fetch(`http://localhost:5000/lot/${lot}`);
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lot/${lot}`);
                         const lotCompounds = await res.json();
                         if (lotCompounds.length === 1) {
                           // If only one compound in lot, open modal directly for that lot compound
@@ -874,15 +864,15 @@ export default function Home() {
           onDelete={async (id: string) => {
             try {
               const path = selectedSource === "lot" && currentLotId
-                ? `http://localhost:5000/delete-lot-compound/${currentLotId}/${id}`
-                : `http://localhost:5000/delete-compound/${id}`;
+                ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/delete-lot-compound/${currentLotId}/${id}`
+                : `${process.env.NEXT_PUBLIC_API_BASE_URL}/delete-compound/${id}`;
               await fetch(path, { method: "DELETE" });
-              const updatedLots = await fetch("http://localhost:5000/lots").then((res) => res.json());
+              const updatedLots = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lots`).then((res) => res.json());
               setLotList(updatedLots);
               const updated = await fetch(
                 selectedSource === "lot" && currentLotId
-                  ? `http://localhost:5000/lot/${currentLotId}`
-                  : "http://localhost:5000/compounds"
+                  ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/lot/${currentLotId}`
+                  : `${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds`
               ).then((res) => res.json());
               setCompounds(updated);
             } catch (err) {
@@ -892,8 +882,8 @@ export default function Home() {
           onUpdate={async (updatedCompound: Compound) => {
             try {
               const path = selectedSource === "lot" && currentLotId
-                ? `http://localhost:5000/update-lot-compound`
-                : `http://localhost:5000/update-compound`;
+                ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/update-lot-compound`
+                : `${process.env.NEXT_PUBLIC_API_BASE_URL}/update-compound`;
               await fetch(path, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -905,13 +895,13 @@ export default function Home() {
               });
               let freshCompound: Compound;
               if (selectedSource === "lot" && currentLotId) {
-                const lotCompounds = await fetch(`http://localhost:5000/lot/${currentLotId}`).then(res => res.json());
+                const lotCompounds = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lot/${currentLotId}`).then(res => res.json());
                 freshCompound = lotCompounds.find((c: Compound) => c.id === updatedCompound.id) || updatedCompound;
                 setCompounds(lotCompounds);
                 console.log("[DEBUG] Fetched lot compound after update:", freshCompound);
               } else {
-                freshCompound = await fetch(`http://localhost:5000/compounds/${updatedCompound.id}`).then(res => res.json());
-                const updatedList = await fetch("http://localhost:5000/compounds").then(res => res.json());
+                freshCompound = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds/${updatedCompound.id}`).then(res => res.json());
+                const updatedList = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds`).then(res => res.json());
                 setCompounds(updatedList);
                 console.log("[DEBUG] Fetched main compound after update:", freshCompound);
               }
@@ -932,7 +922,7 @@ export default function Home() {
           compounds={compounds}
           onClose={() => setShowCreateLot(false)}
           onCreate={() => {
-            fetch("http://localhost:5000/lots")
+            fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lots`)
               .then((res) => res.json())
               .then(setLotList);
           }}
@@ -943,14 +933,14 @@ export default function Home() {
           onClose={() => setShowAddModal(false)}
           onSubmit={async (newCompound: NewCompound) => {
             try {
-              await fetch("http://localhost:5000/add-compound", {
+              await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/add-compound`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newCompound),
               });
               // Wait for backend to finish generating the imageUrl
               await new Promise(res => setTimeout(res, 1500));
-              let updated = await fetch("http://localhost:5000/compounds").then((res) => res.json());
+              let updated = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds`).then((res) => res.json());
               // If imageUrl is still missing, poll a few more times
               let tries = 0;
               while (
@@ -958,7 +948,7 @@ export default function Home() {
                 updated.some((c: any) => c.id === newCompound.id && (!c.imageUrl || c.imageUrl === ""))
               ) {
                 await new Promise(res => setTimeout(res, 1000));
-                updated = await fetch("http://localhost:5000/compounds").then((res) => res.json());
+                updated = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds`).then((res) => res.json());
                 tries++;
               }
               setCompounds(updated);
@@ -975,7 +965,7 @@ export default function Home() {
           onClose={() => setShowFormulationModal(false)}
           onCreate={async (data) => {
             try {
-              const res = await fetch("http://localhost:5000/create-formulation", {
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-formulation`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),

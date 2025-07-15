@@ -26,13 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <RDKitLoader />
-        
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* <RDKitLoader /> */}
         {children}
       </body>
     </html>

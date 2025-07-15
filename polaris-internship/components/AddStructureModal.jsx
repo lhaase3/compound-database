@@ -123,7 +123,7 @@ export default function AddStructureModal({ onClose, onSubmit }) {
 
 
     try {
-      const res = await fetch("http://localhost:5000/add-compound", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/add-compound`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

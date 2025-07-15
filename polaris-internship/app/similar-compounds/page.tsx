@@ -39,7 +39,7 @@ export default function SimilarCompoundsPage() {
     }
     // Load starred compounds from backend if logged in, else from localStorage
     if (user && user.email) {
-      fetch(`http://localhost:5000/get-starred?email=${user.email}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/get-starred?email=${user.email}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data.starred)) {
@@ -76,7 +76,7 @@ export default function SimilarCompoundsPage() {
   useEffect(() => {
     localStorage.setItem("starredCompounds", JSON.stringify(starred));
     if (user && user.email) {
-      fetch("http://localhost:5000/save-starred", {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/save-starred`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, starred }),
@@ -98,13 +98,13 @@ export default function SimilarCompoundsPage() {
   const clearComparison = () => setSelectedForComparison([]);
 
     const onDelete = async (id: string) => {
-    await fetch(`http://localhost:5000/delete-compound/${id}`, { method: "DELETE" });
+    await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/delete-compound/${id}`, { method: "DELETE" });
     setCompounds((prev) => prev.filter((c) => c.id !== id));
     setSelectedCompound(null);
     };
 
     const onUpdate = async (updatedCompound: Compound) => {
-    await fetch("http://localhost:5000/update-compound", {
+    await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-compound`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedCompound),
