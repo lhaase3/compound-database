@@ -92,13 +92,46 @@ export default function PlansPage() {
   }
 
   // Add a new plan
+  // const handleAddPlan = async () => {
+  //   if (!draft.name || !draft.smiles) return;
+  //   try {
+  //     // Find if the chosen priority is already used
+  //     const chosenPriority = draft.priority || 1;
+  //     const plansToShift = activePlans.filter(p => p.priority >= chosenPriority);
+  //     // Increment priorities for all plans at or above the chosen priority
+  //     for (const plan of plansToShift.sort((a, b) => b.priority - a.priority)) {
+  //       await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${plan.id}`, {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ priority: plan.priority + 1 }),
+  //       });
+  //     }
+  //     // Generate a unique plan id for the image
+  //     const planId = Date.now().toString();
+  //     let imageUrl = draft.imageUrl;
+  //     const planData = { ...draft, id: planId, priority: chosenPriority, status: draft.status || 'Not Started', completed: draft.status === 'Completed' };
+  //     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-plan`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(planData),
+  //     });
+  //     const result = await res.json();
+  //     if (result.success) {
+  //       // Fetch updated plans list
+  //       const plansRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`);
+  //       const plansData = await plansRes.json();
+  //       setPlans(Array.isArray(plansData) ? plansData.sort((a, b) => a.priority - b.priority) : []);
+  //       setDraft({ priority: 1 });
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to create plan", err);
+  //   }
+  // };
   const handleAddPlan = async () => {
     if (!draft.name || !draft.smiles) return;
     try {
-      // Find if the chosen priority is already used
       const chosenPriority = draft.priority || 1;
       const plansToShift = activePlans.filter(p => p.priority >= chosenPriority);
-      // Increment priorities for all plans at or above the chosen priority
       for (const plan of plansToShift.sort((a, b) => b.priority - a.priority)) {
         await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${plan.id}`, {
           method: "POST",
@@ -106,21 +139,29 @@ export default function PlansPage() {
           body: JSON.stringify({ priority: plan.priority + 1 }),
         });
       }
-      // Generate a unique plan id for the image
+
       const planId = Date.now().toString();
-      let imageUrl = draft.imageUrl;
-      if (!imageUrl && draft.smiles) {
-        imageUrl = await uploadStructureImage(draft.smiles, planId);
-      }
-      const planData = { ...draft, id: planId, imageUrl, priority: chosenPriority, status: draft.status || 'Not Started', completed: draft.status === 'Completed' };
+
+      // 👇 This line uploads the structure image and sets imageUrl
+      const imageUrl = await uploadStructureImage(draft.smiles, planId);
+
+      const planData = {
+        ...draft,
+        id: planId,
+        priority: chosenPriority,
+        status: draft.status || 'Not Started',
+        completed: draft.status === 'Completed',
+        imageUrl,
+      };
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(planData),
       });
+
       const result = await res.json();
       if (result.success) {
-        // Fetch updated plans list
         const plansRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`);
         const plansData = await plansRes.json();
         setPlans(Array.isArray(plansData) ? plansData.sort((a, b) => a.priority - b.priority) : []);
@@ -130,6 +171,7 @@ export default function PlansPage() {
       console.error("Failed to create plan", err);
     }
   };
+
 
   // Add completed state to plans
   const markPlanCompleted = async (plan: PlannedStructure) => {
@@ -559,7 +601,7 @@ export default function PlansPage() {
             if (smiles) {
               // Generate a temporary plan id for image upload
               const tempPlanId = draft.id || Date.now().toString();
-              imageUrl = await uploadStructureImage(smiles, tempPlanId);
+              // imageUrl = await uploadStructureImage(smiles, tempPlanId);
             }
             setDraft(d => ({ ...d, smiles, imageUrl }));
             setShowDrawModal(false);
