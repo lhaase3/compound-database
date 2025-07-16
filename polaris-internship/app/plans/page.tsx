@@ -424,11 +424,11 @@ export default function PlansPage() {
                           <td className="px-2 py-2 border-r border-[#008080] text-[#002C36]" style={{ width: '160px', minWidth: '100px', maxWidth: '160px' }}>{plan.name}</td>
                           <td className="px-2 py-2 border-r border-[#008080] text-[#002C36]" style={{ width: '160px', minWidth: '100px', maxWidth: '160px' }}>{plan.owner}</td>
                           {/* update this to increase structure column size */}
-                          <td className="border-r border-[#008080] bg-white" style={{ padding: 0, verticalAlign: 'middle', width: '320px', minWidth: '400px', maxWidth: '320px' }}>
+                          <td className="border-r border-[#008080] bg-white" style={{ padding: 0, verticalAlign: 'middle', width: '520px', minWidth: '520px', maxWidth: '520px' }}>
                             {plan.imageUrl ? (
                               <div
                                 className="flex items-center justify-center bg-white rounded mx-auto overflow-hidden border border-gray-200 group relative"
-                                style={{ width: '380px', height: '380px', padding: '8px', boxSizing: 'border-box' }}
+                                style={{ width: '500px', height: '500px', padding: '8px', boxSizing: 'border-box' }}
                                 tabIndex={0}
                                 aria-label={`Structure image for ${plan.name}`}
                               >
