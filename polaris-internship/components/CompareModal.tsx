@@ -26,8 +26,8 @@ const fieldsToShow = [
   "lab?", "first PEO#", "registered PEO#", "Lab book #", "Max loading (%)"
 ];
 
-const IMAGE_COL_WIDTH = 300;
-const ID_COL_WIDTH = 160;
+const IMAGE_COL_WIDTH = 420;
+const ID_COL_WIDTH = 180;
 
 
 const CompareModal: React.FC<CompareModalProps> = ({
@@ -81,13 +81,25 @@ const CompareModal: React.FC<CompareModalProps> = ({
               <tr>
                 <th
                   className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-[#008080] sticky z-30 bg-white"
-                  style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH, borderRight: '2px solid #008080', boxShadow: `2px 0 0 #008080` }}
+                  style={{
+                    left: 0,
+                    width: IMAGE_COL_WIDTH,
+                    minWidth: IMAGE_COL_WIDTH,
+                    boxShadow: '2px 0 0 #008080',
+                    zIndex: 30,
+                  }}
                 >
                   Image
                 </th>
                 <th
                   className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-[#008080] sticky z-30 bg-white"
-                  style={{ left: IMAGE_COL_WIDTH, width: ID_COL_WIDTH, minWidth: ID_COL_WIDTH, borderRight: '2px solid #008080', boxShadow: `2px 0 0 #008080` }}
+                  style={{
+                    left: IMAGE_COL_WIDTH,
+                    width: ID_COL_WIDTH,
+                    minWidth: ID_COL_WIDTH,
+                    boxShadow: '2px 0 0 #008080',
+                    zIndex: 30,
+                  }}
                 >
                   ID
                 </th>
@@ -122,7 +134,7 @@ const CompareModal: React.FC<CompareModalProps> = ({
                         left: 0,
                         width: IMAGE_COL_WIDTH,
                         minWidth: IMAGE_COL_WIDTH,
-                        borderRight: '2px solid #008080',
+                        maxWidth: IMAGE_COL_WIDTH,
                         boxShadow: '2px 0 0 #008080',
                         background: '#fff',
                         zIndex: 20,
@@ -130,12 +142,12 @@ const CompareModal: React.FC<CompareModalProps> = ({
                         padding: 0
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
                         {cmp.imageUrl ? (
                           <img
                             src={cmp.imageUrl}
                             alt={cmp.id}
-                            style={{ maxWidth: '260px', maxHeight: '260px', objectFit: 'contain', display: 'block', margin: '0 auto', background: '#fff', borderRadius: '0.75rem' }}
+                            style={{ maxWidth: '370px', maxHeight: '370px', objectFit: 'contain', display: 'block', margin: '0 auto', background: '#fff', borderRadius: '0.75rem', boxShadow: '0 2px 12px 0 rgba(0,0,0,0.07)' }}
                           />
                         ) : (
                           <span>N/A</span>
@@ -148,7 +160,7 @@ const CompareModal: React.FC<CompareModalProps> = ({
                         left: IMAGE_COL_WIDTH,
                         width: ID_COL_WIDTH,
                         minWidth: ID_COL_WIDTH,
-                        borderRight: '2px solid #008080',
+                        maxWidth: ID_COL_WIDTH,
                         boxShadow: '2px 0 0 #008080',
                         background: '#fff',
                         zIndex: 20,
