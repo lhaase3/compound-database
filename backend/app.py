@@ -17,21 +17,60 @@ import tempfile
 import base64
 import datetime
 from collections import Counter
+import tempfile
+import sys
+
+# app = Flask(__name__)
+# # CORS(app, origins="*", allow_headers="*", supports_credentials=True, methods=["GET", "POST", "OPTIONS", "DELETE"])
+# CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})  # Match frontend port
+
+# # Initialize Firebase Admin SDK
+# firebase_key_json = os.environ["FIREBASE_KEY"]
+
+# # Write it to a temporary file
+# with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_key_file:
+#     temp_key_file.write(firebase_key_json)
+#     firebase_key_path = temp_key_file.name
+
+# # Initialize Firebase
+# cred = credentials.Certificate(firebase_key_path)
+# firebase_admin.initialize_app(cred, {
+#     'storageBucket': 'polaris-test-3b8f8.firebasestorage.app'
+# })
+# db = firestore.client()
+
+
 
 app = Flask(__name__)
-# CORS(app, origins="*", allow_headers="*", supports_credentials=True, methods=["GET", "POST", "OPTIONS", "DELETE"])
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})  # Match frontend port
+CORS(app, resources={r"/*": {"origins": "*"}})
 
+# 🔍 DEBUG: Logging environment variable presence
+print("🔥 Checking for FIREBASE_KEY in environment variables...")
+if "FIREBASE_KEY" not in os.environ:
+    print("❌ FIREBASE_KEY is missing from environment", file=sys.stderr)
+    sys.exit(3)
 
+try:
+    firebase_key_json = os.environ["FIREBASE_KEY"]
+    print("✅ FIREBASE_KEY loaded from environment")
 
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate("firebase-key.json")
-firebase_admin.initialize_app(cred, {
-    'storageBucket': 'polaris-test-3b8f8.firebasestorage.app'
-})
-db = firestore.client()
+    # Write to temporary file
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_key_file:
+        temp_key_file.write(firebase_key_json)
+        firebase_key_path = temp_key_file.name
+    print(f"📁 Firebase key written to temp file at: {firebase_key_path}")
 
+    # Initialize Firebase
+    cred = credentials.Certificate(firebase_key_path)
+    firebase_admin.initialize_app(cred, {
+        'storageBucket': 'polaris-test-3b8f8.firebasestorage.app'
+    })
+    db = firestore.client()
+    print("✅ Firebase Admin initialized successfully")
 
+except Exception as e:
+    print("❌ Failed to initialize Firebase Admin SDK:", str(e), file=sys.stderr)
+    sys.exit(3)
 
 
 # Only treat FN - FNG and FNG - FN as equivalent, not all transitions
@@ -565,8 +604,6 @@ def upload_image_to_firebase():
 
 
 
-    
-
 
 @app.route("/create-formulation", methods=["POST"])
 def create_formulation():
@@ -801,47 +838,141 @@ def list_plans():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# @app.route("/create-plan", methods=["POST"])
+# def create_plan():
+#     try:
+#         data = request.get_json()
+#         # Ensure completed is always set to False by default
+#         if "completed" not in data:
+#             data["completed"] = False
+#         # Generate and upload structure image if smiles is present and no imageUrl
+#         smiles = data.get("smiles")
+#         if smiles and not data.get("imageUrl"):
+#             try:
+#                 from rdkit import Chem
+#                 from rdkit.Chem import Draw
+#                 import io
+#                 import base64
+#                 mol = Chem.MolFromSmiles(smiles)
+#                 if mol:
+#                     img = Draw.MolToImage(mol, size=(1200, 600), dpi=300, kekulize=True, wedgeBonds=True, bgcolor=(255,255,255))
+#                     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+#                         img.save(tmp.name, dpi=(300, 300))
+#                         tmp.flush()
+#                         bucket = storage.bucket()
+#                         filename = f"plan_images/{data.get('id', 'plan')}.png"
+#                         blob = bucket.blob(filename)
+#                         blob.upload_from_filename(tmp.name, content_type="image/png")
+#                         blob.make_public()
+#                         data["imageUrl"] = blob.public_url
+#                     os.unlink(tmp.name)
+#             except Exception as e:
+#                 print(f"Failed to generate/upload image for plan {data.get('id')}: {e}")
+#         # Use the provided id as the Firestore document ID
+#         plan_id = data.get("id")
+#         if not plan_id:
+#             plan_ref = db.collection("plans").document()  # fallback to auto-id if not provided
+#         else:
+#             plan_ref = db.collection("plans").document(str(plan_id))
+#         data["createdAt"] = firestore.SERVER_TIMESTAMP
+#         plan_ref.set(data)
+#         return jsonify({"success": True}), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
+
 @app.route("/create-plan", methods=["POST"])
 def create_plan():
     try:
         data = request.get_json()
-        # Ensure completed is always set to False by default
+
         if "completed" not in data:
             data["completed"] = False
-        # Generate and upload structure image if smiles is present and no imageUrl
+
         smiles = data.get("smiles")
         if smiles and not data.get("imageUrl"):
             try:
                 from rdkit import Chem
-                from rdkit.Chem import Draw
-                import io
-                import base64
+                from rdkit.Chem import rdDepictor, rdMolDraw2D
+                import tempfile
+                import os
+
                 mol = Chem.MolFromSmiles(smiles)
                 if mol:
-                    img = Draw.MolToImage(mol, size=(1200, 600), dpi=300, kekulize=True, wedgeBonds=True, bgcolor=(255,255,255))
+                    rdDepictor.Compute2DCoords(mol)
+
+                    width, height = 2400, 1200
+                    drawer = rdMolDraw2D.MolDraw2DCairo(width, height)
+                    options = drawer.drawOptions()
+
+                    num_atoms = mol.GetNumAtoms()
+                    if num_atoms <= 20:
+                        options.minFontSize = 120
+                        options.maxFontSize = 120
+                    elif num_atoms <= 40:
+                        options.minFontSize = 90
+                        options.maxFontSize = 90
+                    else:
+                        options.minFontSize = 58
+                        options.maxFontSize = 58
+
+                    options.bondLineWidth = 4
+                    options.padding = 0.01
+                    options.fixedScale = True
+
+                    drawer.DrawMolecule(mol)
+                    drawer.FinishDrawing()
+
                     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                        img.save(tmp.name, dpi=(300, 300))
+                        drawer.WriteDrawingText(tmp.name)
                         tmp.flush()
+
                         bucket = storage.bucket()
                         filename = f"plan_images/{data.get('id', 'plan')}.png"
                         blob = bucket.blob(filename)
                         blob.upload_from_filename(tmp.name, content_type="image/png")
                         blob.make_public()
                         data["imageUrl"] = blob.public_url
+
                     os.unlink(tmp.name)
+
+                    # Optional B/W version for printing
+                    drawer_bw = rdMolDraw2D.MolDraw2DCairo(width, height)
+                    options_bw = drawer_bw.drawOptions()
+                    options_bw.minFontSize = options.minFontSize
+                    options_bw.maxFontSize = options.maxFontSize
+                    options_bw.bondLineWidth = options.bondLineWidth
+                    options_bw.padding = options.padding
+                    options_bw.fixedScale = options.fixedScale
+                    options_bw.useBWAtomPalette()
+
+                    drawer_bw.DrawMolecule(mol)
+                    drawer_bw.FinishDrawing()
+
+                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_bw:
+                        drawer_bw.WriteDrawingText(tmp_bw.name)
+                        tmp_bw.flush()
+
+                        filename_bw = f"plan_images/{data.get('id', 'plan')}_bw.png"
+                        blob_bw = bucket.blob(filename_bw)
+                        blob_bw.upload_from_filename(tmp_bw.name, content_type="image/png")
+                        blob_bw.make_public()
+                        data["bwImageUrl"] = blob_bw.public_url
+
+                    os.unlink(tmp_bw.name)
+
             except Exception as e:
                 print(f"Failed to generate/upload image for plan {data.get('id')}: {e}")
-        # Use the provided id as the Firestore document ID
+
         plan_id = data.get("id")
-        if not plan_id:
-            plan_ref = db.collection("plans").document()  # fallback to auto-id if not provided
-        else:
-            plan_ref = db.collection("plans").document(str(plan_id))
+        plan_ref = db.collection("plans").document(str(plan_id)) if plan_id else db.collection("plans").document()
         data["createdAt"] = firestore.SERVER_TIMESTAMP
         plan_ref.set(data)
         return jsonify({"success": True}), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/delete-plan/<plan_id>", methods=["DELETE"])
 def delete_plan(plan_id):
@@ -882,58 +1013,3 @@ if __name__ == '__main__':
 #   This code is the property of Polaris Electro Optics and may not be reused, modified, or distributed without explicit permission.
 
 
-
-
-
-
-
-
-
-
-
-
-# @app.route("/add-compound", methods=["POST", "OPTIONS"])
-# def add_compound():
-#     print("🧪 Received method:", request.method)
-#     if request.method == "OPTIONS":
-#         return '', 200
-
-#     data = request.get_json()
-
-#     # 🚫 Prevent saving lot-based compounds directly
-#     if "original_id" in data:
-#         return jsonify({"error": "Cannot add a compound that originates from a lot."}), 400
-
-#     if "id" not in data:
-#         return jsonify({"error": "Compound must have an 'id' field"}), 400
-
-#     data["createdAt"] = firestore.SERVER_TIMESTAMP
-
-#     phase_map_str = data.get("phase map", "")
-#     transitions = extract_transitions_with_temps(phase_map_str)
-#     data["parsed_phase_transitions"] = transitions
-
-#     # Generate and upload structure image if smiles is present and no imageUrl
-#     smiles = data.get("smiles")
-#     if smiles and not data.get("imageUrl"):
-#         try:
-#             mol = Chem.MolFromSmiles(smiles)
-#             if mol:
-#                 # Generate a high-resolution image
-#                 img = Draw.MolToImage(mol, size=(1200, 600), dpi=300)
-#                 with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-#                     img.save(tmp.name, dpi=(300, 300))
-#                     tmp.flush()
-#                     # Upload to Firebase Storage
-#                     bucket = storage.bucket()
-#                     filename = f"compound_images/{data['id']}.png"
-#                     blob = bucket.blob(filename)
-#                     blob.upload_from_filename(tmp.name, content_type="image/png")
-#                     blob.make_public()
-#                     data["imageUrl"] = blob.public_url
-#                 os.unlink(tmp.name)
-#         except Exception as e:
-#             print(f"Failed to generate/upload image for {data['id']}: {e}")
-
-#     db.collection("compounds").document(data["id"]).set(data, merge=True)
-#     return jsonify({"success": True}), 200
