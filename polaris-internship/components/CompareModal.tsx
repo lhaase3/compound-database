@@ -80,14 +80,14 @@ const CompareModal: React.FC<CompareModalProps> = ({
             <thead>
               <tr>
                 <th
-                  className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky z-30 bg-white"
-                  style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH }}
+                  className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-[#008080] sticky z-30 bg-white"
+                  style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH, borderRight: '2px solid #008080', boxShadow: `2px 0 0 #008080` }}
                 >
                   Image
                 </th>
                 <th
-                  className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky z-30 bg-white"
-                  style={{ left: IMAGE_COL_WIDTH, width: ID_COL_WIDTH, minWidth: ID_COL_WIDTH }}
+                  className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-[#008080] sticky z-30 bg-white"
+                  style={{ left: IMAGE_COL_WIDTH, width: ID_COL_WIDTH, minWidth: ID_COL_WIDTH, borderRight: '2px solid #008080', boxShadow: `2px 0 0 #008080` }}
                 >
                   ID
                 </th>
@@ -118,17 +118,42 @@ const CompareModal: React.FC<CompareModalProps> = ({
                   <tr key={id} className="border-b border-[#008080]">
                     <td
                       className="p-3 text-center sticky z-20 bg-white"
-                      style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH, borderRight: '1px solid #008080' }}
+                      style={{
+                        left: 0,
+                        width: IMAGE_COL_WIDTH,
+                        minWidth: IMAGE_COL_WIDTH,
+                        borderRight: '2px solid #008080',
+                        boxShadow: '2px 0 0 #008080',
+                        background: '#fff',
+                        zIndex: 20,
+                        overflow: 'visible',
+                        padding: 0
+                      }}
                     >
-                      {cmp.imageUrl ? (
-                        <img src={cmp.imageUrl} alt={cmp.id} style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }} />
-                      ) : (
-                        <span>N/A</span>
-                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 16 }}>
+                        {cmp.imageUrl ? (
+                          <img
+                            src={cmp.imageUrl}
+                            alt={cmp.id}
+                            style={{ maxWidth: '260px', maxHeight: '260px', objectFit: 'contain', display: 'block', margin: '0 auto', background: '#fff', borderRadius: '0.75rem' }}
+                          />
+                        ) : (
+                          <span>N/A</span>
+                        )}
+                      </div>
                     </td>
                     <td
                       className="p-3 font-bold text-[#002C36] text-center sticky z-20 bg-white"
-                      style={{ left: IMAGE_COL_WIDTH, width: ID_COL_WIDTH, minWidth: ID_COL_WIDTH, borderRight: '1px solid #008080' }}
+                      style={{
+                        left: IMAGE_COL_WIDTH,
+                        width: ID_COL_WIDTH,
+                        minWidth: ID_COL_WIDTH,
+                        borderRight: '2px solid #008080',
+                        boxShadow: '2px 0 0 #008080',
+                        background: '#fff',
+                        zIndex: 20,
+                        overflow: 'visible'
+                      }}
                     >
                       {cmp.id}
                     </td>
@@ -141,7 +166,7 @@ const CompareModal: React.FC<CompareModalProps> = ({
                         }
                         style={
                           (field === 'phase map' || field === 'Notes')
-                            ? { whiteSpace: 'pre-line', wordBreak: 'break-word', maxWidth: 600 }
+                            ? { whiteSpace: 'pre-line', wordBreak: 'break-word', minWidth: 300, maxWidth: 600 }
                             : undefined
                         }
                       >
@@ -226,3 +251,8 @@ const CompareModal: React.FC<CompareModalProps> = ({
 };
 
 export default CompareModal;
+
+
+
+
+  
