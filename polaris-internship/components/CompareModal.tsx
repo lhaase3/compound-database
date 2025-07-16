@@ -1,0 +1,190 @@
+import React from "react";
+import { Compound } from "@/types/compound";
+
+interface CompareAttachment {
+  compoundId: string;
+  key: string;
+  data: any;
+}
+
+interface CompareModalProps {
+  open: boolean;
+  onClose: () => void;
+  compounds: Compound[];
+  selectedForComparison: string[];
+  compareAttachment: CompareAttachment | null;
+  setCompareAttachment: (att: CompareAttachment | null) => void;
+  clearComparison: () => void;
+}
+
+const fieldsToShow = [
+  "MW", "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
+  "phase map", "r33", "dipole CAMB3LYP SVPD CHCl3 (Cosmo)",
+  "beta CAMB3LYP SVPD CHCl3 (Cosmo)", "dipole B3LYP SVPD CHCl3",
+  "beta B3LYP SVPD CHCl3", "beta/MW", "J/g DSC melt (total)",
+  "kJ/mol DSC melt (total)", "Refractive index (ne/no)", "Notes",
+  "lab?", "first PEO#", "registered PEO#", "Lab book #", "Max loading (%)"
+];
+
+const CompareModal: React.FC<CompareModalProps> = ({
+  open,
+  onClose,
+  compounds,
+  selectedForComparison,
+  compareAttachment,
+  setCompareAttachment,
+  clearComparison,
+}) => {
+  if (!open) return null;
+
+  const visibleFields = fieldsToShow.filter(field =>
+    selectedForComparison.some(id => {
+      const cmp = compounds.find(c => c.id === id);
+      const val = cmp?.[field];
+      return val !== undefined && val !== null && val !== "" && val !== "N/A";
+    })
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full p-8 relative overflow-x-auto max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-2xl font-extrabold text-[#008080] uppercase mb-6 tracking-wide">Compare Compounds</h2>
+        <button
+          className="absolute top-4 right-4 text-2xl text-[#008080] font-bold hover:text-[#00bfae]"
+          onClick={onClose}
+        >
+          &times;
+        </button>
+        <button
+          className="absolute top-4 right-20 bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold px-4 py-2 rounded-md uppercase tracking-wide text-xs"
+          onClick={() => {
+            clearComparison();
+            onClose();
+          }}
+        >
+          Clear
+        </button>
+
+        <table className="min-w-full border border-[#008080] rounded-lg mb-6">
+          <thead>
+            <tr>
+              <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky left-0 z-20 bg-white w-[120px]">Image</th>
+              <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky left-[120px] z-20 bg-white w-[160px]">ID</th>
+              {visibleFields.map(field => (
+                <th key={field} className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] bg-white whitespace-nowrap">
+                  {field}
+                </th>
+              ))}
+              <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-[#008080] bg-white whitespace-nowrap">Attachments</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedForComparison.map(id => {
+              const cmp = compounds.find(c => c.id === id);
+              if (!cmp) return null;
+
+              const atts = cmp.attachments || {};
+              const keysWithData = Object.keys(atts).filter(k => {
+                const att = atts[k];
+                if (Array.isArray(att)) {
+                  return att.some(entry => entry && (entry.note || entry.imageUrl));
+                } else {
+                  return att && (att.note || att.imageUrl);
+                }
+              });
+
+              return (
+                <tr key={id} className="border-b border-[#008080]">
+                  <td className="p-3 text-center border-r border-[#008080] sticky left-0 bg-white z-10 w-[120px]">
+                    {cmp.imageUrl ? (
+                      <img src={cmp.imageUrl} alt={cmp.id} className="w-20 h-20 object-contain mx-auto border rounded" />
+                    ) : (
+                      <span>N/A</span>
+                    )}
+                  </td>
+                  <td className="p-3 font-bold text-[#002C36] text-center border-r border-[#008080] sticky left-[120px] bg-white z-10 w-[160px]">
+                    {cmp.id}
+                  </td>
+                  {visibleFields.map(field => (
+                    <td key={field} className="p-3 text-[#002C36] text-center border-r border-[#008080] whitespace-nowrap">
+                      {cmp[field] ?? "N/A"}
+                    </td>
+                  ))}
+                  <td className="p-3 text-center border-[#008080]">
+                    <div className="flex flex-col gap-2 items-center">
+                      {keysWithData.length === 0 && <span>N/A</span>}
+                      {keysWithData.map((key) => {
+                        const att = atts[key];
+                        if (Array.isArray(att)) {
+                          return att.map((entry, idx) =>
+                            entry && (entry.note || entry.imageUrl) ? (
+                              <button
+                                key={key + "-" + idx}
+                                className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                onClick={() => setCompareAttachment({ compoundId: id, key, data: entry })}
+                                type="button"
+                              >
+                                {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
+                              </button>
+                            ) : null
+                          );
+                        } else {
+                          return (
+                            <button
+                              key={key}
+                              className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                              onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
+                              type="button"
+                            >
+                              {key.replace(/_/g, " ")}
+                            </button>
+                          );
+                        }
+                      })}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {/* Attachment Modal */}
+        {compareAttachment && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6" onClick={() => setCompareAttachment(null)}>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-[95vh] p-10 relative flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-bold mb-6 text-[#008080] uppercase text-center w-full">{compareAttachment.key.replace(/_/g, " ")}</h2>
+              {compareAttachment.data.imageUrl && (
+                <div className="flex justify-center items-center w-full" style={{ minHeight: '200px' }}>
+                  <img
+                    src={compareAttachment.data.imageUrl}
+                    alt={compareAttachment.key}
+                    className="w-auto h-auto max-h-[90vh] max-w-[1600px] object-contain mb-6 border rounded shadow bg-white mx-auto"
+                  />
+                </div>
+              )}
+              {compareAttachment.data.note && (
+                <div className="bg-gray-100 p-4 rounded whitespace-pre-wrap mb-6 text-[#002C36] max-w-4xl w-full text-center mx-auto">
+                  {compareAttachment.data.note}
+                </div>
+              )}
+              {!compareAttachment.data.imageUrl && !compareAttachment.data.note && (
+                <div className="text-gray-500 mb-6">No data available.</div>
+              )}
+              <div className="flex justify-end w-full mt-2">
+                <button
+                  className="px-8 py-4 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xl"
+                  onClick={() => setCompareAttachment(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CompareModal;
