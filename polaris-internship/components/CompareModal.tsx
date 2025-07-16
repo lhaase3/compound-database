@@ -26,6 +26,10 @@ const fieldsToShow = [
   "lab?", "first PEO#", "registered PEO#", "Lab book #", "Max loading (%)"
 ];
 
+const IMAGE_COL_WIDTH = 120;
+const ID_COL_WIDTH = 160;
+
+
 const CompareModal: React.FC<CompareModalProps> = ({
   open,
   onClose,
@@ -75,8 +79,18 @@ const CompareModal: React.FC<CompareModalProps> = ({
           <table className="min-w-full border border-[#008080] rounded-lg mb-6">
             <thead>
               <tr>
-                <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky left-0 z-20 bg-white w-[120px]">Image</th>
-                <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky left-[120px] z-20 bg-white w-[160px]">ID</th>
+                <th
+                  className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky z-30 bg-white"
+                  style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH }}
+                >
+                  Image
+                </th>
+                <th
+                  className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky z-30 bg-white"
+                  style={{ left: IMAGE_COL_WIDTH, width: ID_COL_WIDTH, minWidth: ID_COL_WIDTH }}
+                >
+                  ID
+                </th>
                 {visibleFields.map(field => (
                   <th key={field} className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] bg-white whitespace-nowrap">
                     {field}
@@ -102,14 +116,20 @@ const CompareModal: React.FC<CompareModalProps> = ({
 
                 return (
                   <tr key={id} className="border-b border-[#008080]">
-                    <td className="p-3 text-center border-r border-[#008080] sticky left-0 bg-white z-20 w-[120px]" style={{ background: '#fff', boxShadow: '2px 0 0 #008080' }}>
+                    <td
+                      className="p-3 text-center border-r border-[#008080] sticky z-20 bg-white"
+                      style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH, boxShadow: '2px 0 0 #008080' }}
+                    >
                       {cmp.imageUrl ? (
-                        <img src={cmp.imageUrl} alt={cmp.id} className="w-20 h-20 object-contain mx-auto border rounded" />
+                        <img src={cmp.imageUrl} alt={cmp.id} className="w-100 h-100 object-contain mx-auto border rounded" />
                       ) : (
                         <span>N/A</span>
                       )}
                     </td>
-                    <td className="p-3 font-bold text-[#002C36] text-center border-r border-[#008080] sticky left-[120px] bg-white z-20 w-[160px]" style={{ background: '#fff', boxShadow: '2px 0 0 #008080' }}>
+                    <td
+                      className="p-3 font-bold text-[#002C36] text-center border-r border-[#008080] sticky z-20 bg-white"
+                      style={{ left: IMAGE_COL_WIDTH, width: ID_COL_WIDTH, minWidth: ID_COL_WIDTH, boxShadow: '2px 0 0 #008080' }}
+                    >
                       {cmp.id}
                     </td>
                     {visibleFields.map(field => (
