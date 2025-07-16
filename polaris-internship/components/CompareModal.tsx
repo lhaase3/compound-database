@@ -26,7 +26,7 @@ const fieldsToShow = [
   "lab?", "first PEO#", "registered PEO#", "Lab book #", "Max loading (%)"
 ];
 
-const IMAGE_COL_WIDTH = 120;
+const IMAGE_COL_WIDTH = 300;
 const ID_COL_WIDTH = 160;
 
 
@@ -117,8 +117,8 @@ const CompareModal: React.FC<CompareModalProps> = ({
                 return (
                   <tr key={id} className="border-b border-[#008080]">
                     <td
-                      className="p-3 text-center border-r border-[#008080] sticky z-20 bg-white"
-                      style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH, boxShadow: '2px 0 0 #008080' }}
+                      className="p-3 text-center sticky z-20 bg-white"
+                      style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH, borderRight: '1px solid #008080' }}
                     >
                       {cmp.imageUrl ? (
                         <img src={cmp.imageUrl} alt={cmp.id} style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }} />
@@ -127,8 +127,8 @@ const CompareModal: React.FC<CompareModalProps> = ({
                       )}
                     </td>
                     <td
-                      className="p-3 font-bold text-[#002C36] text-center border-r border-[#008080] sticky z-20 bg-white"
-                      style={{ left: IMAGE_COL_WIDTH, width: ID_COL_WIDTH, minWidth: ID_COL_WIDTH, boxShadow: '2px 0 0 #008080' }}
+                      className="p-3 font-bold text-[#002C36] text-center sticky z-20 bg-white"
+                      style={{ left: IMAGE_COL_WIDTH, width: ID_COL_WIDTH, minWidth: ID_COL_WIDTH, borderRight: '1px solid #008080' }}
                     >
                       {cmp.id}
                     </td>
@@ -141,7 +141,7 @@ const CompareModal: React.FC<CompareModalProps> = ({
                         }
                         style={
                           (field === 'phase map' || field === 'Notes')
-                            ? { whiteSpace: 'pre-line', wordBreak: 'break-word', maxWidth: 320 }
+                            ? { whiteSpace: 'pre-line', wordBreak: 'break-word', maxWidth: 600 }
                             : undefined
                         }
                       >
