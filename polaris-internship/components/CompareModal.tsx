@@ -121,7 +121,7 @@ const CompareModal: React.FC<CompareModalProps> = ({
                       style={{ left: 0, width: IMAGE_COL_WIDTH, minWidth: IMAGE_COL_WIDTH, boxShadow: '2px 0 0 #008080' }}
                     >
                       {cmp.imageUrl ? (
-                        <img src={cmp.imageUrl} alt={cmp.id} className="w-100 h-100 object-contain mx-auto border rounded" />
+                        <img src={cmp.imageUrl} alt={cmp.id} style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }} />
                       ) : (
                         <span>N/A</span>
                       )}
