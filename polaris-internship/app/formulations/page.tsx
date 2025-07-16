@@ -122,35 +122,34 @@ export default function FormulationList() {
 
   // Load starred formulations for user
   useEffect(() => {
+    if (!authChecked) return;
+
+    const stored = localStorage.getItem("starredFormulations");
+
+    // If user is logged in, load from backend
     if (user && user.email) {
       fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/get-starred-formulations?email=${user.email}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data.starred)) {
             setStarredFormulations(data.starred);
-            if (typeof window !== "undefined") {
-              window.localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
-            }
+            localStorage.setItem("starredFormulations", JSON.stringify(data.starred));
           }
         })
-        .catch(err => console.error("Failed to fetch starred formulations:", err));
-    } else {
-      // fallback to localStorage if not logged in
-      if (typeof window !== "undefined") {
-        const stored = window.localStorage.getItem("starredFormulations");
-        if (stored) setStarredFormulations(JSON.parse(stored));
-        else setStarredFormulations([]);
-      } else {
-        setStarredFormulations([]);
-      }
+        .catch(err => {
+          console.error("Failed to fetch from backend, falling back to localStorage");
+          if (stored) setStarredFormulations(JSON.parse(stored));
+        });
+    } else if (stored) {
+      setStarredFormulations(JSON.parse(stored));
     }
-  }, [user]);
+  }, [authChecked, user]);
+
+
 
   // Sync starred formulations to backend and localStorage
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
-    }
+    localStorage.setItem("starredFormulations", JSON.stringify(starredFormulations));
     if (user && user.email) {
       fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/save-starred-formulations`, {
         method: "POST",
@@ -159,6 +158,8 @@ export default function FormulationList() {
       }).catch((err) => console.error("Failed to save starred formulations:", err));
     }
   }, [starredFormulations, user]);
+
+
   const handleResetFilters = async () => {
     setSearchTerm("");
     setShowOnlyStarred(false);
@@ -977,7 +978,7 @@ export default function FormulationList() {
             onClick={() => setEditMode(false)}
           >
             <div
-              className="bg-white p-6 rounded-lg shadow-lg w-full max-w-6xl"
+              className="bg-white p-6 rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-xl font-bold mb-4 text-black">Edit Formulation</h2>

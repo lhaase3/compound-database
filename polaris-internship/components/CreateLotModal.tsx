@@ -119,13 +119,13 @@ export default function CreateLotModal({ compounds, onClose, onCreate }: Props) 
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-black"
+            className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-black font-bold"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
+            className="px-4 py-2 rounded bg-[#008080] hover:bg-[#006666] text-white font-bold"
           >
             Create Lot
           </button>

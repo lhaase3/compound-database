@@ -119,6 +119,7 @@ export default function AddStructureModal({ onClose, onSubmit }) {
       ...formData,
       smiles,
       attachments,
+      createdAt: new Date().toISOString(),
     };
 
 

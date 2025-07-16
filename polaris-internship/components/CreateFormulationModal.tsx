@@ -232,34 +232,42 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
                       {/* Compound selector */}
                       <td className="px-2 py-2 border-r border-[#008080]">
                         <div className="flex flex-col gap-1">
-                          <input
-                            type="text"
-                            placeholder="Search..."
-                            className="border border-[#008080] px-1 py-0.5 rounded text-[#002C36] bg-white text-xs mb-1"
-                            value={compoundSearch}
-                            onChange={e => {
-                              const val = e.target.value;
-                              setCompoundSearches(prev => {
-                                const arr = [...prev];
-                                arr[idx] = val;
-                                return arr;
-                              });
-                            }}
-                          />
                           <select
-                            className="border border-[#008080] px-1 py-0.5 rounded text-[#002C36] bg-white text-xs mb-1"
+                            className="border border-[#008080] px-1 py-0.5 rounded text-[#002C36] bg-white text-xs"
                             value={comp.compoundId}
-                            onChange={e => {
-                              const selectedCompound = compounds.find(c => c.id === e.target.value);
-                              updateComponent(idx, 'compoundId', e.target.value);
+                            onChange={(e) => {
+                              const selectedId = e.target.value;
+                              const selectedCompound = compounds.find(c => c.id === selectedId);
+                              updateComponent(idx, 'compoundId', selectedId);
                               updateComponent(idx, 'imageUrl', selectedCompound?.imageUrl || '');
                             }}
                           >
-                            <option value="" disabled>Select Compound</option>
-                            {filteredCompounds.map((c) => (
-                              <option key={c.id} value={c.id}>{c.name || c.id}</option>
-                            ))}
+                            <option value="" disabled>Select a compound...</option>
+                            {compounds
+                              .filter(c =>
+                                c.name?.toLowerCase().includes(compoundSearches[idx]?.toLowerCase() || '') ||
+                                c.id.toLowerCase().includes(compoundSearches[idx]?.toLowerCase() || '')
+                              )
+                              .map(c => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name || c.id}
+                                </option>
+                              ))}
                           </select>
+                          <input
+                            type="text"
+                            className="border border-[#008080] px-1 py-0.5 rounded text-[#002C36] bg-white text-xs"
+                            placeholder="Search..."
+                            value={compoundSearches[idx] || ""}
+                            onChange={(e) => {
+                              const search = e.target.value;
+                              setCompoundSearches(prev => {
+                                const copy = [...prev];
+                                copy[idx] = search;
+                                return copy;
+                              });
+                            }}
+                          />
                           <select
                             className="border border-[#008080] px-1 py-0.5 rounded text-[#002C36] bg-white text-xs"
                             value={comp.lotId}
@@ -398,10 +406,10 @@ export default function CreateFormulationModal({ compounds, lots, onClose, onCre
           </button>
         </div>
         <div className="flex justify-end gap-2 mt-6">
-          <button className="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold uppercase tracking-wide text-xs" onClick={onClose}>Cancel</button>
+          {/* <button className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold uppercase tracking-wide text-xs" onClick={onClose}>Cancel</button> */}
           <button
             onClick={handleSubmit}
-            className="px-3 py-1 rounded-md bg-[#008080] text-white font-bold uppercase tracking-wide text-xs hover:bg-[#006666]"
+            className="px-5 py-3 rounded-md bg-[#008080] text-white font-bold uppercase tracking-wide text-md hover:bg-[#006666]"
           >
             Save Formulation
           </button>
