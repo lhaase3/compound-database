@@ -47,108 +47,126 @@ const CompareModal: React.FC<CompareModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full p-8 relative overflow-x-auto max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-2xl font-extrabold text-[#008080] uppercase mb-6 tracking-wide">Compare Compounds</h2>
-        <button
-          className="absolute top-4 right-4 text-2xl text-[#008080] font-bold hover:text-[#00bfae]"
-          onClick={onClose}
-        >
-          &times;
-        </button>
-        <button
-          className="absolute top-4 right-20 bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold px-4 py-2 rounded-md uppercase tracking-wide text-xs"
-          onClick={() => {
-            clearComparison();
-            onClose();
-          }}
-        >
-          Clear
-        </button>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full p-8 relative flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        {/* Fixed header bar for title and buttons */}
+        <div className="sticky top-0 left-0 right-0 z-30 flex items-center justify-between bg-white pb-2" style={{ minHeight: 56 }}>
+          <h2 className="text-2xl font-extrabold text-[#008080] uppercase tracking-wide">Compare Compounds</h2>
+          <div className="flex gap-2">
+            <button
+              className="bg-gray-200 hover:bg-gray-300 text-[#002C36] font-bold px-4 py-2 rounded-md uppercase tracking-wide text-xs"
+              onClick={() => {
+                clearComparison();
+                onClose();
+              }}
+              style={{ position: 'sticky', right: 60, top: 0, zIndex: 40 }}
+            >
+              Clear
+            </button>
+            <button
+              className="text-2xl text-[#008080] font-bold hover:text-[#00bfae] bg-transparent border-none px-2"
+              onClick={onClose}
+              style={{ position: 'sticky', right: 0, top: 0, zIndex: 40 }}
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+        <div className="overflow-x-auto overflow-y-auto flex-1 w-full" style={{ maxHeight: '70vh' }}>
+          <table className="min-w-full border border-[#008080] rounded-lg mb-6">
+            <thead>
+              <tr>
+                <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky left-0 z-20 bg-white w-[120px]">Image</th>
+                <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky left-[120px] z-20 bg-white w-[160px]">ID</th>
+                {visibleFields.map(field => (
+                  <th key={field} className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] bg-white whitespace-nowrap">
+                    {field}
+                  </th>
+                ))}
+                <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-[#008080] bg-white whitespace-nowrap">Attachments</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedForComparison.map(id => {
+                const cmp = compounds.find(c => c.id === id);
+                if (!cmp) return null;
 
-        <table className="min-w-full border border-[#008080] rounded-lg mb-6">
-          <thead>
-            <tr>
-              <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky left-0 z-20 bg-white w-[120px]">Image</th>
-              <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky left-[120px] z-20 bg-white w-[160px]">ID</th>
-              {visibleFields.map(field => (
-                <th key={field} className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] bg-white whitespace-nowrap">
-                  {field}
-                </th>
-              ))}
-              <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-[#008080] bg-white whitespace-nowrap">Attachments</th>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedForComparison.map(id => {
-              const cmp = compounds.find(c => c.id === id);
-              if (!cmp) return null;
+                const atts = cmp.attachments || {};
+                const keysWithData = Object.keys(atts).filter(k => {
+                  const att = atts[k];
+                  if (Array.isArray(att)) {
+                    return att.some(entry => entry && (entry.note || entry.imageUrl));
+                  } else {
+                    return att && (att.note || att.imageUrl);
+                  }
+                });
 
-              const atts = cmp.attachments || {};
-              const keysWithData = Object.keys(atts).filter(k => {
-                const att = atts[k];
-                if (Array.isArray(att)) {
-                  return att.some(entry => entry && (entry.note || entry.imageUrl));
-                } else {
-                  return att && (att.note || att.imageUrl);
-                }
-              });
-
-              return (
-                <tr key={id} className="border-b border-[#008080]">
-                  <td className="p-3 text-center border-r border-[#008080] sticky left-0 bg-white z-10 w-[120px]">
-                    {cmp.imageUrl ? (
-                      <img src={cmp.imageUrl} alt={cmp.id} className="w-20 h-20 object-contain mx-auto border rounded" />
-                    ) : (
-                      <span>N/A</span>
-                    )}
-                  </td>
-                  <td className="p-3 font-bold text-[#002C36] text-center border-r border-[#008080] sticky left-[120px] bg-white z-10 w-[160px]">
-                    {cmp.id}
-                  </td>
-                  {visibleFields.map(field => (
-                    <td key={field} className="p-3 text-[#002C36] text-center border-r border-[#008080] whitespace-nowrap">
-                      {cmp[field] ?? "N/A"}
+                return (
+                  <tr key={id} className="border-b border-[#008080]">
+                    <td className="p-3 text-center border-r border-[#008080] sticky left-0 bg-white z-20 w-[120px]" style={{ background: '#fff', boxShadow: '2px 0 0 #008080' }}>
+                      {cmp.imageUrl ? (
+                        <img src={cmp.imageUrl} alt={cmp.id} className="w-20 h-20 object-contain mx-auto border rounded" />
+                      ) : (
+                        <span>N/A</span>
+                      )}
                     </td>
-                  ))}
-                  <td className="p-3 text-center border-[#008080]">
-                    <div className="flex flex-col gap-2 items-center">
-                      {keysWithData.length === 0 && <span>N/A</span>}
-                      {keysWithData.map((key) => {
-                        const att = atts[key];
-                        if (Array.isArray(att)) {
-                          return att.map((entry, idx) =>
-                            entry && (entry.note || entry.imageUrl) ? (
+                    <td className="p-3 font-bold text-[#002C36] text-center border-r border-[#008080] sticky left-[120px] bg-white z-20 w-[160px]" style={{ background: '#fff', boxShadow: '2px 0 0 #008080' }}>
+                      {cmp.id}
+                    </td>
+                    {visibleFields.map(field => (
+                      <td
+                        key={field}
+                        className={
+                          `p-3 text-[#002C36] text-center border-r border-[#008080]` +
+                          ((field === 'phase map' || field === 'Notes') ? ' whitespace-pre-line break-words max-w-xs' : ' whitespace-nowrap')
+                        }
+                        style={
+                          (field === 'phase map' || field === 'Notes')
+                            ? { whiteSpace: 'pre-line', wordBreak: 'break-word', maxWidth: 320 }
+                            : undefined
+                        }
+                      >
+                        {cmp[field] ?? "N/A"}
+                      </td>
+                    ))}
+                    <td className="p-3 text-center border-[#008080]">
+                      <div className="flex flex-col gap-2 items-center">
+                        {keysWithData.length === 0 && <span>N/A</span>}
+                        {keysWithData.map((key) => {
+                          const att = atts[key];
+                          if (Array.isArray(att)) {
+                            return att.map((entry, idx) =>
+                              entry && (entry.note || entry.imageUrl) ? (
+                                <button
+                                  key={key + "-" + idx}
+                                  className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                  onClick={() => setCompareAttachment({ compoundId: id, key, data: entry })}
+                                  type="button"
+                                >
+                                  {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
+                                </button>
+                              ) : null
+                            );
+                          } else {
+                            return (
                               <button
-                                key={key + "-" + idx}
+                                key={key}
                                 className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
-                                onClick={() => setCompareAttachment({ compoundId: id, key, data: entry })}
+                                onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
                                 type="button"
                               >
-                                {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
+                                {key.replace(/_/g, " ")}
                               </button>
-                            ) : null
-                          );
-                        } else {
-                          return (
-                            <button
-                              key={key}
-                              className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
-                              onClick={() => setCompareAttachment({ compoundId: id, key, data: att })}
-                              type="button"
-                            >
-                              {key.replace(/_/g, " ")}
-                            </button>
-                          );
-                        }
-                      })}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
+                            );
+                          }
+                        })}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
         {/* Attachment Modal */}
         {compareAttachment && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6" onClick={() => setCompareAttachment(null)}>
