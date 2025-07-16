@@ -428,7 +428,7 @@ export default function PlansPage() {
                             {plan.imageUrl ? (
                               <div
                                 className="flex items-center justify-center bg-white rounded mx-auto overflow-hidden border border-gray-200 group relative"
-                                style={{ width: '280px', height: '240px', padding: '8px', boxSizing: 'border-box' }}
+                                style={{ width: '380px', height: '380px', padding: '8px', boxSizing: 'border-box' }}
                                 tabIndex={0}
                                 aria-label={`Structure image for ${plan.name}`}
                               >

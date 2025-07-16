@@ -7,3 +7,4 @@ google-auth==2.21.0
 google-auth-oauthlib==1.0.0
 google-cloud-storage
 gunicorn
+numpy<2.0
