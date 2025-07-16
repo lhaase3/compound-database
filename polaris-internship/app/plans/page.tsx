@@ -390,7 +390,7 @@ export default function PlansPage() {
           </div>
         </div>
       )}
-      <div className="w-full max-w-6xl">
+      <div className="w-full max-w-[1600px]">
         <h2 className="text-2xl font-bold text-[#008080] mb-4">Planned Structures</h2>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="activePlansTable">
@@ -424,11 +424,11 @@ export default function PlansPage() {
                           <td className="px-2 py-2 border-r border-[#008080] text-[#002C36]" style={{ width: '160px', minWidth: '100px', maxWidth: '160px' }}>{plan.name}</td>
                           <td className="px-2 py-2 border-r border-[#008080] text-[#002C36]" style={{ width: '160px', minWidth: '100px', maxWidth: '160px' }}>{plan.owner}</td>
                           {/* update this to increase structure column size */}
-                          <td className="border-r border-[#008080] bg-white" style={{ padding: 0, verticalAlign: 'middle', width: '520px', minWidth: '520px', maxWidth: '520px' }}>
+                          <td className="border-r border-[#008080] bg-white" style={{ padding: 0, verticalAlign: 'middle', width: '700px', minWidth: '700px', maxWidth: '700px' }}>
                             {plan.imageUrl ? (
                               <div
                                 className="flex items-center justify-center bg-white rounded mx-auto overflow-hidden border border-gray-200 group relative"
-                                style={{ width: '500px', height: '500px', padding: '8px', boxSizing: 'border-box' }}
+                                style={{ width: '680px', height: '320px', padding: '8px', boxSizing: 'border-box' }}
                                 tabIndex={0}
                                 aria-label={`Structure image for ${plan.name}`}
                               >
@@ -436,7 +436,7 @@ export default function PlansPage() {
                                   src={plan.imageUrl}
                                   alt={plan.name}
                                   className="object-contain"
-                                  style={{ width: '100%', height: '100%', display: 'block', margin: 0, padding: 0 }}
+                                  style={{ width: '650px', height: '220px', maxHeight: '220px', display: 'block', margin: 0, padding: 0 }}
                                 />
                                 <button
                                   className="absolute bottom-2 right-2 bg-white/90 text-xs text-[#008080] px-3 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity font-bold border border-[#00E6D2] hover:bg-[#00E6D2] hover:text-white focus:opacity-100 focus:outline-none"
