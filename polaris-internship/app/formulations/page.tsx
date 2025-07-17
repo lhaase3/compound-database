@@ -623,7 +623,7 @@ export default function FormulationList() {
                             <img
                               src={comp.imageUrl}
                               alt={comp.compoundName || comp.compoundId}
-                              style={{ maxWidth: '220px', maxHeight: '220px', objectFit: 'contain', background: 'white', borderRadius: '0.375rem', border: '1px solid #e5e7eb', marginBottom: '0.25rem', cursor: 'pointer' }}
+                              style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain', background: 'white', borderRadius: '0.375rem', border: '1px solid #e5e7eb', marginBottom: '0.25rem', cursor: 'pointer' }}
                               onClick={() => setShowFullStructureModal({ imageUrl: comp.imageUrl, smiles: comp.smiles, name: comp.compoundName || comp.compoundId })}
                               onError={e => { e.currentTarget.style.display = 'none'; }}
                             />

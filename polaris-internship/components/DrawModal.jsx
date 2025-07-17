@@ -87,7 +87,7 @@ return (
         onClick={handleFilter}
         className="mt-4 self-end px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
       >
-        Filter
+        Apply
       </button>
     </div>
   </div>
