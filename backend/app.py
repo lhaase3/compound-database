@@ -4,7 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, storage
 from flask_cors import CORS
 from rdkit import Chem
-from rdkit.Chem import Draw
+from rdkit.Chem import Draw, Descriptors
 from rdkit.Chem import AllChem, DataStructs
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
@@ -251,6 +251,8 @@ def add_compound():
         try:
             mol = Chem.MolFromSmiles(smiles)
             if mol:
+                data["MW"] = round(Descriptors.MolWt(mol), 2)  # Optional: round to 2 decimal places
+            if mol:
                 rdDepictor.Compute2DCoords(mol)
 
                 # Use even larger canvas and adjust draw options for bigger molecule and slightly smaller font
@@ -316,6 +318,21 @@ def add_compound():
 
     db.collection("compounds").document(data["id"]).set(data, merge=True)
     return jsonify({"success": True}), 200
+
+
+@app.route("/compute-mw", methods=["POST"])
+def compute_mw():
+    data = request.get_json()
+    smiles = data.get("smiles", "")
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol:
+            mw = round(Descriptors.MolWt(mol), 2)
+            return jsonify({"MW": mw})
+        else:
+            return jsonify({"error": "Invalid SMILES"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
@@ -601,6 +618,9 @@ def upload_image_to_firebase():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+
 
 
 
@@ -838,74 +858,29 @@ def list_plans():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# @app.route("/create-plan", methods=["POST"])
-# def create_plan():
-#     try:
-#         data = request.get_json()
-#         # Ensure completed is always set to False by default
-#         if "completed" not in data:
-#             data["completed"] = False
-#         # Generate and upload structure image if smiles is present and no imageUrl
-#         smiles = data.get("smiles")
-#         if smiles and not data.get("imageUrl"):
-#             try:
-#                 from rdkit import Chem
-#                 from rdkit.Chem import Draw
-#                 import io
-#                 import base64
-#                 mol = Chem.MolFromSmiles(smiles)
-#                 if mol:
-#                     img = Draw.MolToImage(mol, size=(1200, 600), dpi=300, kekulize=True, wedgeBonds=True, bgcolor=(255,255,255))
-#                     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-#                         img.save(tmp.name, dpi=(300, 300))
-#                         tmp.flush()
-#                         bucket = storage.bucket()
-#                         filename = f"plan_images/{data.get('id', 'plan')}.png"
-#                         blob = bucket.blob(filename)
-#                         blob.upload_from_filename(tmp.name, content_type="image/png")
-#                         blob.make_public()
-#                         data["imageUrl"] = blob.public_url
-#                     os.unlink(tmp.name)
-#             except Exception as e:
-#                 print(f"Failed to generate/upload image for plan {data.get('id')}: {e}")
-#         # Use the provided id as the Firestore document ID
-#         plan_id = data.get("id")
-#         if not plan_id:
-#             plan_ref = db.collection("plans").document()  # fallback to auto-id if not provided
-#         else:
-#             plan_ref = db.collection("plans").document(str(plan_id))
-#         data["createdAt"] = firestore.SERVER_TIMESTAMP
-#         plan_ref.set(data)
-#         return jsonify({"success": True}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-
 @app.route("/create-plan", methods=["POST"])
 def create_plan():
     try:
         data = request.get_json()
-
+        # Ensure completed is always set to False by default
         if "completed" not in data:
             data["completed"] = False
-
+        # Generate and upload structure image if smiles is present and no imageUrl
         smiles = data.get("smiles")
         if smiles and not data.get("imageUrl"):
             try:
-                from rdkit import Chem
-                from rdkit.Chem import rdDepictor, rdMolDraw2D
-                import tempfile
-                import os
-
                 mol = Chem.MolFromSmiles(smiles)
+                if mol:
+                    data["MW"] = round(Descriptors.MolWt(mol), 2)
                 if mol:
                     rdDepictor.Compute2DCoords(mol)
 
-                    width, height = 2400, 1200
+                    # Use even larger canvas and adjust draw options for bigger molecule and slightly smaller font
+                    width, height = 2400, 1200  # Keep large canvas
                     drawer = rdMolDraw2D.MolDraw2DCairo(width, height)
                     options = drawer.drawOptions()
-
                     num_atoms = mol.GetNumAtoms()
+                    # Dynamically set both minFontSize and maxFontSize for atom labels
                     if num_atoms <= 20:
                         options.minFontSize = 120
                         options.maxFontSize = 120
@@ -915,14 +890,14 @@ def create_plan():
                     else:
                         options.minFontSize = 58
                         options.maxFontSize = 58
-
                     options.bondLineWidth = 4
-                    options.padding = 0.01
-                    options.fixedScale = True
+                    options.padding = 0.01    # Minimal padding to fill image
+                    options.fixedScale = True # Force molecule to fill canvas
+
+                    # options.useBWAtomPalette()
 
                     drawer.DrawMolecule(mol)
                     drawer.FinishDrawing()
-
                     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                         drawer.WriteDrawingText(tmp.name)
                         tmp.flush()
@@ -933,43 +908,18 @@ def create_plan():
                         blob.upload_from_filename(tmp.name, content_type="image/png")
                         blob.make_public()
                         data["imageUrl"] = blob.public_url
-
                     os.unlink(tmp.name)
-
-                    # Optional B/W version for printing
-                    drawer_bw = rdMolDraw2D.MolDraw2DCairo(width, height)
-                    options_bw = drawer_bw.drawOptions()
-                    options_bw.minFontSize = options.minFontSize
-                    options_bw.maxFontSize = options.maxFontSize
-                    options_bw.bondLineWidth = options.bondLineWidth
-                    options_bw.padding = options.padding
-                    options_bw.fixedScale = options.fixedScale
-                    options_bw.useBWAtomPalette()
-
-                    drawer_bw.DrawMolecule(mol)
-                    drawer_bw.FinishDrawing()
-
-                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_bw:
-                        drawer_bw.WriteDrawingText(tmp_bw.name)
-                        tmp_bw.flush()
-
-                        filename_bw = f"plan_images/{data.get('id', 'plan')}_bw.png"
-                        blob_bw = bucket.blob(filename_bw)
-                        blob_bw.upload_from_filename(tmp_bw.name, content_type="image/png")
-                        blob_bw.make_public()
-                        data["bwImageUrl"] = blob_bw.public_url
-
-                    os.unlink(tmp_bw.name)
-
             except Exception as e:
                 print(f"Failed to generate/upload image for plan {data.get('id')}: {e}")
-
+        # Use the provided id as the Firestore document ID
         plan_id = data.get("id")
-        plan_ref = db.collection("plans").document(str(plan_id)) if plan_id else db.collection("plans").document()
+        if not plan_id:
+            plan_ref = db.collection("plans").document()  # fallback to auto-id if not provided
+        else:
+            plan_ref = db.collection("plans").document(str(plan_id))
         data["createdAt"] = firestore.SERVER_TIMESTAMP
         plan_ref.set(data)
         return jsonify({"success": True}), 200
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1013,3 +963,47 @@ if __name__ == '__main__':
 #   This code is the property of Polaris Electro Optics and may not be reused, modified, or distributed without explicit permission.
 
 
+
+
+
+# @app.route("/create-plan", methods=["POST"])
+# def create_plan():
+#     try:
+#         data = request.get_json()
+#         # Ensure completed is always set to False by default
+#         if "completed" not in data:
+#             data["completed"] = False
+#         # Generate and upload structure image if smiles is present and no imageUrl
+#         smiles = data.get("smiles")
+#         if smiles and not data.get("imageUrl"):
+#             try:
+#                 from rdkit import Chem
+#                 from rdkit.Chem import Draw
+#                 import io
+#                 import base64
+#                 mol = Chem.MolFromSmiles(smiles)
+#                 if mol:
+#                     img = Draw.MolToImage(mol, size=(1200, 600), dpi=300, kekulize=True, wedgeBonds=True, bgcolor=(255,255,255))
+#                     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+#                         img.save(tmp.name, dpi=(300, 300))
+#                         tmp.flush()
+#                         bucket = storage.bucket()
+#                         filename = f"plan_images/{data.get('id', 'plan')}.png"
+#                         blob = bucket.blob(filename)
+#                         blob.upload_from_filename(tmp.name, content_type="image/png")
+#                         blob.make_public()
+#                         data["imageUrl"] = blob.public_url
+#                     os.unlink(tmp.name)
+#             except Exception as e:
+#                 print(f"Failed to generate/upload image for plan {data.get('id')}: {e}")
+#         # Use the provided id as the Firestore document ID
+#         plan_id = data.get("id")
+#         if not plan_id:
+#             plan_ref = db.collection("plans").document()  # fallback to auto-id if not provided
+#         else:
+#             plan_ref = db.collection("plans").document(str(plan_id))
+#         data["createdAt"] = firestore.SERVER_TIMESTAMP
+#         plan_ref.set(data)
+#         return jsonify({"success": True}), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
