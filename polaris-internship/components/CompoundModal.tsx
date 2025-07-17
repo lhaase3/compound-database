@@ -485,85 +485,44 @@ export default function CompoundModal({
   // Print handler
   const printRef = useRef<HTMLDivElement>(null);
   const handlePrint = () => {
-    const printContents = document.getElementById('printable-area')?.innerHTML;
-    if (!printContents) return;
-    // Open a small print window sized for 200x100px
-    const printWindow = window.open('', 'compound-print', 'width=220,height=140');
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print Compound</title>
-          <style>
-            @media print {
-              @page {
-                margin: 0;
-                size: 200px 100px;
-              }
-              html, body {
-                margin: 0;
-                padding: 0;
-                width: 200px;
-                height: 100px;
-                font-family: Arial, sans-serif;
-                background: white;
-                color: black;
-                overflow: hidden;
-              }
-              #print-structure-img {
-                width: 120px !important;
-                height: 60px !important;
-                display: block;
-                margin: 0 auto 2px auto;
-                object-fit: contain;
-              }
-              #print-compound-id {
-                font-size: 12px;
-                font-weight: 600;
-                margin: 0;
-                text-align: center;
-                line-height: 1.1;
-                word-break: break-all;
-              }
+  const printContents = document.getElementById('printable-area')?.innerHTML;
+
+  if (!printContents) return;
+
+  const printWindow = window.open('', 'compound-print', 'width=800,height=900');
+  if (!printWindow) return;
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Compound</title>
+        <style>
+          @media print {
+            @page {
+              margin: 0;
             }
             html, body {
-              width: 200px;
-              height: 100px;
               margin: 0;
               padding: 0;
-              overflow: hidden;
+              font-family: Arial, sans-serif;
+              background: white;
+              color: black;
             }
-            #print-structure-img {
-              width: 120px !important;
-              height: 60px !important;
-              display: block;
-              margin: 0 auto 2px auto;
-              object-fit: contain;
+            img {
+              filter: grayscale(100%) !important;
             }
-            #print-compound-id {
-              font-size: 12px;
-              font-weight: 600;
-              margin: 0;
-              text-align: center;
-              line-height: 1.1;
-              word-break: break-all;
-            }
-          </style>
-        </head>
-        <body onload="window.print(); window.close();">
-          <div style="width:200px;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="width:100%;height:60px;display:flex;align-items:center;justify-content:center;">
-              <img id="print-structure-img" src="${compound.imageUrl || ''}" alt="structure" />
-            </div>
-            <div id="print-compound-id">${compound.name || compound.id}</div>
-          </div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-};
+          }
+        </style>
+      </head>
+      <body onload="window.print(); window.close();">
+        ${printContents}
+      </body>
+    </html>
+  `);
 
+  printWindow.document.close();
+  printWindow.focus();
+};
 
   return (
     <div
@@ -755,12 +714,15 @@ export default function CompoundModal({
           id="printable-area"
           style={{
             display: 'none',
+            width: '200px',
+            height: '100px',
             textAlign: 'center',
-            fontSize: '14px',
+            fontSize: '10px',
             color: '#000',
             padding: 0,
             margin: 0,
-            lineHeight: 1.2,       // tighter spacing
+            lineHeight: 1.1,
+            overflow: 'hidden'
           }}
         >
           {compound.bwImageUrl && typeof compound.bwImageUrl === 'string' && compound.bwImageUrl.trim() !== '' && (
@@ -768,29 +730,28 @@ export default function CompoundModal({
               src={compound.bwImageUrl}
               alt={compound.name || compound.id}
               style={{
-                width: '60%',
-                maxWidth: '500px',
-                margin: '0 auto',
-                height: 'auto',
+                width: '100%',
+                maxHeight: '65px', // ensure room for ID text below
+                objectFit: 'contain',
                 display: 'block',
-                paddingTop: '15px',    // tighter gap
-                paddingBottom: '0px',    // tighter gap
+                margin: '0 auto',
+                padding: 0,
               }}
             />
-            )}
-            <div
-              style={{
-                fontSize: '2.4rem',
-                fontWeight: '600',
-                letterSpacing: '0.05em',
-                marginTop: '0px',         // no extra gap
-                textAlign: 'center',
-              }}
-            >
-              {compound.id}
-            </div>
+          )}
+          <div
+            style={{
+              fontSize: '0.75rem', // smaller ID text
+              fontWeight: '600',
+              marginTop: '2px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            {compound.id}
+          </div>
         </div>
-        
 
         {/* Section Divider */}
         <div className="w-full flex items-center mb-6">

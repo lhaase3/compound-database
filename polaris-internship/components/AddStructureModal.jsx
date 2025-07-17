@@ -6,6 +6,33 @@ import AttachmentModal from "./AttachmentModal";
 export default function AddStructureModal({ onClose, onSubmit }) {
   const jsmeInitialized = useRef(false);
   const [formData, setFormData] = useState({});
+
+  useEffect(() => {
+  const computeMW = async (smiles) => {
+      if (!smiles) return;
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compute-mw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ smiles }),
+        });
+        const data = await res.json();
+        if (data.MW) {
+          setFormData((prev) => ({ ...prev, MW: data.MW }));
+        }
+      } catch (err) {
+        console.error("MW calculation failed:", err);
+      }
+    };
+
+    const drawnSMILES = window.jsmeAppletInstance?.smiles?.();
+    const currentSMILES = formData.smiles || drawnSMILES;
+
+    if (currentSMILES) {
+      computeMW(currentSMILES);
+    }
+  }, [formData.smiles]);
+
   const [showAddTextField, setShowAddTextField] = useState(false);
   const [newTextFieldName, setNewTextFieldName] = useState("");
   const [newTextFieldValue, setNewTextFieldValue] = useState("");
@@ -33,6 +60,7 @@ export default function AddStructureModal({ onClose, onSubmit }) {
     "Lab book #",
     "Max loading (%)"
   ];
+
 
     useEffect(() => {
     const container = document.getElementById("jsme_container");
