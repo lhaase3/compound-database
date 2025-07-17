@@ -34,6 +34,29 @@ export default function PlansPage() {
   const [plans, setPlans] = useState<PlannedStructure[]>([]);
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [draft, setDraft] = useState<Partial<PlannedStructure>>({ priority: 1 });
+  useEffect(() => {
+  const calculateMW = async () => {
+      const smiles = draft.smiles?.trim();
+      if (!smiles) return;
+
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compute-mw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ smiles }),
+        });
+        const data = await res.json();
+        if (data.MW) {
+          setDraft((prev) => ({ ...prev, mw: data.MW }));
+        }
+      } catch (err) {
+        console.error("MW calculation failed:", err);
+      }
+    };
+
+    calculateMW();
+  }, [draft.smiles]);
+
   const [showCreatePlan, setShowCreatePlan] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlannedStructure | null>(null);
   const [showFullStructureModal, setShowFullStructureModal] = useState<{ imageUrl: string; name: string } | null>(null);
@@ -549,19 +572,34 @@ export default function PlansPage() {
         <PlanCard plan={selectedPlan} onClose={() => setSelectedPlan(null)} />
       )}
       {showDrawModal && (
-        <DrawModal
-          onClose={() => setShowDrawModal(false)}
-          onSmilesSubmit={async (smiles: string) => {
-            let imageUrl = undefined;
-            if (smiles) {
-              // Generate a temporary plan id for image upload
-              const tempPlanId = draft.id || Date.now().toString();
-              // imageUrl = await uploadStructureImage(smiles, tempPlanId);
-            }
-            setDraft(d => ({ ...d, smiles, imageUrl }));
-            setShowDrawModal(false);
-          }}
-        />
+      <DrawModal
+        onClose={() => setShowDrawModal(false)}
+        onSmilesSubmit={async (smiles: string) => {
+          if (!smiles) return;
+
+          const tempPlanId = draft.id || Date.now().toString();
+          let imageUrl = undefined;
+
+          // Optional: upload image if needed
+          // imageUrl = await uploadStructureImage(smiles, tempPlanId);
+
+          let mw = undefined;
+          try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compute-mw`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ smiles }),
+            });
+            const data = await res.json();
+            if (data.MW) mw = data.MW;
+          } catch (err) {
+            console.error("Failed to calculate MW", err);
+          }
+
+          setDraft(d => ({ ...d, smiles, imageUrl, mw }));
+          setShowDrawModal(false);
+        }}
+      />
       )}
       {showFullStructureModal && (
         <div className="fixed inset-0 bg-black/70 z-50 flex justify-center items-center" onClick={() => setShowFullStructureModal(null)}>

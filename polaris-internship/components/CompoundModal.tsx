@@ -727,8 +727,8 @@ export default function CompoundModal({
               src={compound.bwImageUrl}
               alt={compound.name || compound.id}
               style={{
-                width: '60%',
-                maxWidth: '500px',
+                width: '100px',
+                maxWidth: '100px',
                 margin: '0 auto',
                 height: 'auto',
                 display: 'block',
@@ -739,7 +739,7 @@ export default function CompoundModal({
             )}
             <div
               style={{
-                fontSize: '2.4rem',
+                fontSize: '1rem',
                 fontWeight: '600',
                 letterSpacing: '0.05em',
                 marginTop: '0px',         // no extra gap
@@ -749,7 +749,6 @@ export default function CompoundModal({
               {compound.id}
             </div>
         </div>
-
 
         {/* Section Divider */}
         <div className="w-full flex items-center mb-6">
