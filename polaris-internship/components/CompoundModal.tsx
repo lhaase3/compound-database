@@ -714,12 +714,15 @@ export default function CompoundModal({
           id="printable-area"
           style={{
             display: 'none',
+            width: '200px',
+            height: '100px',
             textAlign: 'center',
-            fontSize: '14px',
+            fontSize: '10px',
             color: '#000',
             padding: 0,
             margin: 0,
-            lineHeight: 1.2,       // tighter spacing
+            lineHeight: 1.1,
+            overflow: 'hidden'
           }}
         >
           {compound.bwImageUrl && typeof compound.bwImageUrl === 'string' && compound.bwImageUrl.trim() !== '' && (
@@ -727,29 +730,28 @@ export default function CompoundModal({
               src={compound.bwImageUrl}
               alt={compound.name || compound.id}
               style={{
-                width: '60%',
-                maxWidth: '500px',
-                margin: '0 auto',
-                height: 'auto',
+                width: '100%',
+                maxHeight: '65px', // ensure room for ID text below
+                objectFit: 'contain',
                 display: 'block',
-                paddingTop: '15px',    // tighter gap
-                paddingBottom: '0px',    // tighter gap
+                margin: '0 auto',
+                padding: 0,
               }}
             />
-            )}
-            <div
-              style={{
-                fontSize: '2.4rem',
-                fontWeight: '600',
-                letterSpacing: '0.05em',
-                marginTop: '0px',         // no extra gap
-                textAlign: 'center',
-              }}
-            >
-              {compound.id}
-            </div>
+          )}
+          <div
+            style={{
+              fontSize: '0.75rem', // smaller ID text
+              fontWeight: '600',
+              marginTop: '2px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            {compound.id}
+          </div>
         </div>
-        
 
         {/* Section Divider */}
         <div className="w-full flex items-center mb-6">
