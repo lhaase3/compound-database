@@ -727,8 +727,8 @@ export default function CompoundModal({
               src={compound.bwImageUrl}
               alt={compound.name || compound.id}
               style={{
-                width: '100px',
-                maxWidth: '100px',
+                width: '200px',
+                maxWidth: '200px',
                 margin: '0 auto',
                 height: 'auto',
                 display: 'block',

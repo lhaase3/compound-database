@@ -75,6 +75,29 @@ export default function AddStructureModal({ onClose, onSubmit }) {
             { options: "oldlook,star" }
         );
         jsmeInitialized.current = true;
+
+        window.jsmeAppletInstance.setCallBack("AfterStructureModified", async () => {
+          const newSmiles = window.jsmeAppletInstance.smiles();
+          if (newSmiles) {
+            // update SMILES immediately
+            setFormData(prev => ({ ...prev, smiles: newSmiles }));
+
+            // fetch MW from backend
+            try {
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compute-mw`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ smiles: newSmiles }),
+              });
+              const data = await res.json();
+              if (data.MW) {
+                setFormData(prev => ({ ...prev, MW: data.MW }));
+              }
+            } catch (err) {
+              console.error("MW auto-calc failed from JSME:", err);
+            }
+          }
+        });
         } else {
         setTimeout(init, 100);
         }
