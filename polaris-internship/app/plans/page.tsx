@@ -343,10 +343,10 @@ export default function PlansPage() {
           <span role="img" aria-label="add">➕</span> Create Plan
         </button>
       </div>
-      <div className="w-full max-w-6xl flex items-center mb-6">
-        <hr className="flex-grow border-t border-[#00E6D2]/40" />
-        <span className="mx-4 text-lg text-[#00E6D2] font-bold uppercase tracking-wide">Plans</span>
-        <hr className="flex-grow border-t border-[#00E6D2]/40" />
+      <div className="w-full max-w-[1600px] flex items-center mb-6">
+        <hr className="flex-grow border-t-2 border-[#00E6D2]/40" />
+        <span className="mx-4 text-2xl text-[#00E6D2] font-bold uppercase tracking-wide whitespace-nowrap">Plans</span>
+        <hr className="flex-grow border-t-2 border-[#00E6D2]/40" />
       </div>
       {showCreatePlan && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCreatePlan(false)}>
@@ -521,11 +521,11 @@ export default function PlansPage() {
                     <td className="px-2 py-2 border-r border-[#008080] relative text-[#002C36]">
                       {plan.owner}
                     </td>
-                    <td className="border-r border-[#008080] bg-white" style={{ padding: 0, verticalAlign: 'middle', width: '280px', minWidth: '240px', maxWidth: '320px' }}>
+                    <td className="border-r border-[#008080] bg-white" style={{ padding: 0, verticalAlign: 'middle', width: '700px', minWidth: '700px', maxWidth: '700px' }}>
                       {plan.imageUrl ? (
                         <div
                           className="flex items-center justify-center bg-white rounded mx-auto overflow-hidden border border-gray-200 group relative"
-                          style={{ width: '280px', height: '240px', padding: '8px', boxSizing: 'border-box' }}
+                          style={{ width: '680px', height: '320px', padding: '8px', boxSizing: 'border-box' }}
                           tabIndex={0}
                           aria-label={`Structure image for ${plan.name}`}
                         >
@@ -533,7 +533,7 @@ export default function PlansPage() {
                             src={plan.imageUrl}
                             alt={plan.name}
                             className="object-contain"
-                            style={{ width: '100%', height: '100%', display: 'block', margin: 0, padding: 0 }}
+                            style={{ width: '650px', height: '220px', maxHeight: '220px', display: 'block', margin: 0, padding: 0 }}
                           />
                           <button
                             className="absolute bottom-2 right-2 bg-white/90 text-xs text-[#008080] px-3 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity font-bold border border-[#00E6D2] hover:bg-[#00E6D2] hover:text-white focus:opacity-100 focus:outline-none"
@@ -558,7 +558,7 @@ export default function PlansPage() {
                           <circle cx="9" cy="9" r="8" stroke="#008080" strokeWidth="2" fill="#00E6D2" />
                           <path d="M5 9.5L8 12.5L13 7.5" stroke="#008080" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        Completed
+                        Completed Structures
                       </span>
                     </td>
                   </tr>
