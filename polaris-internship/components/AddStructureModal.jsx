@@ -75,6 +75,29 @@ export default function AddStructureModal({ onClose, onSubmit }) {
             { options: "oldlook,star" }
         );
         jsmeInitialized.current = true;
+
+        window.jsmeAppletInstance.setCallBack("AfterStructureModified", async () => {
+          const newSmiles = window.jsmeAppletInstance.smiles();
+          if (newSmiles) {
+            // update SMILES immediately
+            setFormData(prev => ({ ...prev, smiles: newSmiles }));
+
+            // fetch MW from backend
+            try {
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compute-mw`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ smiles: newSmiles }),
+              });
+              const data = await res.json();
+              if (data.MW) {
+                setFormData(prev => ({ ...prev, MW: data.MW }));
+              }
+            } catch (err) {
+              console.error("MW auto-calc failed from JSME:", err);
+            }
+          }
+        });
         } else {
         setTimeout(init, 100);
         }
@@ -143,9 +166,29 @@ export default function AddStructureModal({ onClose, onSubmit }) {
     const drawnSMILES = window.jsmeAppletInstance?.smiles?.() || "";
     const smiles = formData.smiles?.trim() || drawnSMILES;
     // Include all fields in fields array and all customFields, even if empty
+    let mw = formData.MW;
+
+    // Try to compute MW from SMILES before saving
+    if (smiles && !mw) {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compute-mw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ smiles }),
+        });
+        const result = await res.json();
+        if (result.MW) {
+          mw = result.MW;
+        }
+      } catch (err) {
+        console.error("MW calculation failed in handleSave", err);
+      }
+    }
+
     const data = {
       ...formData,
       smiles,
+      MW: mw,
       attachments,
       createdAt: new Date().toISOString(),
     };
