@@ -19,27 +19,8 @@ import datetime
 from collections import Counter
 import tempfile
 import sys
-
-# app = Flask(__name__)
-# # CORS(app, origins="*", allow_headers="*", supports_credentials=True, methods=["GET", "POST", "OPTIONS", "DELETE"])
-# CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})  # Match frontend port
-
-# # Initialize Firebase Admin SDK
-# firebase_key_json = os.environ["FIREBASE_KEY"]
-
-# # Write it to a temporary file
-# with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_key_file:
-#     temp_key_file.write(firebase_key_json)
-#     firebase_key_path = temp_key_file.name
-
-# # Initialize Firebase
-# cred = credentials.Certificate(firebase_key_path)
-# firebase_admin.initialize_app(cred, {
-#     'storageBucket': 'polaris-test-3b8f8.firebasestorage.app'
-# })
-# db = firestore.client()
-
-
+from rdkit.Chem import rdDepictor
+from rdkit.Chem.Draw import rdMolDraw2D
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -78,7 +59,9 @@ FN_FNG_EQUIV = {('FN', 'FNG'), ('FNG', 'FN')}
 
 def canonicalize_transition(transition: str) -> str:
     """
-    Only treat 'FN - FNG' and 'FNG - FN' as the same. All other transitions keep their order.
+    HELPER FUNCTION: Standardizes phase transition names
+    Takes a phase transition like "FN - FNG" and makes sure it's written consistently
+    This helps avoid duplicates when searching for similar compounds
     """
     parts = [p.strip().upper() for p in transition.split('-')]
     if len(parts) == 2:
@@ -89,6 +72,11 @@ def canonicalize_transition(transition: str) -> str:
     return transition.strip().upper()
 
 def extract_transitions_with_temps(phase_map_str: str):
+    """
+    HELPER FUNCTION: Extracts phase transitions and temperatures from text
+    Takes a string like "CR-120-N;N-140-I" and converts it to a list
+    of standardized transitions with temperatures
+    """
     if not isinstance(phase_map_str, str):
         return []
 
@@ -132,6 +120,11 @@ def extract_transitions_with_temps(phase_map_str: str):
 
 @app.route('/compounds')
 def get_compounds():
+    """
+    API ENDPOINT: Get all compounds from the database
+    Returns a list of all compounds stored in Firestore
+    Used by the frontend to display the compounds table
+    """
     compounds_ref = db.collection('compounds')
     docs = compounds_ref.stream()
     compounds = [doc.to_dict() for doc in docs]
@@ -140,6 +133,11 @@ def get_compounds():
 
 @app.route("/compounds/<compound_id>")
 def get_single_compound(compound_id):
+    """
+    API ENDPOINT: Get details for one specific compound
+    Takes a compound ID and returns all the data for that compound
+    Used when viewing compound details or editing a compound
+    """
     try:
         doc = db.collection("compounds").document(compound_id).get()
         if not doc.exists:
@@ -151,6 +149,11 @@ def get_single_compound(compound_id):
 
 @app.route("/search-substructure", methods=["POST"])
 def search_substructure():
+    """
+    API ENDPOINT: Find compounds that contain a specific molecular structure
+    Takes a SMILES string (chemical structure code) and finds all compounds
+    that contain that structure as a part of their molecule
+    """
     data = request.get_json()
     print("Received JSON:", data)
     query_smiles = data.get("query")
@@ -181,6 +184,11 @@ def search_substructure():
     
 @app.route("/search-substructure-formulations", methods=["POST"])
 def search_substructure_formulations():
+    """
+    API ENDPOINT: Find formulations that contain compounds with a specific structure
+    First finds compounds with the given structure, then finds all formulations
+    that use those compounds as ingredients
+    """
     data = request.get_json()
     query_smiles = data.get("query")
 
@@ -221,13 +229,14 @@ def search_substructure_formulations():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    
-
-from rdkit.Chem import rdDepictor
-from rdkit.Chem.Draw import rdMolDraw2D
 
 @app.route("/add-compound", methods=["POST", "OPTIONS"])
 def add_compound():
+    """
+    API ENDPOINT: Add a new compound to the database
+    Takes compound data from the frontend, generates molecular images,
+    calculates molecular weight, and saves everything to Firestore
+    """
     print("🧪 Received method:", request.method)
     if request.method == "OPTIONS":
         return '', 200
@@ -322,6 +331,11 @@ def add_compound():
 
 @app.route("/compute-mw", methods=["POST"])
 def compute_mw():
+    """
+    API ENDPOINT: Calculate molecular weight from SMILES
+    Takes a SMILES string (chemical structure code) and returns
+    the calculated molecular weight of that compound
+    """
     data = request.get_json()
     smiles = data.get("smiles", "")
     try:
@@ -335,9 +349,13 @@ def compute_mw():
         return jsonify({"error": str(e)}), 500
 
 
-
 @app.route("/update-compound", methods=["POST"])
 def update_compound():
+    """
+    API ENDPOINT: Update an existing compound's information
+    Takes compound data with changes and saves the updated
+    information back to the database
+    """
     data = request.get_json()
     if "id" not in data:
         return jsonify({"error": "Compound must have an 'id' field"}), 400
@@ -349,16 +367,28 @@ def update_compound():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+
 @app.route("/delete-compound/<string:compound_id>", methods=["DELETE"])
 def delete_compound(compound_id):
+    """
+    API ENDPOINT: Delete a compound from the database
+    Permanently removes a compound and all its data from Firestore
+    Used when a compound is no longer needed
+    """
     try:
         db.collection("compounds").document(compound_id).delete()
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+
 @app.route("/similar-compounds", methods=["POST"])
 def similar_compounds():
+    """
+    API ENDPOINT: Find compounds with similar molecular structures
+    Uses chemical fingerprinting to calculate similarity scores
+    and returns compounds that are structurally similar to the input
+    """
     data = request.get_json()
     smiles = data.get("smiles")
     threshold = float(data.get("threshold", 0.7))  # Default threshold for similarity
@@ -387,8 +417,14 @@ def similar_compounds():
     similar.sort(key=lambda x: x["similarity"], reverse=True)
     return jsonify(similar)
     
+
 @app.route("/filter-phase-map", methods=["POST"])
 def filter_phase_map():
+    """
+    API ENDPOINT: Filter compounds by phase transitions and temperatures
+    Searches for compounds that have specific phase transitions
+    (like crystal to liquid) at specific temperatures
+    """
     data = request.get_json()
     selected_transition = data.get("transition")
     target_temp = data.get("temperature")
@@ -410,6 +446,11 @@ def filter_phase_map():
 
 
 def normalize_transitions(phase_map_str):
+    """
+    HELPER FUNCTION: Clean up and standardize phase transition text
+    Takes raw phase map text and converts it to a standard format
+    for easier searching and comparison
+    """
     if not isinstance(phase_map_str, str):
         return []
     
@@ -427,6 +468,11 @@ def normalize_transitions(phase_map_str):
 
 
 def check_temp_near(transition_list, transition, input_temp_str, default_tolerance=10):
+    """
+    HELPER FUNCTION: Check if a compound has a transition near a target temperature
+    Looks through a compound's phase transitions to see if any match
+    the requested transition type and temperature range
+    """
     try:
         input_temp_str = str(input_temp_str).strip()
         if "-" in input_temp_str and not input_temp_str.endswith("-"):
@@ -457,8 +503,14 @@ def check_temp_near(transition_list, transition, input_temp_str, default_toleran
                     continue
     return False
 
+
 @app.route("/lots", methods=["GET"])
 def list_lots():
+    """
+    API ENDPOINT: Get list of all lot names
+    Returns just the names of all lots in the database
+    Used to populate dropdown menus and lot selection lists
+    """
     lots_ref = db.collection("lots")
     docs = lots_ref.stream()
     lots = [doc.id for doc in docs]
@@ -467,6 +519,11 @@ def list_lots():
 
 @app.route("/lot/<lot_id>", methods=["GET"])
 def get_lot_compounds(lot_id):
+    """
+    API ENDPOINT: Get all compounds in a specific lot
+    Takes a lot name and returns all the compound samples
+    that belong to that manufacturing lot
+    """
     lot_ref = db.collection("lots").document(lot_id).collection("compounds")
     docs = lot_ref.stream()
     compounds = [doc.to_dict() for doc in docs]
@@ -475,6 +532,11 @@ def get_lot_compounds(lot_id):
 
 @app.route("/create-lot", methods=["POST"])
 def create_lot():
+    """
+    API ENDPOINT: Create a new manufacturing lot
+    Takes a compound and creates a new lot for testing samples
+    Copies the compound data but clears testing-specific fields
+    """
     data = request.get_json()
     compound_ids = data.get("compoundIds")
     lot_name = data.get("lotName")
@@ -522,9 +584,13 @@ def create_lot():
     return jsonify({"success": True, "lotName": lot_name, "newCompoundId": new_id}), 200
 
 
-
 @app.route("/lots-for-compound/<compound_id>")
 def lots_for_compound(compound_id):
+    """
+    API ENDPOINT: Find all lots that contain a specific compound
+    Takes a compound ID and returns all the manufacturing lots
+    that were made from that base compound
+    """
     compound_id = compound_id.lower()  # normalize
     matched_lots = []
     for doc in db.collection("lots").stream():
@@ -534,11 +600,13 @@ def lots_for_compound(compound_id):
     return jsonify(matched_lots)
 
 
-
-
-
 @app.route("/update-lot-compound", methods=["POST"])
 def update_lot_compound():
+    """
+    API ENDPOINT: Update test results for a compound in a lot
+    Saves new testing data (like phase maps, optical properties)
+    for a specific compound sample in a manufacturing lot
+    """
     data = request.get_json()
     lot_id = data.get("lotId")
     compound_id = data.get("id")
@@ -552,8 +620,14 @@ def update_lot_compound():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/delete-lot-compound/<lot_id>/<compound_id>", methods=["DELETE"])
 def delete_lot_compound(lot_id, compound_id):
+    """
+    API ENDPOINT: Remove a compound sample from a lot
+    Deletes a specific compound from a manufacturing lot
+    If it's the last compound in the lot, deletes the entire lot
+    """
     try:
         # Delete the compound from the lot
         compound_ref = db.collection("lots").document(lot_id).collection("compounds").document(compound_id)
@@ -570,8 +644,14 @@ def delete_lot_compound(lot_id, compound_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+
 @app.route("/batch-lots-for-compounds", methods=["POST"])
 def batch_lots_for_compounds():
+    """
+    API ENDPOINT: Get lot information for multiple compounds at once
+    Takes a list of compound IDs and returns which lots contain
+    each compound - more efficient than making individual requests
+    """
     data = request.get_json() or {}
     compound_ids = data.get("compound_ids")
 
@@ -590,11 +670,13 @@ def batch_lots_for_compounds():
     return jsonify(lot_map)
 
 
-
-
-
 @app.route("/upload-image-to-firebase", methods=["POST"])
 def upload_image_to_firebase():
+    """
+    API ENDPOINT: Upload images to cloud storage
+    Takes image files (photos, spectra, etc.) and stores them
+    in Firebase Storage, returning a public URL for the image
+    """
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -620,13 +702,13 @@ def upload_image_to_firebase():
         return jsonify({"error": str(e)}), 500
     
 
-
-
-
-
-
 @app.route("/create-formulation", methods=["POST"])
 def create_formulation():
+    """
+    API ENDPOINT: Create a new formulation recipe
+    Takes a list of compounds with percentages and creates
+    a formulation recipe that can be used for manufacturing
+    """
     try:
         data = request.get_json()
 
@@ -646,6 +728,11 @@ def create_formulation():
 
 @app.route("/formulations", methods=["GET"])
 def list_formulations():
+    """
+    API ENDPOINT: Get all formulation recipes
+    Returns a list of all formulations stored in the database
+    Used to display the formulations table on the frontend
+    """
     try:
         docs = db.collection("formulations").stream()
         formulations = [{ "id": doc.id, **doc.to_dict() } for doc in docs]
@@ -656,14 +743,25 @@ def list_formulations():
 
 @app.route("/delete-formulation/<formulation_id>", methods=["DELETE"])
 def delete_formulation(formulation_id):
+    """
+    API ENDPOINT: Delete a formulation recipe
+    Permanently removes a formulation and all its data from the database
+    Used when a formulation is no longer needed
+    """
     try:
         db.collection("formulations").document(formulation_id).delete()
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+
 @app.route("/update-formulation/<formulation_id>", methods=["POST"])
 def update_formulation(formulation_id):
+    """
+    API ENDPOINT: Update an existing formulation recipe
+    Takes formulation data with changes and saves the updated
+    recipe information back to the database
+    """
     try:
         data = request.get_json()
         db.collection("formulations").document(formulation_id).update(data)
@@ -675,6 +773,11 @@ def update_formulation(formulation_id):
 # Dashboard logic
 @app.route('/compound-analytics', methods=['GET'])
 def compound_analytics():
+    """
+    API ENDPOINT: Generate analytics dashboard data
+    Calculates statistics about compounds (total count, average molecular weight,
+    creation timeline) for displaying charts and graphs on the dashboard
+    """
     try:
         compounds_ref = db.collection('compounds')
         docs = compounds_ref.stream()
@@ -734,54 +837,15 @@ def compound_analytics():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/increment-compound-view/<compound_id>', methods=['POST'])
-def increment_compound_view(compound_id):
-    try:
-        compound_ref = db.collection('compounds').document(compound_id)
-        compound_ref.update({"views": firestore.Increment(1)})
-        return jsonify({"message": "View count incremented"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
-@app.route('/compound-similarity-matrix', methods=['GET'])
-def compound_similarity_matrix():
-    try:
-        compounds_ref = db.collection('compounds')
-        docs = compounds_ref.stream()
-        compounds = [doc.to_dict() for doc in docs]
-
-        if not compounds:
-            return jsonify({"error": "No compounds found"}), 404
-
-        matrix = []
-        smiles_list = [c.get("smiles", "") for c in compounds]
-        ids = [c.get("id", "Unknown") for c in compounds]
-
-        fps = []
-        for smi in smiles_list:
-            mol = Chem.MolFromSmiles(smi)
-            if mol:
-                fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048)
-                fps.append(fp)
-            else:
-                fps.append(None)
-
-        for i in range(len(fps)):
-            row = []
-            for j in range(len(fps)):
-                if fps[i] is None or fps[j] is None:
-                    row.append(0)
-                else:
-                    sim = DataStructs.TanimotoSimilarity(fps[i], fps[j])
-                    row.append(round(sim, 2))
-            matrix.append(row)
-
-        return jsonify({"ids": ids, "matrix": matrix})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
     
 @app.route('/save-starred', methods=['POST'])
 def save_starred():
+    """
+    API ENDPOINT: Save user's favorite compounds
+    Stores which compounds a user has marked as favorites
+    so they can quickly find them later
+    """
     data = request.get_json()
     email = data.get('email')
     starred = data.get('starred')
@@ -802,6 +866,11 @@ def save_starred():
     # Get starred compounds for a user
 @app.route('/get-starred', methods=['GET'])
 def get_starred():
+    """
+    API ENDPOINT: Get user's favorite compounds
+    Returns the list of compounds that a user has
+    previously marked as favorites
+    """
     email = request.args.get('email')
     if not email:
         return jsonify({'error': 'Missing email'}), 400
@@ -815,8 +884,14 @@ def get_starred():
         print('Failed to fetch starred compounds:', e)
         return jsonify({'error': str(e)}), 500
     
+    
 @app.route('/save-starred-formulations', methods=['POST'])
 def save_starred_formulations():
+    """
+    API ENDPOINT: Save user's favorite formulations
+    Stores which formulation recipes a user has marked as favorites
+    so they can quickly find them later
+    """
     data = request.get_json()
     email = data.get('email')
     starred = data.get('starred')
@@ -835,6 +910,11 @@ def save_starred_formulations():
 
 @app.route('/get-starred-formulations', methods=['GET'])
 def get_starred_formulations():
+    """
+    API ENDPOINT: Get user's favorite formulations
+    Returns the list of formulation recipes that a user has
+    previously marked as favorites
+    """
     email = request.args.get('email')
     if not email:
         return jsonify({'error': 'Missing email'}), 400
@@ -851,15 +931,26 @@ def get_starred_formulations():
 
 @app.route("/plans", methods=["GET"])
 def list_plans():
+    """
+    API ENDPOINT: Get all synthesis plans
+    Returns a list of all planned compound syntheses
+    Used to display the synthesis planning table
+    """
     try:
         docs = db.collection("plans").stream()
         plans = [{"id": doc.id, **doc.to_dict()} for doc in docs]
         return jsonify(plans), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 
 @app.route("/create-plan", methods=["POST"])
 def create_plan():
+    """
+    API ENDPOINT: Create a new synthesis plan
+    Takes planned compound data and creates a synthesis plan entry
+    Generates molecular images and calculates molecular weight if SMILES provided
+    """
     try:
         data = request.get_json()
         # Ensure completed is always set to False by default
@@ -926,14 +1017,25 @@ def create_plan():
 
 @app.route("/delete-plan/<plan_id>", methods=["DELETE"])
 def delete_plan(plan_id):
+    """
+    API ENDPOINT: Delete a synthesis plan
+    Permanently removes a planned synthesis from the database
+    Used when a synthesis plan is no longer needed
+    """
     try:
         db.collection("plans").document(plan_id).delete()
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 
 @app.route("/update-plan/<plan_id>", methods=["POST"])
 def update_plan(plan_id):
+    """
+    API ENDPOINT: Update an existing synthesis plan
+    Takes plan data with changes (like marking as completed)
+    and saves the updated information back to the database
+    """
     try:
         data = request.get_json()
         if not data:
@@ -949,61 +1051,10 @@ def update_plan(plan_id):
         return jsonify({"error": str(e)}), 500
 
 
-
-
-
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
 
 
 #   Copyright © 2025 Polaris Electro Optics
 #   This code is the property of Polaris Electro Optics and may not be reused, modified, or distributed without explicit permission.
 
-
-
-
-
-# @app.route("/create-plan", methods=["POST"])
-# def create_plan():
-#     try:
-#         data = request.get_json()
-#         # Ensure completed is always set to False by default
-#         if "completed" not in data:
-#             data["completed"] = False
-#         # Generate and upload structure image if smiles is present and no imageUrl
-#         smiles = data.get("smiles")
-#         if smiles and not data.get("imageUrl"):
-#             try:
-#                 from rdkit import Chem
-#                 from rdkit.Chem import Draw
-#                 import io
-#                 import base64
-#                 mol = Chem.MolFromSmiles(smiles)
-#                 if mol:
-#                     img = Draw.MolToImage(mol, size=(1200, 600), dpi=300, kekulize=True, wedgeBonds=True, bgcolor=(255,255,255))
-#                     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-#                         img.save(tmp.name, dpi=(300, 300))
-#                         tmp.flush()
-#                         bucket = storage.bucket()
-#                         filename = f"plan_images/{data.get('id', 'plan')}.png"
-#                         blob = bucket.blob(filename)
-#                         blob.upload_from_filename(tmp.name, content_type="image/png")
-#                         blob.make_public()
-#                         data["imageUrl"] = blob.public_url
-#                     os.unlink(tmp.name)
-#             except Exception as e:
-#                 print(f"Failed to generate/upload image for plan {data.get('id')}: {e}")
-#         # Use the provided id as the Firestore document ID
-#         plan_id = data.get("id")
-#         if not plan_id:
-#             plan_ref = db.collection("plans").document()  # fallback to auto-id if not provided
-#         else:
-#             plan_ref = db.collection("plans").document(str(plan_id))
-#         data["createdAt"] = firestore.SERVER_TIMESTAMP
-#         plan_ref.set(data)
-#         return jsonify({"success": True}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500

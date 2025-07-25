@@ -401,7 +401,7 @@ export default function Home() {
       >
         <button
           onClick={fastScrollToTop}
-          className="pointer-events-auto bg-[#002C36]/80 rounded-full shadow-lg p-2 ml-8"
+          className="pointer-events-auto p-2 ml-8"
           style={{ marginTop: "8px" }}
           aria-label="Back to top"
         >
