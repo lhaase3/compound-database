@@ -1,4 +1,3 @@
-
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -880,9 +879,11 @@ export default function Home() {
                           ((field === 'phase map' || field === 'Notes') ? ' whitespace-pre-line break-words max-w-xs' : ' whitespace-nowrap')
                         }
                         style={
-                          (field === 'phase map' || field === 'Notes')
-                            ? { whiteSpace: 'pre-line', wordBreak: 'break-word', minWidth: 300, maxWidth: 600 }
-                            : undefined
+                          field === 'R33'
+                            ? { minWidth: 80, maxWidth: 100, whiteSpace: 'nowrap' }
+                            : (field === 'phase map' || field === 'Notes')
+                              ? { whiteSpace: 'pre-line', wordBreak: 'break-word', minWidth: 300, maxWidth: 600 }
+                              : undefined
                         }
                       >
                         {compound[field] ?? "N/A"}
