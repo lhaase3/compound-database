@@ -698,7 +698,7 @@ export default function Home() {
                 : 'bg-transparent text-[#00E6D2] hover:bg-[#00545F]'
             }`}
           >
-            📋 Cardssss
+            📋 Cards
           </button>
           <button
             onClick={() => setViewMode('table')}
@@ -791,7 +791,18 @@ export default function Home() {
                     />
                   </th>
                   {tableFieldsToShow.map(field => (
-                    <th key={field} className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r-2 border-[#008080] bg-white whitespace-nowrap sticky" style={{ top: 0, zIndex: 30 }}>
+                    <th
+                      key={field}
+                      className={
+                        `p-3 text-xs font-bold uppercase text-[#008080] border-b border-r-2 border-[#008080] bg-white whitespace-nowrap sticky` +
+                        (field === 'r33' || field === 'R33' ? ' min-w-[60px] max-w-[80px] w-[70px] text-center' : '')
+                      }
+                      style={{
+                        top: 0,
+                        zIndex: 30,
+                        ...(field === 'r33' || field === 'R33' ? { minWidth: 60, maxWidth: 80, width: 70, textAlign: 'center' } : {})
+                      }}
+                    >
                       {field}
                     </th>
                   ))}
@@ -876,11 +887,12 @@ export default function Home() {
                         key={field}
                         className={
                           `p-3 text-[#002C36] text-center border-r-2 border-[#008080]` +
-                          ((field === 'phase map' || field === 'Notes') ? ' whitespace-pre-line break-words max-w-xs' : ' whitespace-nowrap')
+                          ((field === 'phase map' || field === 'Notes') ? ' whitespace-pre-line break-words max-w-xs' : ' whitespace-nowrap') +
+                          (field === 'r33' || field === 'R33' ? ' min-w-[60px] max-w-[80px] w-[70px] text-center' : '')
                         }
                         style={
-                          field === 'R33'
-                            ? { minWidth: 20, maxWidth: 20, whiteSpace: 'nowrap' }
+                          field === 'r33' || field === 'R33'
+                            ? { minWidth: 60, maxWidth: 80, width: 70, textAlign: 'center' }
                             : (field === 'phase map' || field === 'Notes')
                               ? { whiteSpace: 'pre-line', wordBreak: 'break-word', minWidth: 300, maxWidth: 600 }
                               : undefined
