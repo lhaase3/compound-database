@@ -588,7 +588,7 @@ export default function PlansPage() {
                           Completed
                         </span>
                         <button
-                          className="absolute -top-1 -right-1 bg-blue text-[#008080] hover:bg-[#008080] hover:text-white w-5 h-5 rounded-full border border-[#008080] flex items-center justify-center text-xs font-bold transition-all shadow-sm"
+                          className="absolute -top-1 -right-1 bg-white text-[#008080] hover:bg-[#008080] hover:text-white w-5 h-5 rounded-full border border-[#008080] flex items-center justify-center text-xs font-bold transition-all shadow-sm"
                           onClick={e => { e.stopPropagation(); undoCompletedPlan(plan); }}
                           title="Move back to planned structures"
                           aria-label={`Move ${plan.name} back to planned structures`}
