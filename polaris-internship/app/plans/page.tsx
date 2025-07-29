@@ -273,6 +273,32 @@ export default function PlansPage() {
     }
   }
 
+  // Move completed plan back to active plans
+  const undoCompletedPlan = async (plan: PlannedStructure) => {
+    try {
+      // Get the next available priority for active plans
+      const nextPriority = getNextAvailablePriority();
+      
+      // Update the plan to be active again with the next available priority
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-plan/${plan.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          completed: false, 
+          status: 'Not Started',
+          priority: nextPriority
+        }),
+      });
+      
+      // Refetch plans to update UI
+      const plansRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/plans`);
+      const plansData = await plansRes.json();
+      setPlans(Array.isArray(plansData) ? plansData.sort((a, b) => a.priority - b.priority) : []);
+    } catch (err) {
+      console.error("Failed to undo completed plan", err);
+    }
+  }
+
   if (!user) {
     return null;
   }
@@ -305,7 +331,7 @@ export default function PlansPage() {
       >
         <button
           onClick={fastScrollToTop}
-          className="pointer-events-auto bg-[#002C36]/80 rounded-full shadow-lg p-2 ml-8"
+          className="pointer-events-auto p-2 ml-8"
           style={{ marginTop: "8px" }}
           aria-label="Back to top"
         >
@@ -552,14 +578,24 @@ export default function PlansPage() {
                     <td className="px-2 py-2 border-r border-[#008080] relative text-[#002C36]">
                       {plan.mw}
                     </td>
-                    <td className="px-2 py-2 border-r border-[#008080]">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#00E6D2] text-[#008080] font-bold text-xs border border-[#008080] shadow">
-                        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <circle cx="9" cy="9" r="8" stroke="#008080" strokeWidth="2" fill="#00E6D2" />
-                          <path d="M5 9.5L8 12.5L13 7.5" stroke="#008080" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        Completed Structures
-                      </span>
+                    <td className="px-2 py-2 border-r border-[#008080] relative">
+                      <div className="relative">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#00E6D2] text-[#008080] font-bold text-xs border border-[#008080] shadow">
+                          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="9" cy="9" r="8" stroke="#008080" strokeWidth="2" fill="#00E6D2" />
+                            <path d="M5 9.5L8 12.5L13 7.5" stroke="#008080" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Completed
+                        </span>
+                        <button
+                          className="absolute -top-1 -right-1 bg-white text-[#008080] hover:bg-[#008080] hover:text-white w-5 h-5 rounded-full border border-[#008080] flex items-center justify-center text-xs font-bold transition-all shadow-sm"
+                          onClick={e => { e.stopPropagation(); undoCompletedPlan(plan); }}
+                          title="Move back to planned structures"
+                          aria-label={`Move ${plan.name} back to planned structures`}
+                        >
+                          ↶
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
