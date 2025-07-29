@@ -84,7 +84,7 @@ export default function Home() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareAttachment, setCompareAttachment] = useState<{compoundId: string, key: string, data: any} | null>(null);
   const [mwRange, setMwRange] = useState<[number, number]>([0, 4000]);
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const filteredCompounds = compounds.filter((compound) => {
     // Name filter
     const matchesName =
@@ -880,7 +880,7 @@ export default function Home() {
                         }
                         style={
                           field === 'R33'
-                            ? { minWidth: 80, maxWidth: 100, whiteSpace: 'nowrap' }
+                            ? { minWidth: 20, maxWidth: 20, whiteSpace: 'nowrap' }
                             : (field === 'phase map' || field === 'Notes')
                               ? { whiteSpace: 'pre-line', wordBreak: 'break-word', minWidth: 300, maxWidth: 600 }
                               : undefined
