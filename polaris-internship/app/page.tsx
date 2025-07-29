@@ -1,4 +1,3 @@
-
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -85,7 +84,7 @@ export default function Home() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareAttachment, setCompareAttachment] = useState<{compoundId: string, key: string, data: any} | null>(null);
   const [mwRange, setMwRange] = useState<[number, number]>([0, 4000]);
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const filteredCompounds = compounds.filter((compound) => {
     // Name filter
     const matchesName =
@@ -548,7 +547,7 @@ export default function Home() {
           {showFilterDropdown && (
             <div
               ref={filterRef}
-              className="absolute z-20 bg-[#002C36] shadow-lg mt-2 rounded-lg w-80 max-h-96 overflow-y-auto border border-[#00E6D2] p-4"
+              className="absolute z-[100] bg-[#002C36] shadow-lg mt-2 rounded-lg w-80 max-h-96 overflow-y-auto border border-[#00E6D2] p-4"
             >
               {/* Search by Name */}
               <div className="mb-4">
@@ -692,16 +691,6 @@ export default function Home() {
         {/* View Toggle */}
         <div className="ml-4 flex bg-[#00343F] rounded-lg border border-[#00E6D2] overflow-hidden">
           <button
-            onClick={() => setViewMode('cards')}
-            className={`px-4 py-2 text-sm font-bold transition-all ${
-              viewMode === 'cards'
-                ? 'bg-[#00E6D2] text-[#002C36]'
-                : 'bg-transparent text-[#00E6D2] hover:bg-[#00545F]'
-            }`}
-          >
-            📋 Cards
-          </button>
-          <button
             onClick={() => setViewMode('table')}
             className={`px-4 py-2 text-sm font-bold transition-all ${
               viewMode === 'table'
@@ -710,6 +699,16 @@ export default function Home() {
             }`}
           >
             📊 Table
+          </button>
+          <button
+            onClick={() => setViewMode('cards')}
+            className={`px-4 py-2 text-sm font-bold transition-all ${
+              viewMode === 'cards'
+                ? 'bg-[#00E6D2] text-[#002C36]'
+                : 'bg-transparent text-[#00E6D2] hover:bg-[#00545F]'
+            }`}
+          >
+            📋 Cards
           </button>
         </div>
       </div>
@@ -792,7 +791,18 @@ export default function Home() {
                     />
                   </th>
                   {tableFieldsToShow.map(field => (
-                    <th key={field} className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r-2 border-[#008080] bg-white whitespace-nowrap sticky" style={{ top: 0, zIndex: 30 }}>
+                    <th
+                      key={field}
+                      className={
+                        `p-3 text-xs font-bold uppercase text-[#008080] border-b border-r-2 border-[#008080] bg-white whitespace-nowrap sticky` +
+                        (field === 'r33' || field === 'R33' ? ' min-w-[60px] max-w-[80px] w-[70px] text-center' : '')
+                      }
+                      style={{
+                        top: 0,
+                        zIndex: 30,
+                        ...(field === 'r33' || field === 'R33' ? { minWidth: 60, maxWidth: 80, width: 70, textAlign: 'center' } : {})
+                      }}
+                    >
                       {field}
                     </th>
                   ))}
@@ -877,15 +887,22 @@ export default function Home() {
                         key={field}
                         className={
                           `p-3 text-[#002C36] text-center border-r-2 border-[#008080]` +
-                          ((field === 'phase map' || field === 'Notes') ? ' whitespace-pre-line break-words max-w-xs' : ' whitespace-nowrap')
+                          ((field === 'phase map' || field === 'Notes') ? ' whitespace-pre-line break-words max-w-xs' : ' whitespace-nowrap') +
+                          (field === 'r33' || field === 'R33' ? ' min-w-[60px] max-w-[80px] w-[70px] text-center' : '')
                         }
                         style={
-                          (field === 'phase map' || field === 'Notes')
-                            ? { whiteSpace: 'pre-line', wordBreak: 'break-word', minWidth: 300, maxWidth: 600 }
-                            : undefined
+                          field === 'r33' || field === 'R33'
+                            ? { minWidth: 60, maxWidth: 80, width: 70, textAlign: 'center' }
+                            : (field === 'phase map' || field === 'Notes')
+                              ? { whiteSpace: 'pre-line', wordBreak: 'break-word', minWidth: 300, maxWidth: 600 }
+                              : undefined
                         }
                       >
-                        {compound[field] ?? "N/A"}
+                        {(!compound[field] || compound[field] === 'N/A') ? (
+                          <span className="text-gray-300">N/A</span>
+                        ) : (
+                          compound[field]
+                        )}
                       </td>
                     ))}
                     <td className="p-3 text-center border-r border-[#008080]" onClick={e => e.stopPropagation()}>
