@@ -698,7 +698,7 @@ export default function Home() {
                 : 'bg-transparent text-[#00E6D2] hover:bg-[#00545F]'
             }`}
           >
-            📋 Cards
+            📋 Cardssss
           </button>
           <button
             onClick={() => setViewMode('table')}
