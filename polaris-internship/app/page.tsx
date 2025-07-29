@@ -547,7 +547,7 @@ export default function Home() {
           {showFilterDropdown && (
             <div
               ref={filterRef}
-              className="absolute z-20 bg-[#002C36] shadow-lg mt-2 rounded-lg w-80 max-h-96 overflow-y-auto border border-[#00E6D2] p-4"
+              className="absolute z-[100] bg-[#002C36] shadow-lg mt-2 rounded-lg w-80 max-h-96 overflow-y-auto border border-[#00E6D2] p-4"
             >
               {/* Search by Name */}
               <div className="mb-4">
