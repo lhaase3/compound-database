@@ -27,12 +27,6 @@ function isMultiAttachment(key: string) {
   return multiEntryAttachments.includes(key);
 }
 
-// --- Add to AttachmentModal prop types (at the top of the file, or import if external) ---
-// interface AttachmentModalProps extends ... {
-//   isMulti?: boolean;
-//   isNewEntry?: boolean;
-//   renderHeaderExtra?: React.ReactNode;
-// }
 
 // Helper to merge updates with the full compound
 function getFullCompoundUpdate(base: Compound, updates: Partial<CompoundWithAttachments>): Compound {
@@ -41,7 +35,7 @@ function getFullCompoundUpdate(base: Compound, updates: Partial<CompoundWithAtta
     ...base,
     ...updates,
     id: base.id,
-    smiles: base.smiles,
+    smiles: updates.smiles ?? base.smiles,
     attachments: {
       ...base.attachments,
       ...updates.attachments,
@@ -241,36 +235,78 @@ export default function CompoundModal({
   };
 
   // --- Fix handleSave (edit/save compound) ---
+  // const handleSave = async () => {
+  //   try {
+  //     if (source === "lot" && onUpdateCompoundFromLot) {
+  //       // Save to lot compound endpoint
+  //       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-lot-compound`, {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ ...editedCompound, lotId: currentLotId }),
+  //       });
+  //       if (!response.ok) {
+  //         throw new Error("Failed to update lot compound");
+  //       }
+  //       // Fetch the updated lot compound from Firestore and update editedCompound
+  //       const updated = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lot/${currentLotId}`)
+  //         .then(res => res.json());
+  //       // Find the correct compound by id
+  //       const updatedLotCompound = updated.find((c: any) => c.id === editedCompound.id);
+  //       if (updatedLotCompound) {
+  //         setEditedCompound((prev) => ({ ...prev, ...updatedLotCompound }));
+  //         onUpdateCompoundFromLot?.(updatedLotCompound, currentLotId); // ✅ Force re-sync parent
+  //       }
+  //       setEditMode(false);
+  //     } else {
+  //       await onUpdate(getFullCompoundUpdate(compound, editedCompound));
+  //       setEditMode(false);
+  //     }
+  //   } catch (err) {
+  //     console.error("Update failed:", err);
+  //   }
+  // };
+
   const handleSave = async () => {
     try {
-      if (source === "lot" && onUpdateCompoundFromLot) {
-        // Save to lot compound endpoint
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-lot-compound`, {
+      const updatedCompound = getFullCompoundUpdate(compound, editedCompound);
+
+      // Detect if SMILES changed
+      const smilesChanged = updatedCompound.smiles !== compound.smiles;
+
+      // Call backend to update compound
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-compound`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedCompound),
+      });
+
+      if (smilesChanged) {
+        // Hit backend to regenerate image
+        const regen = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/regenerate-images`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...editedCompound, lotId: currentLotId }),
+          body: JSON.stringify({ id: updatedCompound.id, smiles: updatedCompound.smiles }),
         });
-        if (!response.ok) {
-          throw new Error("Failed to update lot compound");
+
+        if (!regen.ok) {
+          const err = await regen.json();
+          console.error("Image regeneration failed:", err);
+        } else {
+          // Refresh the compound data from backend
+          const refreshed = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/compounds/${updatedCompound.id}`).then(r => r.json());
+          setEditedCompound(refreshed);
+          await onUpdate(refreshed);
         }
-        // Fetch the updated lot compound from Firestore and update editedCompound
-        const updated = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lot/${currentLotId}`)
-          .then(res => res.json());
-        // Find the correct compound by id
-        const updatedLotCompound = updated.find((c: any) => c.id === editedCompound.id);
-        if (updatedLotCompound) {
-          setEditedCompound((prev) => ({ ...prev, ...updatedLotCompound }));
-          onUpdateCompoundFromLot?.(updatedLotCompound, currentLotId); // ✅ Force re-sync parent
-        }
-        setEditMode(false);
       } else {
-        await onUpdate(getFullCompoundUpdate(compound, editedCompound));
-        setEditMode(false);
+        await onUpdate(updatedCompound);
       }
+
+      setEditMode(false);
     } catch (err) {
       console.error("Update failed:", err);
     }
   };
+
 
   const handleDelete = async () => {
     const confirmed = window.confirm("Are you sure you want to delete this compound?");
@@ -765,12 +801,21 @@ export default function CompoundModal({
                 {field === "createdAt" ? "Created At" : field}
               </span>
               {editMode ? (
-                <input
-                  className="border border-[#00E6D2] rounded px-2 py-1 text-sm bg-white text-[#002C36] focus:ring-2 focus:ring-[#00E6D2]"
-                  value={editedCompound[field] ?? ""}
-                  onChange={(e) => handleChange(field, e.target.value)}
-                  style={field === "smiles" ? { wordBreak: 'break-all', whiteSpace: 'pre-wrap', maxWidth: '100%' } : {}}
-                />
+                field === "id" ? (
+                  <input
+                    className="border border-[#00E6D2] rounded px-2 py-1 text-sm bg-white text-[#002C36] focus:ring-2 focus:ring-[#00E6D2] font-mono"
+                    value={editedCompound.id ?? ""}
+                    onChange={e => handleChange("id", e.target.value)}
+                    style={{ fontWeight: 700, letterSpacing: '0.05em' }}
+                  />
+                ) : (
+                  <input
+                    className="border border-[#00E6D2] rounded px-2 py-1 text-sm bg-white text-[#002C36] focus:ring-2 focus:ring-[#00E6D2]"
+                    value={editedCompound[field] ?? ""}
+                    onChange={(e) => handleChange(field, e.target.value)}
+                    style={field === "smiles" ? { wordBreak: 'break-all', whiteSpace: 'pre-wrap', maxWidth: '100%' } : {}}
+                  />
+                )
               ) : (
                 <span
                   className={editedCompound[field] ? "text-[#002C36]" : "text-gray-400"}

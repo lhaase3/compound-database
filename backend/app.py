@@ -701,6 +701,83 @@ def upload_image_to_firebase():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route("/regenerate-images", methods=["POST"])
+def regenerate_images():
+    """
+    API ENDPOINT: Regenerates structure images for a compound after SMILES change
+    Replaces imageUrl and bwImageUrl in Firestore and Storage
+    """
+    try:
+        data = request.get_json()
+        compound_id = data.get("id")
+        smiles = data.get("smiles")
+
+        if not compound_id or not smiles:
+            return jsonify({"error": "Missing compound ID or SMILES"}), 400
+
+        mol = Chem.MolFromSmiles(smiles)
+        if not mol:
+            return jsonify({"error": "Invalid SMILES"}), 400
+
+        from rdkit.Chem import rdDepictor
+        from rdkit.Chem.Draw import rdMolDraw2D
+        import tempfile
+        import os
+
+        rdDepictor.Compute2DCoords(mol)
+        width, height = 2400, 1200
+        bucket = storage.bucket()
+
+        # Regenerate color image
+        drawer = rdMolDraw2D.MolDraw2DCairo(width, height)
+        options = drawer.drawOptions()
+        options.minFontSize = 90
+        options.maxFontSize = 90
+        options.bondLineWidth = 4
+        options.padding = 0.01
+        options.fixedScale = True
+        drawer.DrawMolecule(mol)
+        drawer.FinishDrawing()
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            drawer.WriteDrawingText(tmp.name)
+            blob = bucket.blob(f"compound_images/{compound_id}.png")
+            blob.upload_from_filename(tmp.name, content_type="image/png")
+            blob.make_public()
+            imageUrl = blob.public_url
+            os.unlink(tmp.name)
+
+        # Regenerate BW image
+        drawer_bw = rdMolDraw2D.MolDraw2DCairo(width, height)
+        opts_bw = drawer_bw.drawOptions()
+        opts_bw.minFontSize = 90
+        opts_bw.maxFontSize = 90
+        opts_bw.bondLineWidth = 4
+        opts_bw.padding = 0.01
+        opts_bw.fixedScale = True
+        opts_bw.useBWAtomPalette()
+        drawer_bw.DrawMolecule(mol)
+        drawer_bw.FinishDrawing()
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_bw:
+            drawer_bw.WriteDrawingText(tmp_bw.name)
+            blob_bw = bucket.blob(f"compound_images/{compound_id}_bw.png")
+            blob_bw.upload_from_filename(tmp_bw.name, content_type="image/png")
+            blob_bw.make_public()
+            bwImageUrl = blob_bw.public_url
+            os.unlink(tmp_bw.name)
+
+        # Update Firestore
+        db.collection("compounds").document(compound_id).update({
+            "imageUrl": imageUrl,
+            "bwImageUrl": bwImageUrl
+        })
+
+        return jsonify({"imageUrl": imageUrl, "bwImageUrl": bwImageUrl}), 200
+
+    except Exception as e:
+        print("Error regenerating images:", e)
+        return jsonify({"error": str(e)}), 500
+
+    
 
 @app.route("/create-formulation", methods=["POST"])
 def create_formulation():
