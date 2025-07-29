@@ -691,16 +691,6 @@ export default function Home() {
         {/* View Toggle */}
         <div className="ml-4 flex bg-[#00343F] rounded-lg border border-[#00E6D2] overflow-hidden">
           <button
-            onClick={() => setViewMode('cards')}
-            className={`px-4 py-2 text-sm font-bold transition-all ${
-              viewMode === 'cards'
-                ? 'bg-[#00E6D2] text-[#002C36]'
-                : 'bg-transparent text-[#00E6D2] hover:bg-[#00545F]'
-            }`}
-          >
-            📋 Cards
-          </button>
-          <button
             onClick={() => setViewMode('table')}
             className={`px-4 py-2 text-sm font-bold transition-all ${
               viewMode === 'table'
@@ -709,6 +699,16 @@ export default function Home() {
             }`}
           >
             📊 Table
+          </button>
+          <button
+            onClick={() => setViewMode('cards')}
+            className={`px-4 py-2 text-sm font-bold transition-all ${
+              viewMode === 'cards'
+                ? 'bg-[#00E6D2] text-[#002C36]'
+                : 'bg-transparent text-[#00E6D2] hover:bg-[#00545F]'
+            }`}
+          >
+            📋 Cards
           </button>
         </div>
       </div>
@@ -898,7 +898,11 @@ export default function Home() {
                               : undefined
                         }
                       >
-                        {compound[field] ?? "N/A"}
+                        {(!compound[field] || compound[field] === 'N/A') ? (
+                          <span className="text-gray-300">N/A</span>
+                        ) : (
+                          compound[field]
+                        )}
                       </td>
                     ))}
                     <td className="p-3 text-center border-r border-[#008080]" onClick={e => e.stopPropagation()}>
