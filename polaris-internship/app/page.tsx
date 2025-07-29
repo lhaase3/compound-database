@@ -26,6 +26,20 @@ const transitionOptions = [
   "FN - GLASS", "I - GLASS", "N - GLASS", "CR - GLASS"
 ];
 
+// Fields to show in table view (similar to CompareModal)
+const tableFieldsToShow = [
+  "Lambda Max (DCM/AcCN)", "Lambda Max (neat film)",
+  "phase map", "r33", "dipole CAMB3LYP SVPD CHCl3 (Cosmo)",
+  "beta CAMB3LYP SVPD CHCl3 (Cosmo)", "dipole B3LYP SVPD CHCl3",
+  "beta B3LYP SVPD CHCl3", "beta/MW", "J/g DSC melt (total)",
+  "kJ/mol DSC melt (total)", "Refractive index (ne/no)", "Notes",
+  "lab?", "first PEO#", "registered PEO#", "Lab book #", "Max loading (%)"
+];
+
+const IMAGE_COL_WIDTH = 420;
+const ID_COL_WIDTH = 180;
+const MW_COL_WIDTH = 120;
+
 
 type NewCompound = {
   id: string;
@@ -71,6 +85,7 @@ export default function Home() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareAttachment, setCompareAttachment] = useState<{compoundId: string, key: string, data: any} | null>(null);
   const [mwRange, setMwRange] = useState<[number, number]>([0, 4000]);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const filteredCompounds = compounds.filter((compound) => {
     // Name filter
     const matchesName =
@@ -673,25 +688,281 @@ export default function Home() {
         <hr className="flex-grow border-t border-[#00E6D2]/40" />
         <span className="mx-4 text-lg text-[#00E6D2] font-bold uppercase tracking-wide">Compounds</span>
         <hr className="flex-grow border-t border-[#00E6D2]/40" />
+
+        {/* View Toggle */}
+        <div className="ml-4 flex bg-[#00343F] rounded-lg border border-[#00E6D2] overflow-hidden">
+          <button
+            onClick={() => setViewMode('cards')}
+            className={`px-4 py-2 text-sm font-bold transition-all ${
+              viewMode === 'cards'
+                ? 'bg-[#00E6D2] text-[#002C36]'
+                : 'bg-transparent text-[#00E6D2] hover:bg-[#00545F]'
+            }`}
+          >
+            📋 Cards
+          </button>
+          <button
+            onClick={() => setViewMode('table')}
+            className={`px-4 py-2 text-sm font-bold transition-all ${
+              viewMode === 'table'
+                ? 'bg-[#00E6D2] text-[#002C36]'
+                : 'bg-transparent text-[#00E6D2] hover:bg-[#00545F]'
+            }`}
+          >
+            📊 Table
+          </button>
+        </div>
       </div>
 
-      {/* Compound Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10 mx-auto max-w-screen-xl px-6">
-        {filteredCompounds.map((compound, index) => (
-          <CompoundCard
-            key={compound.id || `compound-${index}`}
-            compound={compound}
-            onMoreInfo={setSelectedCompound}
-            isStarred={starred.includes(compound.id)}
-            onToggleStar={() => toggleStar(compound.id)}
-            cardColor="#00343F"
-            accentColor="#00E6D2"
-            compareChecked={selectedForComparison.includes(compound.id)}
-            onToggleCompare={() => toggleCompare(compound.id)}
-            similarity={undefined}
-          />
-        ))}
-      </div>
+      {/* Compound Display - Cards or Table */}
+      {viewMode === 'cards' ? (
+        /* Compound Grid */
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10 mx-auto max-w-screen-xl px-6">
+          {filteredCompounds.map((compound, index) => (
+            <CompoundCard
+              key={compound.id || `compound-${index}`}
+              compound={compound}
+              onMoreInfo={setSelectedCompound}
+              isStarred={starred.includes(compound.id)}
+              onToggleStar={() => toggleStar(compound.id)}
+              cardColor="#00343F"
+              accentColor="#00E6D2"
+              compareChecked={selectedForComparison.includes(compound.id)}
+              onToggleCompare={() => toggleCompare(compound.id)}
+              similarity={undefined}
+            />
+          ))}
+        </div>
+      ) : (
+        /* Compound Table */
+        <div className="w-full max-w-[95vw] mx-auto px-4">
+          <div className="overflow-x-auto overflow-y-auto bg-white rounded-lg border border-[#008080] shadow-2xl" style={{ maxHeight: '90vh' }}>
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr>
+                  <th
+                    className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky bg-white"
+                    style={{
+                      left: 0,
+                      top: 0,
+                      width: IMAGE_COL_WIDTH,
+                      minWidth: IMAGE_COL_WIDTH,
+                      boxShadow: '2px 0 0 #008080, 1px 0 0 #008080 inset',
+                      zIndex: 40,
+                    }}
+                  >
+                    Image
+                  </th>
+                  <th
+                    className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky bg-white"
+                    style={{
+                      left: IMAGE_COL_WIDTH,
+                      top: 0,
+                      width: ID_COL_WIDTH,
+                      minWidth: ID_COL_WIDTH,
+                      boxShadow: '2px 0 0 #008080, 1px 0 0 #008080 inset',
+                      zIndex: 40,
+                    }}
+                  >
+                    ID
+                  </th>
+                  <th
+                    className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] sticky bg-white relative"
+                    style={{
+                      left: IMAGE_COL_WIDTH + ID_COL_WIDTH,
+                      top: 0,
+                      width: MW_COL_WIDTH,
+                      minWidth: MW_COL_WIDTH,
+                      boxShadow: '3px 0 0 #008080, 1px 0 0 #008080 inset',
+                      zIndex: 40,
+                      borderRight: '2px solid #008080 !important',
+                    }}
+                  >
+                    MW
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: '2px',
+                        backgroundColor: '#008080',
+                        zIndex: 1,
+                      }}
+                    />
+                  </th>
+                  {tableFieldsToShow.map(field => (
+                    <th key={field} className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r-2 border-[#008080] bg-white whitespace-nowrap sticky" style={{ top: 0, zIndex: 30 }}>
+                      {field}
+                    </th>
+                  ))}
+                  <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-r border-[#008080] bg-white whitespace-nowrap sticky" style={{ top: 0, zIndex: 30 }}>
+                    Attachments
+                  </th>
+                  <th className="p-3 text-xs font-bold uppercase text-[#008080] border-b border-[#008080] bg-white whitespace-nowrap sticky" style={{ top: 0, zIndex: 30 }}>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCompounds.map((compound, index) => (
+                  <tr key={compound.id || `compound-${index}`} className="border-b border-[#008080] hover:bg-[#f8fffe] cursor-pointer group" onClick={() => setSelectedCompound(compound)}>
+                    <td
+                      className="p-3 text-center sticky z-20 bg-white group-hover:bg-[#f8fffe] border-r border-[#008080]"
+                      style={{
+                        left: 0,
+                        width: IMAGE_COL_WIDTH,
+                        minWidth: IMAGE_COL_WIDTH,
+                        maxWidth: IMAGE_COL_WIDTH,
+                        boxShadow: '2px 0 0 #008080, 1px 0 0 #008080 inset',
+                        zIndex: 20,
+                        overflow: 'visible',
+                        padding: 0,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
+                        {compound.imageUrl ? (
+                          <img
+                            src={compound.imageUrl}
+                            alt={compound.id}
+                            style={{ maxWidth: '370px', maxHeight: '370px', objectFit: 'contain', display: 'block', margin: '0 auto', background: '#fff', borderRadius: '0.75rem', boxShadow: '0 2px 12px 0 rgba(0,0,0,0.07)' }}
+                          />
+                        ) : (
+                          <span className="text-gray-400">No Image</span>
+                        )}
+                      </div>
+                    </td>
+                    <td
+                      className="p-3 font-bold text-[#002C36] text-center sticky z-20 bg-white group-hover:bg-[#f8fffe] border-r border-[#008080]"
+                      style={{
+                        left: IMAGE_COL_WIDTH,
+                        width: ID_COL_WIDTH,
+                        minWidth: ID_COL_WIDTH,
+                        maxWidth: ID_COL_WIDTH,
+                        boxShadow: '2px 0 0 #008080, 1px 0 0 #008080 inset',
+                        zIndex: 20,
+                        overflow: 'visible',
+                      }}
+                    >
+                      {compound.id}
+                    </td>
+                    <td
+                      className="p-3 font-semibold text-[#002C36] text-center sticky z-20 bg-white group-hover:bg-[#f8fffe] border-r border-[#008080] relative"
+                      style={{
+                        left: IMAGE_COL_WIDTH + ID_COL_WIDTH,
+                        width: MW_COL_WIDTH,
+                        minWidth: MW_COL_WIDTH,
+                        maxWidth: MW_COL_WIDTH,
+                        boxShadow: '3px 0 0 #008080, 1px 0 0 #008080 inset',
+                        zIndex: 20,
+                        overflow: 'visible',
+                        borderRight: '2px solid #008080 !important',
+                      }}
+                    >
+                      {compound.MW ?? "N/A"}
+                      <div 
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: '2px',
+                          backgroundColor: '#008080',
+                          zIndex: 1,
+                        }}
+                      />
+                    </td>
+                    {tableFieldsToShow.map(field => (
+                      <td
+                        key={field}
+                        className={
+                          `p-3 text-[#002C36] text-center border-r-2 border-[#008080]` +
+                          ((field === 'phase map' || field === 'Notes') ? ' whitespace-pre-line break-words max-w-xs' : ' whitespace-nowrap')
+                        }
+                        style={
+                          (field === 'phase map' || field === 'Notes')
+                            ? { whiteSpace: 'pre-line', wordBreak: 'break-word', minWidth: 300, maxWidth: 600 }
+                            : undefined
+                        }
+                      >
+                        {compound[field] ?? "N/A"}
+                      </td>
+                    ))}
+                    <td className="p-3 text-center border-r border-[#008080]" onClick={e => e.stopPropagation()}>
+                      <div className="flex flex-col gap-2 items-center">
+                        {(() => {
+                          const atts = compound.attachments || {};
+                          const keysWithData = Object.keys(atts).filter(k => {
+                            const att = atts[k];
+                            if (Array.isArray(att)) {
+                              return att.some(entry => entry && (entry.note || entry.imageUrl));
+                            } else {
+                              return att && (att.note || att.imageUrl);
+                            }
+                          });
+
+                          if (keysWithData.length === 0) {
+                            return <span>N/A</span>;
+                          }
+
+                          return keysWithData.map((key) => {
+                            const att = atts[key];
+                            if (Array.isArray(att)) {
+                              return att.map((entry, idx) =>
+                                entry && (entry.note || entry.imageUrl) ? (
+                                  <button
+                                    key={key + "-" + idx}
+                                    className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                    onClick={() => setCompareAttachment({ compoundId: compound.id, key, data: entry })}
+                                    type="button"
+                                  >
+                                    {key.replace(/_/g, " ")} {entry.name ? `(${entry.name})` : `#${idx + 1}`}
+                                  </button>
+                                ) : null
+                              );
+                            } else {
+                              return (
+                                <button
+                                  key={key}
+                                  className="px-2 py-1 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xs mb-1"
+                                  onClick={() => setCompareAttachment({ compoundId: compound.id, key, data: att })}
+                                  type="button"
+                                >
+                                  {key.replace(/_/g, " ")}
+                                </button>
+                              );
+                            }
+                          });
+                        })()}
+                      </div>
+                    </td>
+                    <td className="p-3 text-center border-[#008080]">
+                      <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => toggleStar(compound.id)}
+                          className={`text-4xl focus:outline-none ${
+                            starred.includes(compound.id) ? 'text-[#00E6D2]' : 'text-gray-400 hover:text-[#00E6D2]'
+                          }`}
+                          title={starred.includes(compound.id) ? 'Unstar' : 'Star'}
+                          style={{
+                            textShadow: starred.includes(compound.id)
+                              ? '0 0 16px #00E6D2, 0 0 8px #00E6D2'
+                              : '0 0 8px #00E6D2',
+                            filter: starred.includes(compound.id) ? 'drop-shadow(0 0 8px #00E6D2)' : 'none',
+                            transition: 'text-shadow 0.2s, filter 0.2s',
+                          }}
+                        >
+                          {starred.includes(compound.id) ? '★' : '☆'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Floating Compare Button */}
       {selectedForComparison.length >= 2 && (
@@ -711,6 +982,41 @@ export default function Home() {
         setCompareAttachment={setCompareAttachment}
         clearComparison={clearComparison}
       />
+      
+      {/* Attachment Modal */}
+      {compareAttachment && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6" onClick={() => setCompareAttachment(null)}>
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-[95vh] p-10 relative flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-6 text-[#008080] uppercase text-center w-full">{compareAttachment.key.replace(/_/g, " ")}</h2>
+            {compareAttachment.data.imageUrl && (
+              <div className="flex justify-center items-center w-full" style={{ minHeight: '200px' }}>
+                <img
+                  src={compareAttachment.data.imageUrl}
+                  alt={compareAttachment.key}
+                  className="w-auto h-auto max-h-[90vh] max-w-[1600px] object-contain mb-6 border rounded shadow bg-white mx-auto"
+                />
+              </div>
+            )}
+            {compareAttachment.data.note && (
+              <div className="bg-gray-100 p-4 rounded whitespace-pre-wrap mb-6 text-[#002C36] max-w-4xl w-full text-center mx-auto">
+                {compareAttachment.data.note}
+              </div>
+            )}
+            {!compareAttachment.data.imageUrl && !compareAttachment.data.note && (
+              <div className="text-gray-500 mb-6">No data available.</div>
+            )}
+            <div className="flex justify-end w-full mt-2">
+              <button
+                className="px-8 py-4 bg-[#008080] text-white rounded hover:bg-[#006666] font-bold uppercase tracking-wide text-xl"
+                onClick={() => setCompareAttachment(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Remove inline login modal and block overlay. Redirect handled above. */}
       {showDrawModal && (
         <DrawModal
